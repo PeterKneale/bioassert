@@ -18,7 +18,7 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
-noodles = { version = "0.87", features = ["fasta", "fastq", "vcf", "bam"] }
+noodles = { version = "0.111", features = ["fasta", "fastq", "vcf", "bam"] }
 anyhow = "1"
 
 [dev-dependencies]
