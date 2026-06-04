@@ -1,0 +1,26 @@
+[package]
+name = "bioassert"
+version = "0.1.0"
+edition = "2021"
+description = "BioAssert - A bioinformatics assertion and validation CLI tool"
+license = "MIT"
+repository = "https://github.com/PeterKneale/bioassert"
+keywords = ["bioinformatics", "genomics", "validation", "assertion"]
+categories = ["command-line-utilities", "science"]
+
+[lib]
+name = "bioassert"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bioassert"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+noodles = { version = "0.87", features = ["fasta", "fastq", "vcf", "bam"] }
+anyhow = "1"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
