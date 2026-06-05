@@ -44,10 +44,8 @@ fn run(cli: Cli) -> Result<()> {
             expected,
         } => {
             let file = Path::new(&file);
-
             handle(file, metric, comparator, expected)?;
-            println!("OK");
-        },
+        }
         Commands::Fasta {
             filepath: _,
             metric: _,
@@ -55,7 +53,7 @@ fn run(cli: Cli) -> Result<()> {
             expected: _,
         } => {
             println!("Not implemented yet");
-        },
+        }
     }
     Ok(())
 }

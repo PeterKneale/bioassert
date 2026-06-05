@@ -14,16 +14,13 @@ pub fn handle_read_count(file: &Path, comparator: String, expected: String) -> R
 }
 fn assert_read_count(file: &Path, comparator: Comparator, expected: u64) -> Result<()> {
     let actual = count_reads(file)?;
+    let assertion = format!("read count {comparator} {expected}");
 
     if comparator.compare(actual, expected) {
+        println!("Assertion OK. {assertion}");
         Ok(())
     } else {
-        bail!(
-            "Assertion failed. Expected: read count {} {}, actual: {}",
-            comparator,
-            expected,
-            actual
-        );
+        bail!("Assertion failed. Expected: {assertion}, actual: {actual}");
     }
 }
 fn count_reads(file: &Path) -> io::Result<u64> {
