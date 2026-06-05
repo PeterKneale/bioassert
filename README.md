@@ -7,9 +7,15 @@ BioAssert is a bioinformatics assertion and validation tool written in Rust. It 
 
 ## Features
 
-- Validate DNA, RNA, and protein sequences
-- Calculate and assert GC content
-- Assert sequence length constraints
+- Assert 
+  - BAM
+    - Read Counts ✅
+    - Sorting ☑️
+    - Headers ☑️
+    - Read Lengths ☑️
+  - FASTA
+  - FASTQ
+  - VCF
 - Built on the [noodles](https://crates.io/crates/noodles) bioinformatics library
 
 ## Installation
@@ -20,27 +26,20 @@ cargo install bioassert
 
 ## CLI Usage
 
+- Successful assertions print `OK` to stdout and exit with a zero status code.
 ```sh
-# Show help
-bioassert --help
+bioassert bam example.bam read_count eq 53
+OK
+bioassert bam example.bam read_count gt 10
+OK
+bioassert bam example.bam read_count lt 200
+OK
+```
 
-# Show version
-bioassert --version
-
-# Validate a DNA sequence
-bioassert validate-dna ATGCNATGC
-
-# Validate an RNA sequence
-bioassert validate-rna AUGCNAUG
-
-# Validate a protein sequence
-bioassert validate-protein MSTVX
-
-# Check GC content (with optional range)
-bioassert gc-content ATGCATGC --min 0.4 --max 0.6
-
-# Check sequence length (with optional bounds)
-bioassert check-length ATGCATGC --min 1 --max 20
+- Failed assertions print an error message to stderr and exit with a non-zero status code.
+```sh
+bioassert bam example.bam read_count eq 1   
+Error: Assertion failed. Expected: read count == 1, actual: 53
 ```
 
 ## Library Usage
@@ -53,14 +52,8 @@ bioassert = "0.1"
 ```
 
 ```rust
-use bioassert::{assert_valid_dna, assert_gc_content, gc_content};
+use bioassert;
 
-fn main() -> anyhow::Result<()> {
-    assert_valid_dna("ATGCN")?;
-    assert_gc_content("ATGC", 0.4, 0.6)?;
-    println!("GC content: {:.2}%", gc_content("ATGC") * 100.0);
-    Ok(())
-}
 ```
 
 ## Development
@@ -75,7 +68,3 @@ cargo test
 # Lint
 cargo clippy --all-targets --all-features -- -D warnings
 ```
-
-## Publishing
-
-A GitHub Actions CD workflow publishes the crate to [crates.io](https://crates.io) automatically when a GitHub Release is created. The workflow requires a `CARGO_REGISTRY_TOKEN` secret to be configured in the repository settings.
