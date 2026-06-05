@@ -14,7 +14,6 @@ use std::path::Path;
     version,
     author
 )]
-
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -48,8 +47,15 @@ fn run(cli: Cli) -> Result<()> {
 
             handle(file, metric, comparator, expected)?;
             println!("OK");
-        }
-        _ => {}
+        },
+        Commands::Fasta {
+            filepath: _,
+            metric: _,
+            comparator: _,
+            expected: _,
+        } => {
+            println!("Not implemented yet");
+        },
     }
     Ok(())
 }
