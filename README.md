@@ -68,3 +68,24 @@ cargo test
 # Lint
 cargo clippy --all-targets --all-features -- -D warnings
 ```
+
+## Releasing
+
+This project uses a **manual bump PR** workflow. Versioning lives in `Cargo.toml`
+and is enforced against the git tag in CD.
+
+1. Create a release PR:
+   - Bump `version` in `Cargo.toml` (semver; pre-1.0 uses `0.MINOR.PATCH`).
+   - Update `CHANGELOG.md` (move `Unreleased` items into a new version section).
+   - Run `cargo build` so `Cargo.lock` is updated.
+   - Commit, e.g. `chore: release v0.1.2`.
+2. Merge the PR to `main`.
+3. Create a **GitHub Release** with tag `vX.Y.Z` (matching `Cargo.toml`).
+4. CD (`.github/workflows/cd.yml`) will:
+   - Verify the tag matches `Cargo.toml`.
+   - Run tests.
+   - `cargo publish --locked --dry-run`, then publish to crates.io.
+
+> Published versions on crates.io are immutable. Always bump before releasing.
+
+

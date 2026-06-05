@@ -1,6 +1,6 @@
 [package]
 name = "bioassert"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 description = "BioAssert - A bioinformatics assertion and validation CLI tool"
 license = "MIT"

@@ -32,8 +32,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
+      - name: Verify release tag matches Cargo.toml version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          CARGO_VER=$(grep -m1 '^version' Cargo.toml | cut -d '"' -f2)
+          echo "Release tag: $TAG"
+          echo "Cargo.toml:  $CARGO_VER"
+          if [ "$TAG" != "$CARGO_VER" ]; then
+            echo "::error::Release tag '$TAG' does not match Cargo.toml version '$CARGO_VER'. Bump Cargo.toml before releasing."
+            exit 1
+          fi
+
       - name: Run tests before publishing
         run: cargo test --all-targets --all-features -- --test-threads=1
 
+      - name: Cargo publish dry run
+        run: cargo publish --locked --dry-run
+
       - name: Publish to crates.io
-        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
