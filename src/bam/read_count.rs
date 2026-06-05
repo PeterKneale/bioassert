@@ -1,12 +1,12 @@
+use crate::parse::parse_int;
 use crate::{parse_comparator, Comparator};
 use anyhow::{bail, Result};
 use noodles::bam;
 use std::fs::File;
 use std::io;
 use std::path::Path;
-use crate::parse::parse_int;
 
-pub fn handle_read_count(file: &Path, comparator: String, expected: String) -> Result<()>{
+pub fn handle_read_count(file: &Path, comparator: String, expected: String) -> Result<()> {
     let comparator = parse_comparator(&comparator)?;
     let expected = parse_int(&expected)?;
 
@@ -16,7 +16,6 @@ fn assert_read_count(file: &Path, comparator: Comparator, expected: u64) -> Resu
     let actual = count_reads(file)?;
 
     if comparator.compare(actual, expected) {
-
         Ok(())
     } else {
         bail!(

@@ -1,8 +1,8 @@
-use std::path::Path;
 use crate::bam::metrics::{parse_bam_metric, BamMetric};
 use crate::bam::read_count::handle_read_count;
 use crate::common::file::assert_file_exists;
-use anyhow::{Result};
+use anyhow::Result;
+use std::path::Path;
 pub fn handle(file: &Path, metric: String, comparator: String, expected: String) -> Result<()> {
     assert_file_exists(file)?;
     match parse_bam_metric(&metric)? {
@@ -12,4 +12,3 @@ pub fn handle(file: &Path, metric: String, comparator: String, expected: String)
         }
     }
 }
-

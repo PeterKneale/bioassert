@@ -10,7 +10,6 @@ pub mod bam;
 pub mod common;
 pub mod parse;
 
-
 pub fn parse_comparator(s: &str) -> Result<Comparator> {
     match s {
         "eq" => Ok(Comparator::Eq),

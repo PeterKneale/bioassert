@@ -6,7 +6,6 @@ use bioassert::bam::assertions::handle;
 use clap::{Parser, Subcommand};
 use std::path::Path;
 
-
 /// BioAssert - A bioinformatics assertion and validation tool.
 #[derive(Parser)]
 #[command(
@@ -46,7 +45,7 @@ fn run(cli: Cli) -> Result<()> {
             expected,
         } => {
             let file = Path::new(&file);
-            
+
             handle(file, metric, comparator, expected)?;
             println!("OK");
         }

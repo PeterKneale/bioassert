@@ -8,4 +8,3 @@ pub fn assert_file_exists(file: &Path) -> Result<()> {
 
     Ok(())
 }
-
