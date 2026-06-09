@@ -112,8 +112,3 @@ cargo fmt
 cargo clippy --all-targets
 cargo test
 ```
-
-## License
-
-Licensed under either of Apache-2.0 or MIT at your option.
-
