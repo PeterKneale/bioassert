@@ -1,61 +1,85 @@
-//! BioAssert - A bioinformatics assertion and validation library.
+//! BioAssert: declaratively assert bioinformatics file properties.
 //!
-//! This library provides functions for asserting and validating properties
-//! of biological sequences and bioinformatics file formats.
+//! This crate exposes both a library API and a CLI binary. The authoritative behavior is
+//! defined in [`docs/spec.md`](../docs/spec.md) and the staged delivery in
+//! [`docs/implementation-plan.md`](../docs/implementation-plan.md).
+//!
+//! # Library API
+//!
+//! ```no_run
+//! use std::collections::HashMap;
+//! use std::path::PathBuf;
+//!
+//! let mut inputs = HashMap::new();
+//! inputs.insert("bam".to_string(), PathBuf::from("sample.bam"));
+//!
+//! let report = bioassert::run_assertions("bam exists eq true", inputs)?;
+//! println!("{} passed, {} failed", report.passed(), report.failed());
+//! # Ok::<(), anyhow::Error>(())
+//! ```
 
-use anyhow::{bail, Result};
-use std::fmt::{Display, Formatter};
+use std::collections::HashMap;
+use std::path::PathBuf;
 
-pub mod bam;
-pub mod common;
-pub mod parse;
+use anyhow::Result;
 
-pub fn parse_comparator(s: &str) -> Result<Comparator> {
-    match s {
-        "eq" => Ok(Comparator::Eq),
-        "ne" => Ok(Comparator::Ne),
-        "lt" => Ok(Comparator::Lt),
-        "le" => Ok(Comparator::Le),
-        "gt" => Ok(Comparator::Gt),
-        "ge" => Ok(Comparator::Ge),
-        _ => bail!("unsupported comparator: '{s}' (expected: eq, ne, lt, le, gt, ge)"),
-    }
+pub mod cli;
+pub mod engine;
+pub mod exit;
+pub mod model;
+pub mod parser;
+pub mod providers;
+pub mod registry;
+
+pub use engine::{MetricResolver, compare, evaluate};
+pub use model::{Assertion, AssertionResult, Operator, Report, Status, Value};
+pub use parser::{ParseError, ParsedBundle};
+pub use providers::{
+    BamProvider, FastaProvider, FastqProvider, GenericFileProvider, MetricProvider, VcfProvider,
+};
+pub use registry::MetricRegistry;
+
+/// Options controlling evaluation behavior.
+#[derive(Debug, Clone, Default)]
+pub struct Options {
+    /// Evaluate all assertions and report every failure instead of stopping at the first
+    /// (`--continue` / `--report-all`).
+    pub continue_on_failure: bool,
 }
 
-#[derive(Clone, Copy)]
-pub enum Comparator {
-    Eq,
-    Ne,
-    Lt,
-    Le,
-    Gt,
-    Ge,
+/// Evaluate the given assertions against the bound inputs and return a [`Report`].
+///
+/// `source` is the raw assertion source (plain-text DSL or YAML). `inputs` maps virtual subject
+/// names (e.g. `"bam"`) to physical file paths. Bindings declared inside a YAML bundle are merged
+/// with `inputs`, with `inputs` (the caller's `--input` bindings) taking precedence.
+///
+/// Uses the default fail-fast behavior; see [`run_assertions_with`] for options.
+pub fn run_assertions(source: &str, inputs: HashMap<String, PathBuf>) -> Result<Report> {
+    run_assertions_with(source, inputs, &Options::default())
 }
 
-impl Display for Comparator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::Eq => "==",
-            Self::Ne => "!=",
-            Self::Lt => "<",
-            Self::Le => "<=",
-            Self::Gt => ">",
-            Self::Ge => ">=",
-        };
+/// Like [`run_assertions`], but with explicit [`Options`].
+pub fn run_assertions_with(
+    source: &str,
+    inputs: HashMap<String, PathBuf>,
+    options: &Options,
+) -> Result<Report> {
+    let bundle = parser::parse(source)?;
 
-        write!(f, "{s}")
-    }
-}
+    let mut resolved_inputs = bundle.inputs.clone();
+    resolved_inputs.extend(inputs); // CLI `--input` overrides YAML `inputs`.
 
-impl Comparator {
-    pub fn compare(self, actual: u64, expected: u64) -> bool {
-        match self {
-            Self::Eq => actual == expected,
-            Self::Ne => actual != expected,
-            Self::Lt => actual < expected,
-            Self::Le => actual <= expected,
-            Self::Gt => actual > expected,
-            Self::Ge => actual >= expected,
-        }
-    }
+    log::debug!(
+        "parsed {} assertion(s) with {} input binding(s)",
+        bundle.assertions.len(),
+        resolved_inputs.len()
+    );
+
+    let mut registry = registry::MetricRegistry::with_default_providers();
+    engine::evaluate(
+        &bundle.assertions,
+        &resolved_inputs,
+        &mut registry,
+        options.continue_on_failure,
+    )
 }

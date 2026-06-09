@@ -1,0 +1,13 @@
+# Assertions for an aligned BAM bound as `bam`.
+#
+# Run with:
+#   bioassert --assertions examples/aligned_bam.assert --input bam=sample.bam
+#
+# Boolean metrics must be explicit (`eq true` / `eq false`).
+bam exists eq true
+bam size gte 100MB
+bam read_count gt 100000
+bam sort_order eq coordinate
+bam read_group_count gte 1
+bam has_index eq true
+

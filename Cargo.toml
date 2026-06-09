@@ -1,11 +1,12 @@
 [package]
 name = "bioassert"
-version = "1.0.0"
-edition = "2021"
-description = "BioAssert - A bioinformatics assertion and validation CLI tool"
-license = "MIT"
-repository = "https://github.com/PeterKneale/bioassert"
-keywords = ["bioinformatics", "genomics", "validation", "assertion"]
+version = "0.1.0"
+edition = "2024"
+description = "Declaratively assert bioinformatics file properties in pipelines"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/your-org/bioassert"
+readme = "README.md"
+keywords = ["bioinformatics", "validation", "assertions", "genomics", "nf-core"]
 categories = ["command-line-utilities", "science"]
 
 [lib]
@@ -17,10 +18,28 @@ name = "bioassert"
 path = "src/main.rs"
 
 [dependencies]
-clap = { version = "4", features = ["derive"] }
-noodles = { version = "0.111", features = ["fasta", "fastq", "vcf", "bam"] }
-anyhow = "1"
+clap = { version = "4.5", features = ["derive"] }
+anyhow = "1.0"
+thiserror = "2.0"
+log = "0.4"
+env_logger = "0.11"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+regex = "1.12"
+sha2 = "0.10"
+md-5 = "0.10"
+noodles-fasta = "0.62"
+noodles-fastq = "0.23"
+noodles-vcf = "0.88"
+noodles-bam = "0.90"
+noodles-sam = "0.85"
+flate2 = "1.1"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
 
 [dev-dependencies]
-assert_cmd = "2"
-predicates = "3"
+tempfile = "3"
+

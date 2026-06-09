@@ -21,3 +21,12 @@ target
 #.idea/
 /*.bam
 /.idea
+
+
+# Added by cargo
+
+/target
+
+# BioAssert default execution log
+/bioassert.log
+

@@ -1,91 +1,113 @@
 # BioAssert
 
-[![CI](https://github.com/PeterKneale/bioassert/actions/workflows/ci.yml/badge.svg)](https://github.com/PeterKneale/bioassert/actions/workflows/ci.yml)
-[![Crates.io](https://img.shields.io/crates/v/bioassert.svg)](https://crates.io/crates/bioassert)
+> Declaratively assert bioinformatics file properties (BAM/CRAM, FASTQ, FASTA, VCF/BCF, …) in
+> pipelines — a fast, statically-linked Rust CLI + library, built on the
+> [noodles](https://docs.rs/noodles/latest/noodles/) ecosystem.
 
-BioAssert is a bioinformatics assertion and validation tool written in Rust. It provides both a reusable **library** (`lib.rs`) and a **CLI binary** (`main.rs`).
+BioAssert evaluates a small assertion DSL (plain text or YAML) against named file inputs and
+reports pass/fail via **exit codes**, **stdout/stderr**, and an always-written **log file** —
+ideal for Nextflow/nf-core and other pipelines.
 
-## Features
+See [`docs/spec.md`](docs/spec.md) for the full specification and
+[`docs/implementation-plan.md`](docs/implementation-plan.md) for the staged build plan.
 
-- Assert 
-  - BAM
-    - Read Counts ✅
-    - Sorting ☑️
-    - Headers ☑️
-    - Read Lengths ☑️
-  - FASTA
-  - FASTQ
-  - VCF
-- Built on the [noodles](https://crates.io/crates/noodles) bioinformatics library
+> **Project status:** early development. Phase 0 (foundations: CLI skeleton, data model, exit
+> codes, library API surface) is in place. The DSL/YAML parser and evaluation engine land in the
+> next phases — see the implementation plan.
 
-## Installation
+## Quick Start
 
-```sh
+### 1. Install
+
+```bash
+# From crates.io (once published)
 cargo install bioassert
+
+# Or build from source
+cargo build --release
 ```
 
-## CLI Usage
+### 2. Write an assertion file
 
-- Successful assertions print `OK` to stdout and exit with a zero status code.
-```sh
-bioassert bam example.bam read_count eq 53
-OK
-bioassert bam example.bam read_count gt 10
-OK
-bioassert bam example.bam read_count lt 200
-OK
+Save as `aligned_bam.assert` (also in [`examples/`](examples/aligned_bam.assert)):
+
+```text
+# assertions for an aligned BAM bound as `bam`
+bam exists eq true
+bam size gte 100MB
+bam read_count gt 100000
+bam sort_order eq coordinate
+bam read_group_count gte 1
+bam has_index eq true
 ```
 
-- Failed assertions print an error message to stderr and exit with a non-zero status code.
-```sh
-bioassert bam example.bam read_count eq 1   
-Error: Assertion failed. Expected: read count == 1, actual: 53
+### 3. Run BioAssert
+
+Bind the virtual subject `bam` to a real file and run:
+
+```bash
+bioassert \
+    --assertions aligned_bam.assert \
+    --input bam=sample.bam
 ```
 
-## Library Usage
+### Expected output
 
-Add to your `Cargo.toml`:
-
-```toml
-[dependencies]
-bioassert = "0.1"
-```
-
-```rust
-use bioassert;
+On success (exit code `0`):
 
 ```
+[PASS] bam (sample.bam) exists eq true
+[PASS] bam (sample.bam) read_count=5321 gt 100000
+...
+6 passed, 0 failed
+```
+
+On failure (exit code `1`):
+
+```
+[FAIL] bam (sample.bam) sort_order=unknown, expected 'coordinate'
+```
+
+A full execution log is written to `bioassert.log` (override with `--log-file <path>`).
+
+## Assertion DSL (summary)
+
+Each line is `‹subject› ‹metric› ‹operator› ‹value›`:
+
+- **Subjects** are virtual names bound with `--input name=path` (e.g. `bam`, `read1`, `vcf`).
+- **Operators:** `eq`, `ne`, `gt`, `lt`, `gte`, `lte`, `in`, `not_in`, `contains`, `matches`.
+- **Boolean metrics** (e.g. `exists`, `has_index`) are explicit: `bam has_index eq true`.
+- **Relational/cross-subject:** `read1 paired_with eq read2`, `read1 read_count eq read2`.
+- **Sizes** use SI suffixes: `KB`, `MB`, `GB`, `TB`.
+
+YAML bundles are also supported — see the spec.
+
+## CLI
+
+```
+bioassert [OPTIONS] --assertions <file> --input <name=path>...
+
+  -a, --assertions <file>    Path to assertion file (text or YAML), repeatable
+  -i, --input <name=path>    Bind input name to file, repeatable
+  -l, --log-file <file>      Write execution logs (default: bioassert.log)
+  -c, --continue             Continue after failures (report all)
+  -q, --quiet                Minimal logging
+  -v, --verbose              Verbose logging
+  -h, --help                 Print help
+  -V, --version              Print version
+```
+
+**Exit codes:** `0` all passed · `1` one or more failed · `2` usage/config error.
 
 ## Development
 
-```sh
-# Build
-cargo build
-
-# Run tests
+```bash
+cargo fmt
+cargo clippy --all-targets
 cargo test
-
-# Lint
-cargo clippy --all-targets --all-features -- -D warnings
 ```
 
-## Releasing
+## License
 
-This project uses a **manual bump PR** workflow. Versioning lives in `Cargo.toml`
-and is enforced against the git tag in CD.
-
-1. Create a release PR:
-   - Bump `version` in `Cargo.toml` (semver; pre-1.0 uses `0.MINOR.PATCH`).
-   - Update `CHANGELOG.md` (move `Unreleased` items into a new version section).
-   - Run `cargo build` so `Cargo.lock` is updated.
-   - Commit, e.g. `chore: release v0.1.2`.
-2. Merge the PR to `main`.
-3. Create a **GitHub Release** with tag `vX.Y.Z` (matching `Cargo.toml`).
-4. CD (`.github/workflows/cd.yml`) will:
-   - Verify the tag matches `Cargo.toml`.
-   - Run tests.
-   - `cargo publish --locked --dry-run`, then publish to crates.io.
-
-> Published versions on crates.io are immutable. Always bump before releasing.
-
+Licensed under either of Apache-2.0 or MIT at your option.
 

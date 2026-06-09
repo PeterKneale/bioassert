@@ -1,0 +1,8 @@
+# Generic file checks that work for any file type (no format provider required).
+#
+# Run with:
+#   bioassert --assertions examples/file_checks.assert --input data=README.md
+data exists eq true
+data size gt 0
+data lines gt 0
+
