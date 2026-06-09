@@ -8,13 +8,6 @@ BioAssert evaluates a small assertion DSL (plain text or YAML) against named fil
 reports pass/fail via **exit codes**, **stdout/stderr**, and an always-written **log file** —
 ideal for Nextflow/nf-core and other pipelines.
 
-See [`docs/spec.md`](docs/spec.md) for the full specification and
-[`docs/implementation-plan.md`](docs/implementation-plan.md) for the staged build plan.
-
-> **Project status:** early development. Phase 0 (foundations: CLI skeleton, data model, exit
-> codes, library API surface) is in place. The DSL/YAML parser and evaluation engine land in the
-> next phases — see the implementation plan.
-
 ## Quick Start
 
 ### 1. Install
