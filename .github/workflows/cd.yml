@@ -1,4 +1,4 @@
-name: CD - Publish to crates.io
+name: CD
 
 on:
   release:
