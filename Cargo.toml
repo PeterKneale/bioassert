@@ -1,10 +1,10 @@
 [package]
 name = "bioassert"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2024"
 description = "Declaratively assert bioinformatics file properties in pipelines"
 license = "Apache-2.0 OR MIT"
-repository = "https://github.com/your-org/bioassert"
+repository = "https://github.com/PeterKneale/bioassert"
 readme = "README.md"
 keywords = ["bioinformatics", "assert", "genomics", "nf-core", "nextflow"]
 categories = ["command-line-utilities", "science"]

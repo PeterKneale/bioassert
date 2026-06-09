@@ -16,9 +16,22 @@ ideal for Nextflow/nf-core and other pipelines.
 # From crates.io (once published)
 cargo install bioassert
 
+# Or pull the prebuilt container image from GitHub Container Registry
+docker pull ghcr.io/peterkneale/bioassert:latest
+
 # Or build from source
 cargo build --release
 ```
+
+> Container images are published to **`ghcr.io/<owner>/bioassert`** on each release
+> (multi-arch: `linux/amd64` + `linux/arm64`), tagged with the semantic version and `latest`.
+> Run it like any CLI, mounting your data:
+>
+> ```bash
+> docker run --rm -v "$PWD:/data" -w /data ghcr.io/your-org/bioassert:latest \
+>     --assertions aligned_bam.assert --input bam=sample.bam
+> ```
+
 
 ### 2. Write an assertion file
 

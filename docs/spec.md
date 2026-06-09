@@ -445,22 +445,32 @@ For further details on writing and using nf-core modules (boilerplate and resour
 ## Packaging and Distribution
 
 - **Rust Crate and CLI:** BioAssert is published on crates.io (e.g. `bioassert = "0.x"`). The repository includes `Cargo.toml` with metadata, and a `src/main.rs` for the CLI. The crate uses semantic versioning.
-- **Docker Image:** A Docker container is provided (with static-linked binary). We use a multi-stage build: compile with `--release --target x86_64-unknown-linux-musl` and then COPY into a minimal `scratch` or Alpine base. For example (in Dockerfile):
+- **Docker Image:** A Docker container is provided (with a statically linked binary). The
+  repository `Dockerfile` uses a multi-stage build on `rust:<version>-alpine` (musl), linking the
+  C runtime statically (`-C target-feature=+crt-static`), then copies the binary into a minimal
+  `scratch` base. For example (in Dockerfile):
   ```dockerfile
-  FROM rust:1.77 AS builder
-  RUN rustup target add x86_64-unknown-linux-musl
-  COPY . /src
+  FROM rust:1.96-alpine AS builder
+  RUN apk add --no-cache musl-dev
   WORKDIR /src
-  RUN cargo build --locked --release --target x86_64-unknown-linux-musl
+  COPY . .
+  ENV RUSTFLAGS="-C target-feature=+crt-static"
+  RUN cargo build --locked --release
 
   FROM scratch
-  COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-  COPY --from=builder /src/target/x86_64-unknown-linux-musl/release/bioassert /usr/local/bin/bioassert
+  COPY --from=builder /src/target/release/bioassert /usr/local/bin/bioassert
   ENTRYPOINT ["/usr/local/bin/bioassert"]
   ```
-  (A known approach.) This yields a static binary with no glibc dependencies. The Docker image is published to Docker Hub (or GitHub Packages) with tags matching the crate version. Multi-arch (amd64/arm64) build is done via GitHub Actions or Docker Buildx.
+  This yields a static binary with no glibc dependencies. The image is published to the **GitHub
+  Container Registry (`ghcr.io/<owner>/bioassert`)** with tags matching the crate version
+  (`{{version}}`, `{{major}}.{{minor}}`, `{{major}}`) and `latest`. Multi-arch (`linux/amd64`,
+  `linux/arm64`) images are built with Docker Buildx + QEMU in GitHub Actions.
 
-- **CI/CD:** Use GitHub Actions to test on each push/PR (run `cargo test`, plus maybe a few integration tests). On release, automatically build and push the Docker image and publish crate. Ensure reproducible builds by using `--locked` and pinning Rust version. The GitHub Actions workflow also runs `cargo fmt -- --check` and `cargo clippy`.
+- **CI/CD:** Use GitHub Actions to test on each push/PR (run `cargo fmt -- --check`,
+  `cargo clippy`, `cargo build`, `cargo test`). On release, automatically publish the crate to
+  crates.io and build/push the multi-arch Docker image to `ghcr.io` (authenticated with the
+  built-in `GITHUB_TOKEN`, `packages: write`). Ensure reproducible builds by using `--locked` and
+  a pinned Rust toolchain.
 
 - **Library API:** In addition to the binary, BioAssert is usable as a library. We document public functions (e.g. `run_assertions(assertions: &str, inputs: HashMap<String, PathBuf>) -> Result<Report>`). Other Rust programs can call these to integrate BioAssert checks.
 

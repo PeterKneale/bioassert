@@ -1,0 +1,7 @@
+# Build artifacts and VCS metadata are not needed in the Docker build context.
+target/
+.git/
+.github/
+*.log
+bioassert.log
+
