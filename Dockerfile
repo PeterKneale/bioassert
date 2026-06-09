@@ -16,6 +16,9 @@ RUN cargo build --locked --release
 # Final image: just the static binary
 FROM alpine
 
+# bash required for tools such as nextflow that expect a POSIX shell with some common features.
+RUN apk add --no-cache bash
+
 # OCI labels are injected at build time by docker/metadata-action in CI.
 COPY --from=builder /src/target/release/bioassert /usr/local/bin/bioassert
 
