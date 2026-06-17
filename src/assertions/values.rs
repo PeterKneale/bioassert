@@ -1,7 +1,7 @@
+use crate::assertions::values::Value::BytesValue;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use crate::assertions::values::Value::BytesValue;
 
 #[derive(Debug, Clone)]
 pub enum Value {

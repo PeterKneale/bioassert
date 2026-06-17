@@ -1,10 +1,10 @@
-mod file_exists;
-mod file_size;
-mod file_empty;
-mod file_lines;
+mod delimited_cell;
 mod delimited_column_count;
 mod delimited_line_count;
-mod delimited_cell;
+mod file_empty;
+mod file_exists;
+mod file_lines;
+mod file_size;
 
 pub use delimited_cell::DelimitedCellExecutor;
 pub use delimited_column_count::DelimitedColumnCountExecutor;
@@ -67,11 +67,17 @@ mod tests {
 
     #[test]
     fn parse_fields_strips_double_quotes() {
-        assert_eq!(parse_fields("\"hello world\",b", ','), vec!["hello world", "b"]);
+        assert_eq!(
+            parse_fields("\"hello world\",b", ','),
+            vec!["hello world", "b"]
+        );
     }
 
     #[test]
     fn parse_fields_strips_single_quotes() {
-        assert_eq!(parse_fields("'hello world',b", ','), vec!["hello world", "b"]);
+        assert_eq!(
+            parse_fields("'hello world',b", ','),
+            vec!["hello world", "b"]
+        );
     }
 }

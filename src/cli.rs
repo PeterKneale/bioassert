@@ -13,5 +13,5 @@ pub enum Commands {
     },
     Run {
         file: PathBuf,
-    }
+    },
 }

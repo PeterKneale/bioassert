@@ -1,10 +1,10 @@
+use super::MetricExecutor;
+use crate::assertions::{parse_comparator, parse_integer, Value};
+use crate::parser::Assertion;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use crate::assertions::{parse_comparator, parse_integer, Value};
-use crate::parser::Assertion;
 use std::path::PathBuf;
-use super::MetricExecutor;
 
 pub struct FileLinesExecutor;
 

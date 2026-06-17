@@ -1,10 +1,10 @@
 mod cli;
 
-use std::error::Error;
+use bioassert::parser::Assertion;
 use clap::Parser;
 use cli::{Cli, Commands};
+use std::error::Error;
 use std::fs;
-use bioassert::parser::Assertion;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();

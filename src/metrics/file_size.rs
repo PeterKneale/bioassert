@@ -1,8 +1,8 @@
-use std::path::Path;
+use super::MetricExecutor;
 use crate::assertions::{parse_bytes, parse_comparator, BytesValue, Value};
 use crate::parser::Assertion;
+use std::path::Path;
 use std::path::PathBuf;
-use super::MetricExecutor;
 
 pub struct FileSizeExecutor;
 

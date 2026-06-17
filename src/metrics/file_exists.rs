@@ -1,7 +1,7 @@
-use std::path::PathBuf;
+use super::MetricExecutor;
 use crate::assertions::{parse_boolean, parse_comparator, Value};
 use crate::parser::Assertion;
-use super::MetricExecutor;
+use std::path::PathBuf;
 
 pub struct FileExistsExecutor;
 

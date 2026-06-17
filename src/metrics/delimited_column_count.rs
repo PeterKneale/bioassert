@@ -1,10 +1,10 @@
+use super::MetricExecutor;
+use crate::assertions::{parse_comparator, parse_integer, Value};
+use crate::parser::Assertion;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
-use crate::assertions::{parse_comparator, parse_integer, Value};
-use crate::parser::Assertion;
 use std::path::PathBuf;
-use super::MetricExecutor;
 
 pub struct DelimitedColumnCountExecutor {
     pub delimiter: char,
@@ -54,7 +54,10 @@ mod tests {
     #[test]
     fn counts_tsv_header_fields() {
         let f = temp_file("name\tage\tcity\nAlice\t30\tNew York\n");
-        assert_eq!(column_count(f.path(), '\t').unwrap(), Value::IntegerValue(3));
+        assert_eq!(
+            column_count(f.path(), '\t').unwrap(),
+            Value::IntegerValue(3)
+        );
     }
 
     #[test]

@@ -1,5 +1,5 @@
-use std::fmt::{Display, Formatter};
 use crate::assertions::metrics_error::MetricError;
+use std::fmt::{Display, Formatter};
 
 pub const FILE_EXISTS_METRIC: &str = "file.exists";
 pub const FILE_SIZE_METRIC: &str = "file.size";
@@ -175,26 +175,26 @@ mod tests {
     #[test]
     fn display_file_metrics() {
         assert_eq!(Metric::FileExists.to_string(), "file.exists");
-        assert_eq!(Metric::FileSize.to_string(),   "file.size");
-        assert_eq!(Metric::FileEmpty.to_string(),  "file.empty");
-        assert_eq!(Metric::FileLines.to_string(),  "file.lines");
+        assert_eq!(Metric::FileSize.to_string(), "file.size");
+        assert_eq!(Metric::FileEmpty.to_string(), "file.empty");
+        assert_eq!(Metric::FileLines.to_string(), "file.lines");
     }
 
     #[test]
     fn display_delimited_counts() {
-        assert_eq!(Metric::DelimitedColumnCount(',').to_string(),  "csv.columns.count");
-        assert_eq!(Metric::DelimitedLineCount(',').to_string(),    "csv.lines.count");
+        assert_eq!(Metric::DelimitedColumnCount(',').to_string(), "csv.columns.count");
+        assert_eq!(Metric::DelimitedLineCount(',').to_string(), "csv.lines.count");
         assert_eq!(Metric::DelimitedColumnCount('\t').to_string(), "tsv.columns.count");
-        assert_eq!(Metric::DelimitedLineCount('\t').to_string(),   "tsv.lines.count");
-        assert_eq!(Metric::DelimitedColumnCount('|').to_string(),  "psv.columns.count");
-        assert_eq!(Metric::DelimitedLineCount('|').to_string(),    "psv.lines.count");
+        assert_eq!(Metric::DelimitedLineCount('\t').to_string(), "tsv.lines.count");
+        assert_eq!(Metric::DelimitedColumnCount('|').to_string(), "psv.columns.count");
+        assert_eq!(Metric::DelimitedLineCount('|').to_string(), "psv.lines.count");
     }
 
     #[test]
     fn display_delimited_cell() {
-        assert_eq!(Metric::DelimitedCell(',',  2, 3).to_string(), "csv.line.2.column.3");
+        assert_eq!(Metric::DelimitedCell(',', 2, 3).to_string(), "csv.line.2.column.3");
         assert_eq!(Metric::DelimitedCell('\t', 1, 1).to_string(), "tsv.line.1.column.1");
-        assert_eq!(Metric::DelimitedCell('|',  10, 5).to_string(), "psv.line.10.column.5");
+        assert_eq!(Metric::DelimitedCell('|', 10, 5).to_string(), "psv.line.10.column.5");
     }
 }
 

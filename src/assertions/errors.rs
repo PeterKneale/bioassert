@@ -1,12 +1,12 @@
+use crate::assertions::{ComparatorError, MetricError, ValueParseError};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
-use crate::assertions::{ComparatorError, MetricError, ValueParseError};
 
 #[derive(Debug)]
 pub enum BioAssertError {
     Comparator(ComparatorError),
     Metric(MetricError),
-    ValueParse(ValueParseError)
+    ValueParse(ValueParseError),
 }
 
 impl Error for BioAssertError {}
@@ -23,7 +23,7 @@ impl Display for BioAssertError {
 
 
 impl From<ValueParseError> for BioAssertError {
-    fn from(err:ValueParseError)->Self {
+    fn from(err: ValueParseError) -> Self {
         Self::ValueParse(err)
     }
 }

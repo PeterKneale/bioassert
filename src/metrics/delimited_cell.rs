@@ -1,10 +1,10 @@
+use super::MetricExecutor;
+use crate::assertions::parse_comparator;
+use crate::parser::Assertion;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
-use crate::assertions::parse_comparator;
-use crate::parser::Assertion;
 use std::path::PathBuf;
-use super::MetricExecutor;
 
 pub struct DelimitedCellExecutor {
     pub delimiter: char,
@@ -14,22 +14,27 @@ pub struct DelimitedCellExecutor {
 
 fn cell(file: &Path, delimiter: char, line: usize, column: usize) -> io::Result<String> {
     let reader = io::BufReader::new(File::open(file)?);
-    let raw = reader
-        .lines()
-        .nth(line - 1)
-        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, format!("line {} not found", line)))??;
+    let raw = reader.lines().nth(line - 1).ok_or_else(|| {
+        io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!("line {} not found", line),
+        )
+    })??;
     super::parse_fields(&raw, delimiter)
         .into_iter()
         .nth(column - 1)
-        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, format!("column {} not found", column)))
+        .ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!("column {} not found", column),
+            )
+        })
 }
 
 fn strip_quotes(s: &str) -> &str {
     if s.len() >= 2 {
         let b = s.as_bytes();
-        if (b[0] == b'\'' && b[s.len() - 1] == b'\'')
-            || (b[0] == b'"' && b[s.len() - 1] == b'"')
-        {
+        if (b[0] == b'\'' && b[s.len() - 1] == b'\'') || (b[0] == b'"' && b[s.len() - 1] == b'"') {
             return &s[1..s.len() - 1];
         }
     }

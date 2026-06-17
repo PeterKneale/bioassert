@@ -40,7 +40,7 @@ pub fn parse_file(contents: &str) -> Result<Vec<Assertion>, Box<dyn std::error::
         if line.is_empty() {
             continue;
         }
-        if line.starts_with("#"){
+        if line.starts_with("#") {
             continue;
         }
 

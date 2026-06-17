@@ -1,6 +1,6 @@
-use std::fmt::{Display, Formatter};
 use crate::assertions::comparator_errors::ComparatorError;
 use crate::assertions::comparator_errors::ComparatorError::UnknownComparator;
+use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum Comparator {
@@ -39,7 +39,7 @@ pub fn parse_comparator(s: &str) -> Result<Comparator, ComparatorError> {
 pub fn check_supports_boolean_comparison(comparator: Comparator) -> Result<(), ComparatorError> {
     check_supported(comparator, &[Comparator::Eq, Comparator::Ne])
 }
-pub fn check_supported(comparator: Comparator, supported: &[Comparator],) -> Result<(), ComparatorError> {
+pub fn check_supported(comparator: Comparator, supported: &[Comparator]) -> Result<(), ComparatorError> {
     if !supported.contains(&comparator) {
         let expected = supported
             .iter()
