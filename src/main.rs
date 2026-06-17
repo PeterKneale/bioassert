@@ -5,6 +5,7 @@ use clap::Parser;
 use cli::{Cli, Commands};
 use std::error::Error;
 use std::fs;
+use bioassert::executor::execute;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
@@ -36,11 +37,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn run_one(assertion: Assertion) -> bool {
-    match bioassert::executor::execute(assertion) {
-        Ok(passed) => passed,
-        Err(error) => {
-            eprintln!("ERROR. {}", error);
-            false
-        }
-    }
+    execute(assertion).unwrap_or_else(|error| { 
+        eprintln!("ERROR. {}", error);
+        false
+    })
 }

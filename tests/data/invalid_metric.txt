@@ -1,0 +1,2 @@
+tests/data/empty_file.txt file.exists eq true
+tests/data/empty_file.txt file.explode eq true

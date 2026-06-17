@@ -1,0 +1,129 @@
+# file.exists
+tests/data/empty_file.txt file.exists eq true
+tests/data/empty_file.txt file.exists ne false
+tests/data/size_5B.txt file.exists eq true
+tests/data/size_1K.txt file.exists eq true
+
+# file.size — eq
+tests/data/empty_file.txt file.size eq 0B
+tests/data/size_5B.txt file.size eq 5B
+tests/data/size_5B.txt file.size eq 5b
+tests/data/size_1K.txt file.size eq 1024B
+tests/data/size_1K.txt file.size eq 1kb
+
+# file.size — ne
+tests/data/empty_file.txt file.size ne 1B
+tests/data/size_5B.txt file.size ne 4B
+tests/data/size_1K.txt file.size ne 1023B
+
+# file.size — lt
+tests/data/empty_file.txt file.size lt 1B
+tests/data/size_5B.txt file.size lt 6B
+tests/data/size_1K.txt file.size lt 2KB
+
+# file.size — lte
+tests/data/size_5B.txt file.size lte 5B
+tests/data/size_5B.txt file.size lte 6B
+tests/data/size_1K.txt file.size lte 1kb
+
+# file.size — gt
+tests/data/size_5B.txt file.size gt 4B
+tests/data/size_1K.txt file.size gt 500B
+
+# file.size — gte
+tests/data/size_5B.txt file.size gte 5B
+tests/data/size_5B.txt file.size gte 4B
+tests/data/size_1K.txt file.size gte 1kb
+
+# file.empty
+tests/data/empty_file.txt file.empty eq true
+tests/data/empty_file.txt file.empty ne false
+tests/data/size_5B.txt file.empty eq false
+tests/data/size_5B.txt file.empty ne true
+tests/data/size_1K.txt file.empty eq false
+
+# file.lines — eq
+tests/data/empty_file.txt file.lines eq 0
+tests/data/lines_1.txt file.lines eq 1
+tests/data/lines_10.txt file.lines eq 10
+tests/data/lines_100.txt file.lines eq 100
+
+# file.lines — ne
+tests/data/lines_10.txt file.lines ne 9
+tests/data/lines_10.txt file.lines ne 11
+
+# file.lines — lt
+tests/data/lines_10.txt file.lines lt 11
+tests/data/lines_100.txt file.lines lt 101
+
+# file.lines — lte
+tests/data/lines_10.txt file.lines lte 10
+tests/data/lines_10.txt file.lines lte 11
+
+# file.lines — gt
+tests/data/lines_10.txt file.lines gt 9
+tests/data/lines_100.txt file.lines gt 99
+
+# file.lines — gte
+tests/data/lines_10.txt file.lines gte 10
+tests/data/lines_10.txt file.lines gte 9
+
+# csv — column and line counts
+tests/data/example.csv csv.columns.count gt 2
+tests/data/example.csv csv.columns.count eq 3
+tests/data/example.csv csv.columns.count lt 4
+tests/data/example.csv csv.lines.count gt 2
+tests/data/example.csv csv.lines.count eq 3
+tests/data/example.csv csv.lines.count lt 4
+
+# csv — cell eq
+tests/data/example.csv csv.line.1.column.1 eq name
+tests/data/example.csv csv.line.1.column.2 eq age
+tests/data/example.csv csv.line.1.column.3 eq city
+tests/data/example.csv csv.line.2.column.1 eq Alice
+tests/data/example.csv csv.line.3.column.3 eq "Los Angeles"
+
+# csv — string comparators
+tests/data/example.csv csv.line.2.column.1 starts A
+tests/data/example.csv csv.line.2.column.1 contains lic
+tests/data/example.csv csv.line.2.column.1 ends e
+
+# tsv — column and line counts
+tests/data/example.tsv tsv.columns.count gt 2
+tests/data/example.tsv tsv.columns.count eq 3
+tests/data/example.tsv tsv.columns.count lt 4
+tests/data/example.tsv tsv.lines.count gt 2
+tests/data/example.tsv tsv.lines.count eq 3
+tests/data/example.tsv tsv.lines.count lt 4
+
+# tsv — cell eq
+tests/data/example.tsv tsv.line.1.column.1 eq name
+tests/data/example.tsv tsv.line.1.column.2 eq age
+tests/data/example.tsv tsv.line.1.column.3 eq city
+tests/data/example.tsv tsv.line.2.column.1 eq Alice
+tests/data/example.tsv tsv.line.3.column.3 eq "Los Angeles"
+
+# tsv — string comparators
+tests/data/example.tsv tsv.line.2.column.1 starts A
+tests/data/example.tsv tsv.line.2.column.1 contains lic
+tests/data/example.tsv tsv.line.2.column.1 ends e
+
+# psv — column and line counts
+tests/data/example.psv psv.columns.count gt 2
+tests/data/example.psv psv.columns.count eq 3
+tests/data/example.psv psv.columns.count lt 4
+tests/data/example.psv psv.lines.count gt 2
+tests/data/example.psv psv.lines.count eq 3
+tests/data/example.psv psv.lines.count lt 4
+
+# psv — cell eq
+tests/data/example.psv psv.line.1.column.1 eq name
+tests/data/example.psv psv.line.1.column.2 eq age
+tests/data/example.psv psv.line.1.column.3 eq city
+tests/data/example.psv psv.line.2.column.1 eq Alice
+tests/data/example.psv psv.line.3.column.3 eq "Los Angeles"
+
+# psv — string comparators
+tests/data/example.psv psv.line.2.column.1 starts A
+tests/data/example.psv psv.line.2.column.1 contains lic
+tests/data/example.psv psv.line.2.column.1 ends e
