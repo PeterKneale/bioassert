@@ -88,6 +88,34 @@ PASS. Expected tests/example.psv psv.line.2.column.1 contains lic, got Alice
 PASS. Expected tests/example.psv psv.line.2.column.1 ends_with e, got Alice";
 
 #[test]
+fn assert_exits_1_on_failure() {
+    let binary = env!("CARGO_BIN_EXE_bioassert");
+    let output = Command::new(binary)
+        .args(["assert", "tests/empty_file.txt file.lines gt 999"])
+        .output()
+        .expect("failed to run bioassert");
+
+    assert!(
+        !output.status.success(),
+        "expected non-zero exit code for a failing assertion"
+    );
+}
+
+#[test]
+fn run_exits_1_when_any_assertion_fails() {
+    let binary = env!("CARGO_BIN_EXE_bioassert");
+    let output = Command::new(binary)
+        .args(["assert", "tests/nonexistent_file.txt file.exists eq true"])
+        .output()
+        .expect("failed to run bioassert");
+
+    assert!(
+        !output.status.success(),
+        "expected non-zero exit code when a file does not exist"
+    );
+}
+
+#[test]
 fn run_assertions_file_passes_with_exit_0() {
     let binary = env!("CARGO_BIN_EXE_bioassert");
     let output = Command::new(binary)

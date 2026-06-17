@@ -9,34 +9,38 @@ use std::fs;
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
-    match cli.command {
+    let all_passed = match cli.command {
         Commands::Assert { assertion } => {
             let assertion = bioassert::parser::parse_raw_assertion(&assertion)?;
-            execute(assertion);
-            Ok(())
+            run_one(assertion)
         }
 
         Commands::Run { file } => {
             println!("Running assertions in {}", file.as_path().display());
             let contents = fs::read_to_string(file)?;
             match bioassert::parser::parse_file(&contents) {
-                Ok(assertions) => {
-                    for assertion in assertions {
-                        execute(assertion);
-                    }
-                }
+                Ok(assertions) => assertions.into_iter().fold(true, |acc, a| run_one(a) && acc),
                 Err(err) => {
                     eprintln!("💥{}", err);
                     return Err(err);
                 }
             }
-            Ok(())
         }
+    };
+
+    if !all_passed {
+        std::process::exit(1);
     }
+
+    Ok(())
 }
 
-fn execute(assertion: Assertion) {
-    if let Err(error) = bioassert::executor::execute(assertion) {
-        eprintln!("ERROR. {}", error);
+fn run_one(assertion: Assertion) -> bool {
+    match bioassert::executor::execute(assertion) {
+        Ok(passed) => passed,
+        Err(error) => {
+            eprintln!("ERROR. {}", error);
+            false
+        }
     }
 }

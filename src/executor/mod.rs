@@ -5,7 +5,7 @@ use crate::metrics::{
 };
 use crate::parser::Assertion;
 
-pub fn execute(assertion: Assertion) -> Result<(), Box<dyn std::error::Error>> {
+pub fn execute(assertion: Assertion) -> Result<bool, Box<dyn std::error::Error>> {
     let metric = parse_metric(assertion.metric.as_str())?;
     let (result, message) = match metric {
         Metric::FileExists => FileExistsExecutor.execute(assertion),
@@ -17,7 +17,7 @@ pub fn execute(assertion: Assertion) -> Result<(), Box<dyn std::error::Error>> {
         Metric::DelimitedCell(d, line, col) => DelimitedCellExecutor { delimiter: d, line, col }.execute(assertion),
     }?;
     announce(result, message);
-    Ok(())
+    Ok(result)
 }
 
 fn announce(result: bool, message: String) {
