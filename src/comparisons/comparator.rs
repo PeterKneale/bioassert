@@ -1,7 +1,8 @@
-use crate::assertions::comparator_errors::ComparatorError;
-use crate::assertions::comparator_errors::ComparatorError::UnknownComparator;
-use crate::assertions::errors::BioAssertError;
+use super::errors::ComparatorError;
+use super::errors::ComparatorError::UnknownComparator;
+use crate::errors::BioAssertError;
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum Comparator {
@@ -16,27 +17,7 @@ pub enum Comparator {
     Contains,
     Matches,
 }
-pub fn parse_comparator(s: &str) -> Result<Comparator, ComparatorError> {
-    match s {
-        "eq" => Ok(Comparator::Eq),
-        "ne" => Ok(Comparator::Ne),
-        "lt" => Ok(Comparator::Lt),
-        "lte" => Ok(Comparator::Le),
-        "gt" => Ok(Comparator::Gt),
-        "gte" => Ok(Comparator::Ge),
-        "starts" => Ok(Comparator::Starts),
-        "ends" => Ok(Comparator::Ends),
-        "contains" => Ok(Comparator::Contains),
-        "matches" => Ok(Comparator::Matches),
-        _ => {
-            let message = format!(
-                "unknown comparator: {} (expected: eq, ne, lt, lte, gt, gte, starts, ends, contains, matches)",
-                s
-            );
-            Err(UnknownComparator(message))
-        }
-    }
-}
+
 
 impl Comparator {
     pub fn compare<T>(self, actual: T, expected: T) -> bool
@@ -68,8 +49,50 @@ impl Comparator {
             _ => Err(ComparatorError::UnsupportedComparator(format!(
                 "unsupported comparator for string comparison: {}",
                 self
-            )).into()),
+            ))
+                .into()),
         }
+    }
+}
+
+impl FromStr for Comparator {
+    type Err = ComparatorError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "eq" => Ok(Self::Eq),
+            "ne" => Ok(Self::Ne),
+            "lt" => Ok(Self::Lt),
+            "lte" => Ok(Self::Le),
+            "gt" => Ok(Self::Gt),
+            "gte" => Ok(Self::Ge),
+            "starts" => Ok(Self::Starts),
+            "ends" => Ok(Self::Ends),
+            "contains" => Ok(Self::Contains),
+            "matches" => Ok(Self::Matches),
+            _ => Err(UnknownComparator(format!(
+                "unknown comparator: {} (expected: eq, ne, lt, lte, gt, gte, starts, ends, contains, matches)",
+                s
+            ))),
+        }
+    }
+}
+
+impl Display for Comparator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::Eq => "==",
+            Self::Ne => "!=",
+            Self::Lt => "<",
+            Self::Le => "<=",
+            Self::Gt => ">",
+            Self::Ge => ">=",
+            Self::Starts => "starts_with",
+            Self::Ends => "ends_with",
+            Self::Contains => "contains",
+            Self::Matches => "matches",
+        };
+        write!(f, "{s}")
     }
 }
 
@@ -77,32 +100,28 @@ impl Comparator {
 mod tests {
     use super::*;
 
-    // parse_comparator
-
     #[test]
-    fn parse_comparator_parses_all_numeric() {
-        assert!(matches!(parse_comparator("eq"), Ok(Comparator::Eq)));
-        assert!(matches!(parse_comparator("ne"), Ok(Comparator::Ne)));
-        assert!(matches!(parse_comparator("lt"), Ok(Comparator::Lt)));
-        assert!(matches!(parse_comparator("lte"), Ok(Comparator::Le)));
-        assert!(matches!(parse_comparator("gt"), Ok(Comparator::Gt)));
-        assert!(matches!(parse_comparator("gte"), Ok(Comparator::Ge)));
+    fn from_str_parses_all_numeric() {
+        assert!(matches!("eq".parse::<Comparator>(), Ok(Comparator::Eq)));
+        assert!(matches!("ne".parse::<Comparator>(), Ok(Comparator::Ne)));
+        assert!(matches!("lt".parse::<Comparator>(), Ok(Comparator::Lt)));
+        assert!(matches!("lte".parse::<Comparator>(), Ok(Comparator::Le)));
+        assert!(matches!("gt".parse::<Comparator>(), Ok(Comparator::Gt)));
+        assert!(matches!("gte".parse::<Comparator>(), Ok(Comparator::Ge)));
     }
 
     #[test]
-    fn parse_comparator_parses_all_string() {
-        assert!(matches!(parse_comparator("starts"), Ok(Comparator::Starts)));
-        assert!(matches!(parse_comparator("ends"), Ok(Comparator::Ends)));
-        assert!(matches!(parse_comparator("contains"), Ok(Comparator::Contains)));
-        assert!(matches!(parse_comparator("matches"), Ok(Comparator::Matches)));
+    fn from_str_parses_all_string() {
+        assert!(matches!("starts".parse::<Comparator>(), Ok(Comparator::Starts)));
+        assert!(matches!("ends".parse::<Comparator>(), Ok(Comparator::Ends)));
+        assert!(matches!("contains".parse::<Comparator>(), Ok(Comparator::Contains)));
+        assert!(matches!("matches".parse::<Comparator>(), Ok(Comparator::Matches)));
     }
 
     #[test]
-    fn parse_comparator_rejects_unknown() {
-        assert!(matches!(parse_comparator("like"), Err(ComparatorError::UnknownComparator(_))));
+    fn from_str_rejects_unknown() {
+        assert!(matches!("like".parse::<Comparator>(), Err(ComparatorError::UnknownComparator(_))));
     }
-
-    // compare
 
     #[test]
     fn compare_eq() {
@@ -141,8 +160,6 @@ mod tests {
         assert!(Comparator::Ge.compare(6u64, 5u64));
         assert!(!Comparator::Ge.compare(4u64, 5u64));
     }
-
-    // compare_string
 
     #[test]
     fn compare_string_eq() {
@@ -190,8 +207,6 @@ mod tests {
         assert!(Comparator::Lt.compare_string("a", "b").is_err());
     }
 
-    // Display
-
     #[test]
     fn display_numeric_comparators() {
         assert_eq!(Comparator::Eq.to_string(), "==");
@@ -208,24 +223,5 @@ mod tests {
         assert_eq!(Comparator::Ends.to_string(), "ends_with");
         assert_eq!(Comparator::Contains.to_string(), "contains");
         assert_eq!(Comparator::Matches.to_string(), "matches");
-    }
-}
-
-impl Display for Comparator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::Eq => "==",
-            Self::Ne => "!=",
-            Self::Lt => "<",
-            Self::Le => "<=",
-            Self::Gt => ">",
-            Self::Ge => ">=",
-            Self::Starts => "starts_with",
-            Self::Ends => "ends_with",
-            Self::Contains => "contains",
-            Self::Matches => "matches",
-        };
-
-        write!(f, "{s}")
     }
 }

@@ -1,6 +1,9 @@
-use crate::assertions::{parse_comparator, BioAssertError, FileError};
-use crate::metrics::MetricExecutor;
+use crate::assertions::FileError;
+use crate::comparisons::Comparator;
+use crate::errors::BioAssertError;
+use crate::metrics::{ExecutionResult, MetricExecutor};
 use crate::parser::Assertion;
+use crate::values::Value;
 use std::path::PathBuf;
 
 pub struct DelimitedCellExecutor {
@@ -35,19 +38,15 @@ impl MetricExecutor for DelimitedCellExecutor {
         }
     }
 
-    fn execute(self, assertion: Assertion) -> Result<(bool, String), BioAssertError> {
+    fn execute(self, assertion: &Assertion) -> Result<ExecutionResult, BioAssertError> {
         let file = PathBuf::from(&assertion.file);
-        let comparator = parse_comparator(assertion.comparator.as_str())?;
+        let comparator = assertion.comparator.parse::<Comparator>()?;
         let expected_str = strip_quotes(&assertion.expected).to_string();
-        let actual =
+        let actual_str =
             super::functions::cell(&file, self.delimiter, self.line, self.col)
                 .map_err(|e| FileError::new(&file, e))?;
-        let result = comparator.compare_string(&actual, &expected_str)?;
-        let message = format!(
-            "Expected {} {} {} {}, got {}",
-            assertion.file, assertion.metric, comparator, expected_str, actual
-        );
-        Ok((result, message))
+        let success = comparator.compare_string(&actual_str, &expected_str)?;
+        Ok(ExecutionResult { success, actual: Value::StringValue(actual_str) })
     }
 }
 

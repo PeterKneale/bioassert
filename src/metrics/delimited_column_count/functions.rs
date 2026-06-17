@@ -1,4 +1,4 @@
-use crate::assertions::Value;
+use crate::values::Value;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
@@ -11,7 +11,7 @@ pub fn column_count(file: &Path, delimiter: char) -> io::Result<Value> {
         first_line.trim_end_matches(['\n', '\r']),
         delimiter,
     )
-    .len();
+        .len();
     Ok(Value::IntegerValue(count as u64))
 }
 

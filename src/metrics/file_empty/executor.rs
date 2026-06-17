@@ -1,6 +1,9 @@
-use crate::assertions::{parse_boolean, parse_comparator, BioAssertError, FileError};
-use crate::metrics::MetricExecutor;
+use crate::assertions::FileError;
+use crate::comparisons::Comparator;
+use crate::errors::BioAssertError;
+use crate::metrics::{ExecutionResult, MetricExecutor};
 use crate::parser::Assertion;
+use crate::values::parse_boolean;
 use std::path::PathBuf;
 
 pub struct FileEmptyExecutor;
@@ -10,16 +13,12 @@ impl MetricExecutor for FileEmptyExecutor {
         (metric == "file.empty").then_some(Self)
     }
 
-    fn execute(self, assertion: Assertion) -> Result<(bool, String), BioAssertError> {
+    fn execute(self, assertion: &Assertion) -> Result<ExecutionResult, BioAssertError> {
         let file = PathBuf::from(&assertion.file);
-        let comparator = parse_comparator(assertion.comparator.as_str())?;
+        let comparator = assertion.comparator.parse::<Comparator>()?;
         let expected = parse_boolean(assertion.expected.as_str())?;
         let actual = super::functions::empty(&file).map_err(|e| FileError::new(&file, e))?;
-        let result = comparator.compare(&actual, &expected);
-        let message = format!(
-            "Expected {} {} {} {}, got {}",
-            assertion.file, assertion.metric, comparator, expected, actual
-        );
-        Ok((result, message))
+        let success = comparator.compare(&actual, &expected);
+        Ok(ExecutionResult { success, actual })
     }
 }

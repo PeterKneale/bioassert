@@ -39,14 +39,6 @@ fn assert_exits_2_on_error() {
     assert_exit_code_is_error(&output);
     assert!(String::from_utf8_lossy(&output.stderr).contains("ERROR."));
 }
-
-fn assert_exit_code_failed(output: Output) {
-    assert_eq!(output.status.code(), Some(1));
-}
-fn assert_exit_code_is_error(output: &Output) {
-    assert_eq!(output.status.code(), Some(2));
-}
-
 // BioAssertError variants — one test per variant, all using the inline assert subcommand
 
 #[test]
@@ -140,4 +132,12 @@ fn run_exits_0_for_all_passing_assertions() {
         String::from_utf8_lossy(&output.stdout)
     );
     assert_snapshot!("run_all_passing_stdout", String::from_utf8_lossy(&output.stdout));
+}
+
+
+fn assert_exit_code_failed(output: Output) {
+    assert_eq!(output.status.code(), Some(1));
+}
+fn assert_exit_code_is_error(output: &Output) {
+    assert_eq!(output.status.code(), Some(2));
 }

@@ -15,12 +15,18 @@ pub use file_exists::FileExistsExecutor;
 pub use file_lines::FileLinesExecutor;
 pub use file_size::FileSizeExecutor;
 
-use crate::assertions::BioAssertError;
+use crate::errors::BioAssertError;
 use crate::parser::Assertion;
+use crate::values::Value;
+
+pub struct ExecutionResult {
+    pub success: bool,
+    pub actual: Value,
+}
 
 pub trait MetricExecutor {
     fn try_parse(metric: &str) -> Option<Self>
     where
         Self: Sized;
-    fn execute(self, assertion: Assertion) -> Result<(bool, String), BioAssertError>;
+    fn execute(self, assertion: &Assertion) -> Result<ExecutionResult, BioAssertError>;
 }

@@ -1,5 +1,4 @@
-use crate::assertions::values::Value::BytesValue;
-use crate::assertions::values_error::ValueParseError;
+use super::errors::ValueParseError;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -8,6 +7,7 @@ pub enum Value {
     BooleanValue(bool),
     BytesValue(u64),
     IntegerValue(u64),
+    StringValue(String),
 }
 
 impl PartialEq for Value {
@@ -17,6 +17,7 @@ impl PartialEq for Value {
             (Self::BooleanValue(a), Self::BooleanValue(b)) => a == b,
             (Self::BytesValue(a), Self::BytesValue(b)) => a == b,
             (Self::IntegerValue(a), Self::IntegerValue(b)) => a == b,
+            (Self::StringValue(a), Self::StringValue(b)) => a == b,
             _ => false,
         }
     }
@@ -39,6 +40,7 @@ impl Display for Value {
             Self::BooleanValue(value) => write!(f, "{value}"),
             Self::BytesValue(value) => write!(f, "{}", format_bytes(*value)),
             Self::IntegerValue(value) => write!(f, "{value}"),
+            Self::StringValue(value) => write!(f, "{value}"),
         }
     }
 }
@@ -78,11 +80,12 @@ pub fn parse_bytes(value: &str) -> Result<Value, ValueParseError> {
             let bytes = integer
                 .checked_mul(multiplier)
                 .ok_or_else(|| ValueParseError::InvalidBytes(value.clone()))?;
-            return Ok(BytesValue(bytes));
+            return Ok(Value::BytesValue(bytes));
         }
     }
     Err(ValueParseError::InvalidBytes(format!("Unknown format: {}", value)))
 }
+
 pub fn parse_integer(value: &str) -> Result<Value, ValueParseError> {
     let value = value.trim();
     if let Ok(v) = value.parse::<u64>() {
@@ -90,6 +93,7 @@ pub fn parse_integer(value: &str) -> Result<Value, ValueParseError> {
     }
     Err(ValueParseError::InvalidInteger(value.to_string()))
 }
+
 pub fn parse_boolean(value: &str) -> Result<Value, ValueParseError> {
     let parsed = bool::from_str(value.trim());
     if parsed.is_ok() {
@@ -101,8 +105,6 @@ pub fn parse_boolean(value: &str) -> Result<Value, ValueParseError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // parse_bytes
 
     #[test]
     fn parse_bytes_parses_bytes() {
@@ -144,8 +146,6 @@ mod tests {
         assert!(matches!(parse_bytes("abcKB"), Err(ValueParseError::InvalidBytes(_))));
     }
 
-    // parse_integer
-
     #[test]
     fn parse_integer_parses_number() {
         assert_eq!(parse_integer("42").unwrap(), Value::IntegerValue(42));
@@ -171,8 +171,6 @@ mod tests {
         assert!(matches!(parse_integer("1.5"), Err(ValueParseError::InvalidInteger(_))));
     }
 
-    // parse_boolean
-
     #[test]
     fn parse_boolean_parses_true() {
         assert_eq!(parse_boolean("true").unwrap(), Value::BooleanValue(true));
@@ -193,8 +191,6 @@ mod tests {
         assert!(matches!(parse_boolean("yes"), Err(ValueParseError::InvalidBoolean(_))));
     }
 
-    // PartialEq
-
     #[test]
     fn eq_same_variant_same_value() {
         assert_eq!(Value::BytesValue(100), Value::BytesValue(100));
@@ -214,8 +210,6 @@ mod tests {
         assert_ne!(Value::BytesValue(1), Value::IntegerValue(1));
         assert_ne!(Value::BytesValue(0), Value::BooleanValue(false));
     }
-
-    // PartialOrd
 
     #[test]
     fn ord_bytes_less_than() {

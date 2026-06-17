@@ -12,13 +12,8 @@ impl Error for ComparatorError {}
 impl Display for ComparatorError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ComparatorError::UnknownComparator(message) => {
-                write!(f, "{message}")
-            }
-
-            ComparatorError::UnsupportedComparator(message) => {
-                write!(f, "{message}")
-            }
+            ComparatorError::UnknownComparator(message) => write!(f, "{message}"),
+            ComparatorError::UnsupportedComparator(message) => write!(f, "{message}"),
         }
     }
 }
