@@ -82,6 +82,122 @@ fn parse_delimited_metric(s: &str) -> Option<Metric> {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // parse_metric — file metrics
+
+    #[test]
+    fn parse_metric_parses_file_metrics() {
+        assert!(matches!(parse_metric("file.exists"), Ok(Metric::FileExists)));
+        assert!(matches!(parse_metric("file.size"),   Ok(Metric::FileSize)));
+        assert!(matches!(parse_metric("file.empty"),  Ok(Metric::FileEmpty)));
+        assert!(matches!(parse_metric("file.lines"),  Ok(Metric::FileLines)));
+    }
+
+    #[test]
+    fn parse_metric_rejects_unknown() {
+        assert!(matches!(parse_metric("file.foo"), Err(MetricError::UnknownMetric(_))));
+        assert!(matches!(parse_metric("unknown"),  Err(MetricError::UnknownMetric(_))));
+    }
+
+    // parse_metric — delimited column and line counts
+
+    #[test]
+    fn parse_metric_csv_column_count() {
+        assert!(matches!(parse_metric("csv.columns.count"), Ok(Metric::DelimitedColumnCount(','))));
+    }
+
+    #[test]
+    fn parse_metric_csv_line_count() {
+        assert!(matches!(parse_metric("csv.lines.count"), Ok(Metric::DelimitedLineCount(','))));
+    }
+
+    #[test]
+    fn parse_metric_tsv_column_count() {
+        assert!(matches!(parse_metric("tsv.columns.count"), Ok(Metric::DelimitedColumnCount('\t'))));
+    }
+
+    #[test]
+    fn parse_metric_tsv_line_count() {
+        assert!(matches!(parse_metric("tsv.lines.count"), Ok(Metric::DelimitedLineCount('\t'))));
+    }
+
+    #[test]
+    fn parse_metric_psv_column_count() {
+        assert!(matches!(parse_metric("psv.columns.count"), Ok(Metric::DelimitedColumnCount('|'))));
+    }
+
+    #[test]
+    fn parse_metric_psv_line_count() {
+        assert!(matches!(parse_metric("psv.lines.count"), Ok(Metric::DelimitedLineCount('|'))));
+    }
+
+    // parse_metric — delimited cells
+
+    #[test]
+    fn parse_metric_csv_cell() {
+        let m = parse_metric("csv.line.2.column.3").unwrap();
+        assert!(matches!(m, Metric::DelimitedCell(',', 2, 3)));
+    }
+
+    #[test]
+    fn parse_metric_tsv_cell() {
+        let m = parse_metric("tsv.line.1.column.1").unwrap();
+        assert!(matches!(m, Metric::DelimitedCell('\t', 1, 1)));
+    }
+
+    #[test]
+    fn parse_metric_psv_cell() {
+        let m = parse_metric("psv.line.10.column.5").unwrap();
+        assert!(matches!(m, Metric::DelimitedCell('|', 10, 5)));
+    }
+
+    #[test]
+    fn parse_metric_rejects_zero_line_index() {
+        assert!(parse_metric("csv.line.0.column.1").is_err());
+    }
+
+    #[test]
+    fn parse_metric_rejects_zero_column_index() {
+        assert!(parse_metric("csv.line.1.column.0").is_err());
+    }
+
+    #[test]
+    fn parse_metric_rejects_malformed_delimited() {
+        assert!(parse_metric("csv.line.1").is_err());
+        assert!(parse_metric("csv.unknown.thing").is_err());
+    }
+
+    // Display
+
+    #[test]
+    fn display_file_metrics() {
+        assert_eq!(Metric::FileExists.to_string(), "file.exists");
+        assert_eq!(Metric::FileSize.to_string(),   "file.size");
+        assert_eq!(Metric::FileEmpty.to_string(),  "file.empty");
+        assert_eq!(Metric::FileLines.to_string(),  "file.lines");
+    }
+
+    #[test]
+    fn display_delimited_counts() {
+        assert_eq!(Metric::DelimitedColumnCount(',').to_string(),  "csv.columns.count");
+        assert_eq!(Metric::DelimitedLineCount(',').to_string(),    "csv.lines.count");
+        assert_eq!(Metric::DelimitedColumnCount('\t').to_string(), "tsv.columns.count");
+        assert_eq!(Metric::DelimitedLineCount('\t').to_string(),   "tsv.lines.count");
+        assert_eq!(Metric::DelimitedColumnCount('|').to_string(),  "psv.columns.count");
+        assert_eq!(Metric::DelimitedLineCount('|').to_string(),    "psv.lines.count");
+    }
+
+    #[test]
+    fn display_delimited_cell() {
+        assert_eq!(Metric::DelimitedCell(',',  2, 3).to_string(), "csv.line.2.column.3");
+        assert_eq!(Metric::DelimitedCell('\t', 1, 1).to_string(), "tsv.line.1.column.1");
+        assert_eq!(Metric::DelimitedCell('|',  10, 5).to_string(), "psv.line.10.column.5");
+    }
+}
+
 fn delimiter_prefix(d: char) -> &'static str {
     match d {
         ',' => "csv",
