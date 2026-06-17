@@ -3,7 +3,7 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use crate::assertions::Value;
 
-pub fn lines(file: &Path) -> std::io::Result<Value> {
+pub fn count_lines(file: &Path) -> std::io::Result<Value> {
     let count = BufReader::new(File::open(file)?).lines().count();
     Ok(Value::IntegerValue(count as u64))
 }
@@ -20,7 +20,7 @@ mod tests {
         let file_path = dir.path().join("file.txt");
         File::create(&file_path).unwrap();
 
-        assert_eq!(lines(&file_path).unwrap(), Value::IntegerValue(0));
+        assert_eq!(count_lines(&file_path).unwrap(), Value::IntegerValue(0));
     }
 
     #[test]
@@ -30,7 +30,7 @@ mod tests {
         let mut f = File::create(&file_path).unwrap();
         f.write_all(b"line1\nline2\nline3\n").unwrap();
 
-        assert_eq!(lines(&file_path).unwrap(), Value::IntegerValue(3));
+        assert_eq!(count_lines(&file_path).unwrap(), Value::IntegerValue(3));
     }
 
     #[test]
@@ -40,6 +40,6 @@ mod tests {
         let mut f = File::create(&file_path).unwrap();
         f.write_all(b"line1\nline2").unwrap();
 
-        assert_eq!(lines(&file_path).unwrap(), Value::IntegerValue(2));
+        assert_eq!(count_lines(&file_path).unwrap(), Value::IntegerValue(2));
     }
 }

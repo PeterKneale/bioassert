@@ -2,7 +2,7 @@ use crate::assertions::{parse_boolean, parse_bytes, parse_integer, parse_compara
 use crate::assertions::parse_metric;
 use crate::files::empty::empty;
 use crate::files::exists::exists;
-use crate::files::lines::lines;
+use crate::files::lines::count_lines;
 use crate::files::size::size;
 use crate::parser::Assertion;
 use std::path::PathBuf;
@@ -53,7 +53,7 @@ pub fn execute(assertion: Assertion) -> Result<(), Box<dyn std::error::Error>> {
             let file = PathBuf::from(&assertion.file);
             let comparator = parse_comparator(assertion.comparator.as_str())?;
             let expected = parse_integer(assertion.expected.as_str())?;
-            let actual = lines(&file)?;
+            let actual = count_lines(&file)?;
             let result = comparator.compare(&actual, &expected);
             let message = format!(
                 "Expected {} {} {} {}, got {}",
