@@ -1,5 +1,5 @@
 use super::MetricExecutor;
-use crate::assertions::{parse_boolean, parse_comparator, Value};
+use crate::assertions::{parse_boolean, parse_comparator, BioAssertError, FileError, Value};
 use crate::parser::Assertion;
 use std::path::Path;
 use std::path::PathBuf;
@@ -15,11 +15,11 @@ impl MetricExecutor for FileEmptyExecutor {
         (metric == "file.empty").then_some(Self)
     }
 
-    fn execute(self, assertion: Assertion) -> Result<(bool, String), Box<dyn std::error::Error>> {
+    fn execute(self, assertion: Assertion) -> Result<(bool, String), BioAssertError> {
         let file = PathBuf::from(&assertion.file);
         let comparator = parse_comparator(assertion.comparator.as_str())?;
         let expected = parse_boolean(assertion.expected.as_str())?;
-        let actual = empty(&file)?;
+        let actual = empty(&file).map_err(|e| FileError::new(&file, e))?;
         let result = comparator.compare(&actual, &expected);
         let message = format!(
             "Expected {} {} {} {}, got {}",

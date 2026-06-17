@@ -1,12 +1,12 @@
 use super::MetricExecutor;
-use crate::assertions::{parse_boolean, parse_comparator, Value};
+use crate::assertions::{parse_boolean, parse_comparator, BioAssertError, Value};
 use crate::parser::Assertion;
 use std::path::PathBuf;
 
 pub struct FileExistsExecutor;
 
-fn exists(file: &PathBuf) -> std::io::Result<Value> {
-    Ok(Value::BooleanValue(file.exists() && file.is_file()))
+fn exists(file: &PathBuf) -> Value {
+    Value::BooleanValue(file.exists() && file.is_file())
 }
 
 impl MetricExecutor for FileExistsExecutor {
@@ -14,11 +14,11 @@ impl MetricExecutor for FileExistsExecutor {
         (metric == "file.exists").then_some(Self)
     }
 
-    fn execute(self, assertion: Assertion) -> Result<(bool, String), Box<dyn std::error::Error>> {
+    fn execute(self, assertion: Assertion) -> Result<(bool, String), BioAssertError> {
         let file = PathBuf::from(&assertion.file);
         let comparator = parse_comparator(assertion.comparator.as_str())?;
         let expected = parse_boolean(assertion.expected.as_str())?;
-        let actual = exists(&file)?;
+        let actual = exists(&file);
         let result = comparator.compare(&actual, &expected);
         let message = format!(
             "Expected {} {} {} {}, got {}",
@@ -39,13 +39,13 @@ mod tests {
         let dir = tempdir().unwrap();
         let path = dir.path().join("file.txt");
         File::create(&path).unwrap();
-        assert_eq!(exists(&path).unwrap(), Value::BooleanValue(true));
+        assert_eq!(exists(&path), Value::BooleanValue(true));
     }
 
     #[test]
     fn returns_false_when_file_does_not_exist() {
         let dir = tempdir().unwrap();
         let path = dir.path().join("file.txt");
-        assert_eq!(exists(&path).unwrap(), Value::BooleanValue(false));
+        assert_eq!(exists(&path), Value::BooleanValue(false));
     }
 }

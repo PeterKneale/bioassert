@@ -1,18 +1,12 @@
 use super::MetricExecutor;
-use crate::assertions::{parse_bytes, parse_comparator, BytesValue, Value};
+use crate::assertions::{parse_bytes, parse_comparator, BioAssertError, BytesValue, FileError, Value};
 use crate::parser::Assertion;
 use std::path::Path;
 use std::path::PathBuf;
 
 pub struct FileSizeExecutor;
 
-fn size(file: &Path) -> Result<Value, std::io::Error> {
-    if !file.exists() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            format!("file not found: {}", file.display()),
-        ));
-    }
+fn size(file: &Path) -> std::io::Result<Value> {
     Ok(BytesValue(file.metadata()?.len()))
 }
 
@@ -21,11 +15,11 @@ impl MetricExecutor for FileSizeExecutor {
         (metric == "file.size").then_some(Self)
     }
 
-    fn execute(self, assertion: Assertion) -> Result<(bool, String), Box<dyn std::error::Error>> {
+    fn execute(self, assertion: Assertion) -> Result<(bool, String), BioAssertError> {
         let file = PathBuf::from(&assertion.file);
         let comparator = parse_comparator(assertion.comparator.as_str())?;
         let expected = parse_bytes(assertion.expected.as_str())?;
-        let actual = size(&file)?;
+        let actual = size(&file).map_err(|e| FileError::new(&file, e))?;
         let result = comparator.compare(&actual, &expected);
         let message = format!(
             "Expected {} {} {} {}, got {}",

@@ -1,6 +1,6 @@
 use super::delimited_utils::{delimiter_for_prefix, parse_fields};
 use super::MetricExecutor;
-use crate::assertions::parse_comparator;
+use crate::assertions::{parse_comparator, BioAssertError, FileError};
 use crate::parser::Assertion;
 use std::fs::File;
 use std::io::{self, BufRead};
@@ -56,11 +56,11 @@ impl MetricExecutor for DelimitedCellExecutor {
         }
     }
 
-    fn execute(self, assertion: Assertion) -> Result<(bool, String), Box<dyn std::error::Error>> {
+    fn execute(self, assertion: Assertion) -> Result<(bool, String), BioAssertError> {
         let file = PathBuf::from(&assertion.file);
         let comparator = parse_comparator(assertion.comparator.as_str())?;
         let expected_str = strip_quotes(&assertion.expected).to_string();
-        let actual = cell(&file, self.delimiter, self.line, self.col)?;
+        let actual = cell(&file, self.delimiter, self.line, self.col).map_err(|e| FileError::new(&file, e))?;
         let result = comparator.compare_string(&actual, &expected_str)?;
         let message = format!(
             "Expected {} {} {} {}, got {}",

@@ -1,5 +1,5 @@
 use super::MetricExecutor;
-use crate::assertions::{parse_comparator, parse_integer, Value};
+use crate::assertions::{parse_comparator, parse_integer, BioAssertError, FileError, Value};
 use crate::parser::Assertion;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -18,11 +18,11 @@ impl MetricExecutor for FileLinesExecutor {
         (metric == "file.lines").then_some(Self)
     }
 
-    fn execute(self, assertion: Assertion) -> Result<(bool, String), Box<dyn std::error::Error>> {
+    fn execute(self, assertion: Assertion) -> Result<(bool, String), BioAssertError> {
         let file = PathBuf::from(&assertion.file);
         let comparator = parse_comparator(assertion.comparator.as_str())?;
         let expected = parse_integer(assertion.expected.as_str())?;
-        let actual = count_lines(&file)?;
+        let actual = count_lines(&file).map_err(|e| FileError::new(&file, e))?;
         let result = comparator.compare(&actual, &expected);
         let message = format!(
             "Expected {} {} {} {}, got {}",

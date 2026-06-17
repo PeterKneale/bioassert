@@ -46,11 +46,19 @@ fn main() {
     };
 
     if outcomes.iter().any(|o| matches!(o, Outcome::Error)) {
-        std::process::exit(2);
+        exit_error();
     }
     if outcomes.iter().any(|o| matches!(o, Outcome::Fail)) {
-        std::process::exit(1);
+        exit_failed();
     }
+}
+
+fn exit_failed() {
+    std::process::exit(1);
+}
+
+fn exit_error() {
+    std::process::exit(2);
 }
 
 fn run_one(assertion: Assertion) -> Outcome {

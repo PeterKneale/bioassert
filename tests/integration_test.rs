@@ -28,15 +28,72 @@ fn assert_exits_1_on_assertion_failure() {
 fn assert_exits_1_for_missing_file() {
     // file.exists returns false (not an error) for a nonexistent file — exit 1
     let output = exec(&["assert", "tests/data/nonexistent_file.txt file.exists eq true"]);
-    assert_eq!(output.status.code(), Some(1));
+    assert_exit_code_failed(output);
 }
+
 
 #[test]
 fn assert_exits_2_on_error() {
     // file.size on a nonexistent file is a runtime error — exit 2
     let output = exec(&["assert", "tests/data/nonexistent_file.txt file.size gt 0B"]);
-    assert_eq!(output.status.code(), Some(2));
+    assert_exit_code_is_error(&output);
     assert!(String::from_utf8_lossy(&output.stderr).contains("ERROR."));
+}
+
+fn assert_exit_code_failed(output: Output) {
+    assert_eq!(output.status.code(), Some(1));
+}
+fn assert_exit_code_is_error(output: &Output) {
+    assert_eq!(output.status.code(), Some(2));
+}
+
+// BioAssertError variants — one test per variant, all using the inline assert subcommand
+
+#[test]
+fn assert_exits_2_for_metric_error() {
+    let output = exec(&["assert", "tests/data/empty_file.txt file.explode eq 0"]);
+    assert_exit_code_is_error(&output);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
+    assert!(stderr.contains("unknown metric"), "expected 'unknown metric' in stderr: {stderr}");
+}
+
+#[test]
+fn assert_exits_2_for_comparator_error() {
+    // numeric comparator (lt) on a cell assertion triggers UnsupportedComparator at runtime
+    let output = exec(&["assert", "tests/data/example.csv csv.line.1.column.1 lt Alice"]);
+    assert_exit_code_is_error(&output);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
+    assert!(stderr.contains("unsupported comparator"), "expected 'unsupported comparator' in stderr: {stderr}");
+}
+
+#[test]
+fn assert_exits_2_for_value_error() {
+    let output = exec(&["assert", "tests/data/empty_file.txt file.lines eq notanumber"]);
+    assert_exit_code_is_error(&output);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
+    assert!(stderr.contains("Invalid integer"), "expected 'Invalid integer' in stderr: {stderr}");
+}
+
+#[test]
+fn assert_exits_2_for_file_error() {
+    let output = exec(&["assert", "tests/data/nonexistent_file.txt file.size eq 0B"]);
+    assert_exit_code_is_error(&output);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
+    assert!(stderr.contains("nonexistent_file.txt"), "expected path in stderr: {stderr}");
+}
+
+#[test]
+fn assert_exits_2_for_regex_error() {
+    // single-quoted value passes the grammar; strip_quotes removes quotes before regex compilation fails
+    let output = exec(&["assert", "tests/data/example.csv csv.line.1.column.1 matches '[invalid'"]);
+    assert_exit_code_is_error(&output);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
+    assert!(stderr.contains("invalid regex"), "expected 'invalid regex' in stderr: {stderr}");
 }
 
 // run subcommand

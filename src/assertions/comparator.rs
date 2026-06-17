@@ -1,5 +1,6 @@
 use crate::assertions::comparator_errors::ComparatorError;
 use crate::assertions::comparator_errors::ComparatorError::UnknownComparator;
+use crate::assertions::errors::BioAssertError;
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -53,7 +54,7 @@ impl Comparator {
         }
     }
 
-    pub fn compare_string(self, actual: &str, expected: &str) -> Result<bool, Box<dyn std::error::Error>> {
+    pub fn compare_string(self, actual: &str, expected: &str) -> Result<bool, BioAssertError> {
         match self {
             Self::Eq => Ok(actual == expected),
             Self::Ne => Ok(actual != expected),
@@ -64,10 +65,10 @@ impl Comparator {
                 let re = regex::Regex::new(expected)?;
                 Ok(re.is_match(actual))
             }
-            _ => Err(Box::new(ComparatorError::UnsupportedComparator(format!(
+            _ => Err(ComparatorError::UnsupportedComparator(format!(
                 "unsupported comparator for string comparison: {}",
                 self
-            )))),
+            )).into()),
         }
     }
 }
