@@ -1,7 +1,6 @@
-use crate::assertions::FileError;
 use crate::comparisons::Comparator;
 use crate::errors::BioAssertError;
-use crate::metrics::{ExecutionResult, MetricExecutor};
+use crate::assertions::{ExecutionResult, MetricExecutor};
 use crate::parser::Assertion;
 use crate::values::Value;
 use std::path::PathBuf;
@@ -40,11 +39,11 @@ impl MetricExecutor for DelimitedCellExecutor {
 
     fn execute(self, assertion: &Assertion) -> Result<ExecutionResult, BioAssertError> {
         let file = PathBuf::from(&assertion.file);
-        let comparator = assertion.comparator.parse::<Comparator>()?;
+        let comparator: Comparator = assertion.comparator.parse()?;
         let expected_str = strip_quotes(&assertion.expected).to_string();
         let actual_str =
             super::functions::cell(&file, self.delimiter, self.line, self.col)
-                .map_err(|e| FileError::new(&file, e))?;
+                ?;
         let success = comparator.compare_string(&actual_str, &expected_str)?;
         Ok(ExecutionResult { success, actual: Value::StringValue(actual_str) })
     }
@@ -53,7 +52,7 @@ impl MetricExecutor for DelimitedCellExecutor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::metrics::MetricExecutor;
+    use crate::assertions::MetricExecutor;
 
     #[test]
     fn strip_quotes_removes_double_quotes() {

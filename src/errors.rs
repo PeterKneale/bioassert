@@ -1,5 +1,5 @@
-use crate::assertions::FileError;
 use crate::comparisons::ComparatorError;
+use crate::file_error::FileError;
 use crate::values::ValueParseError;
 use std::error::Error;
 use std::fmt::{Display, Formatter};

@@ -1,10 +1,13 @@
+use crate::file_error::FileError;
 use crate::values::Value;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-pub fn count_lines(file: &Path) -> std::io::Result<Value> {
-    let count = BufReader::new(File::open(file)?).lines().count();
+pub fn count_lines(file: &Path) -> Result<Value, FileError> {
+    let count = BufReader::new(File::open(file).map_err(|e| FileError::new(file, e))?)
+        .lines()
+        .count();
     Ok(Value::IntegerValue(count as u64))
 }
 

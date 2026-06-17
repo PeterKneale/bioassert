@@ -16,7 +16,7 @@ fn main() {
 
     let outcomes: Vec<Outcome> = match cli.command {
         Commands::Assert { assertion } => {
-            let assertion = match bioassert::parser::parse_raw_assertion(&assertion) {
+            let assertion = match assertion.parse::<Assertion>() {
                 Ok(a) => a,
                 Err(e) => {
                     eprintln!("ERROR. {}", e);
@@ -46,19 +46,11 @@ fn main() {
     };
 
     if outcomes.iter().any(|o| matches!(o, Outcome::Error)) {
-        exit_error();
+        std::process::exit(2);
     }
     if outcomes.iter().any(|o| matches!(o, Outcome::Fail)) {
-        exit_failed();
+        std::process::exit(1);
     }
-}
-
-fn exit_failed() {
-    std::process::exit(1);
-}
-
-fn exit_error() {
-    std::process::exit(2);
 }
 
 fn run_one(assertion: Assertion) -> Outcome {

@@ -1,6 +1,5 @@
 use super::errors::ValueParseError;
 use std::fmt::{Display, Formatter};
-use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -60,46 +59,47 @@ fn format_bytes(bytes: u64) -> String {
     format!("{}B", bytes)
 }
 
-pub fn parse_bytes(value: &str) -> Result<Value, ValueParseError> {
-    let value = value.trim().to_uppercase();
-    let units = [
-        ("PB", 1024_u64.pow(5)),
-        ("TB", 1024_u64.pow(4)),
-        ("GB", 1024_u64.pow(3)),
-        ("MB", 1024_u64.pow(2)),
-        ("KB", 1024_u64),
-        ("B", 1_u64),
-    ];
-
-    for (suffix, multiplier) in units {
-        if let Some(number) = value.strip_suffix(suffix) {
-            let integer = number
-                .trim()
-                .parse::<u64>()
-                .map_err(|_| ValueParseError::InvalidBytes(value.clone()))?;
-            let bytes = integer
-                .checked_mul(multiplier)
-                .ok_or_else(|| ValueParseError::InvalidBytes(value.clone()))?;
-            return Ok(Value::BytesValue(bytes));
+impl Value {
+    pub fn from_bytes(value: &str) -> Result<Self, ValueParseError> {
+        let value = value.trim().to_uppercase();
+        let units = [
+            ("PB", 1024_u64.pow(5)),
+            ("TB", 1024_u64.pow(4)),
+            ("GB", 1024_u64.pow(3)),
+            ("MB", 1024_u64.pow(2)),
+            ("KB", 1024_u64),
+            ("B", 1_u64),
+        ];
+        for (suffix, multiplier) in units {
+            if let Some(number) = value.strip_suffix(suffix) {
+                let integer = number
+                    .trim()
+                    .parse::<u64>()
+                    .map_err(|_| ValueParseError::InvalidBytes(value.clone()))?;
+                let bytes = integer
+                    .checked_mul(multiplier)
+                    .ok_or_else(|| ValueParseError::InvalidBytes(value.clone()))?;
+                return Ok(Self::BytesValue(bytes));
+            }
         }
+        Err(ValueParseError::InvalidBytes(format!("Unknown format: {}", value)))
     }
-    Err(ValueParseError::InvalidBytes(format!("Unknown format: {}", value)))
-}
 
-pub fn parse_integer(value: &str) -> Result<Value, ValueParseError> {
-    let value = value.trim();
-    if let Ok(v) = value.parse::<u64>() {
-        return Ok(Value::IntegerValue(v));
+    pub fn from_integer(value: &str) -> Result<Self, ValueParseError> {
+        let value = value.trim();
+        value
+            .parse::<u64>()
+            .map(Self::IntegerValue)
+            .map_err(|_| ValueParseError::InvalidInteger(value.to_string()))
     }
-    Err(ValueParseError::InvalidInteger(value.to_string()))
-}
 
-pub fn parse_boolean(value: &str) -> Result<Value, ValueParseError> {
-    let parsed = bool::from_str(value.trim());
-    if parsed.is_ok() {
-        return Ok(Value::BooleanValue(parsed.unwrap()));
+    pub fn from_boolean(value: &str) -> Result<Self, ValueParseError> {
+        value
+            .trim()
+            .parse::<bool>()
+            .map(Self::BooleanValue)
+            .map_err(|_| ValueParseError::InvalidBoolean(value.to_string()))
     }
-    Err(ValueParseError::InvalidBoolean(value.to_string()))
 }
 
 #[cfg(test)]
@@ -107,88 +107,88 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_bytes_parses_bytes() {
-        assert_eq!(parse_bytes("100B").unwrap(), Value::BytesValue(100));
+    fn from_bytes_parses_bytes() {
+        assert_eq!(Value::from_bytes("100B").unwrap(), Value::BytesValue(100));
     }
 
     #[test]
-    fn parse_bytes_parses_kilobytes() {
-        assert_eq!(parse_bytes("1KB").unwrap(), Value::BytesValue(1024));
+    fn from_bytes_parses_kilobytes() {
+        assert_eq!(Value::from_bytes("1KB").unwrap(), Value::BytesValue(1024));
     }
 
     #[test]
-    fn parse_bytes_parses_megabytes() {
-        assert_eq!(parse_bytes("1MB").unwrap(), Value::BytesValue(1024 * 1024));
+    fn from_bytes_parses_megabytes() {
+        assert_eq!(Value::from_bytes("1MB").unwrap(), Value::BytesValue(1024 * 1024));
     }
 
     #[test]
-    fn parse_bytes_parses_gigabytes() {
-        assert_eq!(parse_bytes("1GB").unwrap(), Value::BytesValue(1024 * 1024 * 1024));
+    fn from_bytes_parses_gigabytes() {
+        assert_eq!(Value::from_bytes("1GB").unwrap(), Value::BytesValue(1024 * 1024 * 1024));
     }
 
     #[test]
-    fn parse_bytes_is_case_insensitive() {
-        assert_eq!(parse_bytes("1kb").unwrap(), Value::BytesValue(1024));
+    fn from_bytes_is_case_insensitive() {
+        assert_eq!(Value::from_bytes("1kb").unwrap(), Value::BytesValue(1024));
     }
 
     #[test]
-    fn parse_bytes_trims_whitespace() {
-        assert_eq!(parse_bytes(" 1KB ").unwrap(), Value::BytesValue(1024));
+    fn from_bytes_trims_whitespace() {
+        assert_eq!(Value::from_bytes(" 1KB ").unwrap(), Value::BytesValue(1024));
     }
 
     #[test]
-    fn parse_bytes_rejects_bare_number() {
-        assert!(matches!(parse_bytes("1024"), Err(ValueParseError::InvalidBytes(_))));
+    fn from_bytes_rejects_bare_number() {
+        assert!(matches!(Value::from_bytes("1024"), Err(ValueParseError::InvalidBytes(_))));
     }
 
     #[test]
-    fn parse_bytes_rejects_non_numeric_prefix() {
-        assert!(matches!(parse_bytes("abcKB"), Err(ValueParseError::InvalidBytes(_))));
+    fn from_bytes_rejects_non_numeric_prefix() {
+        assert!(matches!(Value::from_bytes("abcKB"), Err(ValueParseError::InvalidBytes(_))));
     }
 
     #[test]
-    fn parse_integer_parses_number() {
-        assert_eq!(parse_integer("42").unwrap(), Value::IntegerValue(42));
+    fn from_integer_parses_number() {
+        assert_eq!(Value::from_integer("42").unwrap(), Value::IntegerValue(42));
     }
 
     #[test]
-    fn parse_integer_parses_zero() {
-        assert_eq!(parse_integer("0").unwrap(), Value::IntegerValue(0));
+    fn from_integer_parses_zero() {
+        assert_eq!(Value::from_integer("0").unwrap(), Value::IntegerValue(0));
     }
 
     #[test]
-    fn parse_integer_trims_whitespace() {
-        assert_eq!(parse_integer(" 42 ").unwrap(), Value::IntegerValue(42));
+    fn from_integer_trims_whitespace() {
+        assert_eq!(Value::from_integer(" 42 ").unwrap(), Value::IntegerValue(42));
     }
 
     #[test]
-    fn parse_integer_rejects_text() {
-        assert!(matches!(parse_integer("abc"), Err(ValueParseError::InvalidInteger(_))));
+    fn from_integer_rejects_text() {
+        assert!(matches!(Value::from_integer("abc"), Err(ValueParseError::InvalidInteger(_))));
     }
 
     #[test]
-    fn parse_integer_rejects_float() {
-        assert!(matches!(parse_integer("1.5"), Err(ValueParseError::InvalidInteger(_))));
+    fn from_integer_rejects_float() {
+        assert!(matches!(Value::from_integer("1.5"), Err(ValueParseError::InvalidInteger(_))));
     }
 
     #[test]
-    fn parse_boolean_parses_true() {
-        assert_eq!(parse_boolean("true").unwrap(), Value::BooleanValue(true));
+    fn from_boolean_parses_true() {
+        assert_eq!(Value::from_boolean("true").unwrap(), Value::BooleanValue(true));
     }
 
     #[test]
-    fn parse_boolean_parses_false() {
-        assert_eq!(parse_boolean("false").unwrap(), Value::BooleanValue(false));
+    fn from_boolean_parses_false() {
+        assert_eq!(Value::from_boolean("false").unwrap(), Value::BooleanValue(false));
     }
 
     #[test]
-    fn parse_boolean_trims_whitespace() {
-        assert_eq!(parse_boolean(" true ").unwrap(), Value::BooleanValue(true));
+    fn from_boolean_trims_whitespace() {
+        assert_eq!(Value::from_boolean(" true ").unwrap(), Value::BooleanValue(true));
     }
 
     #[test]
-    fn parse_boolean_rejects_yes() {
-        assert!(matches!(parse_boolean("yes"), Err(ValueParseError::InvalidBoolean(_))));
+    fn from_boolean_rejects_yes() {
+        assert!(matches!(Value::from_boolean("yes"), Err(ValueParseError::InvalidBoolean(_))));
     }
 
     #[test]

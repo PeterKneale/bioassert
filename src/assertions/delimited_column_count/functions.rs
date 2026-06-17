@@ -1,17 +1,18 @@
+use crate::file_error::FileError;
 use crate::values::Value;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
-pub fn column_count(file: &Path, delimiter: char) -> io::Result<Value> {
-    let mut reader = io::BufReader::new(File::open(file)?);
+pub fn column_count(file: &Path, delimiter: char) -> Result<Value, FileError> {
+    let mut reader = io::BufReader::new(File::open(file).map_err(|e| FileError::new(file, e))?);
     let mut first_line = String::new();
-    reader.read_line(&mut first_line)?;
+    reader.read_line(&mut first_line).map_err(|e| FileError::new(file, e))?;
     let count = super::super::delimited_utils::parse_fields(
         first_line.trim_end_matches(['\n', '\r']),
         delimiter,
     )
-        .len();
+    .len();
     Ok(Value::IntegerValue(count as u64))
 }
 

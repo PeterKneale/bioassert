@@ -1,8 +1,11 @@
+use crate::file_error::FileError;
 use crate::values::Value;
 use std::path::Path;
 
-pub fn empty(file: &Path) -> std::io::Result<Value> {
-    Ok(Value::BooleanValue(file.metadata()?.len() == 0))
+pub fn empty(file: &Path) -> Result<Value, FileError> {
+    file.metadata()
+        .map(|m| Value::BooleanValue(m.len() == 0))
+        .map_err(|e| FileError::new(file, e))
 }
 
 #[cfg(test)]

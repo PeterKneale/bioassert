@@ -1,9 +1,8 @@
-use crate::assertions::FileError;
 use crate::comparisons::Comparator;
 use crate::errors::BioAssertError;
-use crate::metrics::{ExecutionResult, MetricExecutor};
+use crate::assertions::{ExecutionResult, MetricExecutor};
 use crate::parser::Assertion;
-use crate::values::parse_integer;
+use crate::values::Value;
 use std::path::PathBuf;
 
 pub struct DelimitedColumnCountExecutor {
@@ -19,10 +18,10 @@ impl MetricExecutor for DelimitedColumnCountExecutor {
 
     fn execute(self, assertion: &Assertion) -> Result<ExecutionResult, BioAssertError> {
         let file = PathBuf::from(&assertion.file);
-        let comparator = assertion.comparator.parse::<Comparator>()?;
-        let expected = parse_integer(assertion.expected.as_str())?;
+        let comparator: Comparator = assertion.comparator.parse()?;
+        let expected = Value::from_integer(&assertion.expected)?;
         let actual = super::functions::column_count(&file, self.delimiter)
-            .map_err(|e| FileError::new(&file, e))?;
+            ?;
         let success = comparator.compare(&actual, &expected);
         Ok(ExecutionResult { success, actual })
     }
@@ -31,7 +30,7 @@ impl MetricExecutor for DelimitedColumnCountExecutor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::metrics::MetricExecutor;
+    use crate::assertions::MetricExecutor;
 
     #[test]
     fn try_parse_csv_columns_count() {

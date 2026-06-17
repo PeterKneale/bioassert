@@ -1,10 +1,11 @@
-use crate::assertions::FileError;
+use super::functions::get_file_size;
 use crate::comparisons::Comparator;
 use crate::errors::BioAssertError;
-use crate::metrics::{ExecutionResult, MetricExecutor};
+use crate::assertions::{ExecutionResult, MetricExecutor};
 use crate::parser::Assertion;
-use crate::values::parse_bytes;
+use crate::values::Value;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 pub struct FileSizeExecutor;
 
@@ -15,9 +16,9 @@ impl MetricExecutor for FileSizeExecutor {
 
     fn execute(self, assertion: &Assertion) -> Result<ExecutionResult, BioAssertError> {
         let file = PathBuf::from(&assertion.file);
-        let comparator = assertion.comparator.parse::<Comparator>()?;
-        let expected = parse_bytes(assertion.expected.as_str())?;
-        let actual = super::functions::size(&file).map_err(|e| FileError::new(&file, e))?;
+        let comparator  = Comparator::from_str(&assertion.comparator)?;
+        let expected = Value::from_bytes(&assertion.expected)?;
+        let actual = get_file_size(&file)?;
         let success = comparator.compare(&actual, &expected);
         Ok(ExecutionResult { success, actual })
     }

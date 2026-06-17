@@ -1,7 +1,8 @@
+use crate::file_error::FileError;
 use crate::values::Value;
 use std::path::Path;
 
-pub fn line_count(file: &Path) -> std::io::Result<Value> {
+pub fn line_count(file: &Path) -> Result<Value, FileError> {
     super::super::file_lines::count_lines(file)
 }
 

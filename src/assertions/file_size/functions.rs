@@ -1,8 +1,11 @@
+use crate::file_error::FileError;
 use crate::values::{BytesValue, Value};
 use std::path::Path;
 
-pub fn size(file: &Path) -> std::io::Result<Value> {
-    Ok(BytesValue(file.metadata()?.len()))
+pub fn get_file_size(file: &Path) -> Result<Value, FileError> {
+    file.metadata()
+        .map(|m| BytesValue(m.len()))
+        .map_err(|e| FileError::new(file, e))
 }
 
 #[cfg(test)]
@@ -17,7 +20,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let path = dir.path().join("file.txt");
         File::create(&path).unwrap();
-        assert_eq!(size(&path).unwrap(), BytesValue(0));
+        assert_eq!(get_file_size(&path).unwrap(), BytesValue(0));
     }
 
     #[test]
@@ -26,13 +29,13 @@ mod tests {
         let path = dir.path().join("file.txt");
         let mut f = File::create(&path).unwrap();
         f.write_all(b"hello").unwrap();
-        assert_eq!(size(&path).unwrap(), BytesValue(5));
+        assert_eq!(get_file_size(&path).unwrap(), BytesValue(5));
     }
 
     #[test]
     fn returns_error_when_file_does_not_exist() {
         let dir = tempdir().unwrap();
         let path = dir.path().join("missing.txt");
-        assert!(size(&path).is_err());
+        assert!(get_file_size(&path).is_err());
     }
 }
