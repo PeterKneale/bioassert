@@ -109,4 +109,29 @@ mod tests {
     fn parse_fields_strips_quotes() {
         assert_eq!(parse_fields("\"hello world\",b", ','), vec!["hello world", "b"]);
     }
+
+    #[test]
+    fn column_count_counts_tsv_header_fields() {
+        let f = csv_file("name\tage\tcity\nAlice\t30\tNew York\n");
+        assert_eq!(column_count(f.path(), '\t').unwrap(), Value::IntegerValue(3));
+    }
+
+    #[test]
+    fn cell_returns_tsv_value() {
+        let f = csv_file("name\tage\tcity\nAlice\t30\tNew York\n");
+        assert_eq!(cell(f.path(), '\t', 1, 1).unwrap(), "name");
+        assert_eq!(cell(f.path(), '\t', 2, 3).unwrap(), "New York");
+    }
+
+    #[test]
+    fn cell_errors_on_missing_line() {
+        let f = csv_file("name,age\n");
+        assert!(cell(f.path(), ',', 99, 1).is_err());
+    }
+
+    #[test]
+    fn cell_errors_on_missing_column() {
+        let f = csv_file("name,age\n");
+        assert!(cell(f.path(), ',', 1, 99).is_err());
+    }
 }

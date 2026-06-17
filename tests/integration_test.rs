@@ -57,7 +57,21 @@ PASS. Expected tests/example.csv csv.line.2.column.1 == Alice, got Alice
 PASS. Expected tests/example.csv csv.line.3.column.3 == Los Angeles, got Los Angeles
 PASS. Expected tests/example.csv csv.line.2.column.1 starts_with A, got Alice
 PASS. Expected tests/example.csv csv.line.2.column.1 contains lic, got Alice
-PASS. Expected tests/example.csv csv.line.2.column.1 ends_with e, got Alice";
+PASS. Expected tests/example.csv csv.line.2.column.1 ends_with e, got Alice
+PASS. Expected tests/example.tsv tsv.columns.count > 2, got 3
+PASS. Expected tests/example.tsv tsv.columns.count == 3, got 3
+PASS. Expected tests/example.tsv tsv.columns.count < 4, got 3
+PASS. Expected tests/example.tsv tsv.lines.count > 2, got 3
+PASS. Expected tests/example.tsv tsv.lines.count == 3, got 3
+PASS. Expected tests/example.tsv tsv.lines.count < 4, got 3
+PASS. Expected tests/example.tsv tsv.line.1.column.1 == name, got name
+PASS. Expected tests/example.tsv tsv.line.1.column.2 == age, got age
+PASS. Expected tests/example.tsv tsv.line.1.column.3 == city, got city
+PASS. Expected tests/example.tsv tsv.line.2.column.1 == Alice, got Alice
+PASS. Expected tests/example.tsv tsv.line.3.column.3 == Los Angeles, got Los Angeles
+PASS. Expected tests/example.tsv tsv.line.2.column.1 starts_with A, got Alice
+PASS. Expected tests/example.tsv tsv.line.2.column.1 contains lic, got Alice
+PASS. Expected tests/example.tsv tsv.line.2.column.1 ends_with e, got Alice";
 
 #[test]
 fn run_assertions_file_passes_with_exit_0() {
