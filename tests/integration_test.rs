@@ -10,14 +10,14 @@ fn bioassert(args: &[&str]) -> Output {
 // assert subcommand
 
 #[test]
-fn assert_exits_0_on_pass() {
+fn assert_exits_0_on_assertion_pass() {
     let output = bioassert(&["assert", "tests/data/empty_file.txt file.exists eq true"]);
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
 }
 
 #[test]
-fn assert_exits_1_on_failure() {
+fn assert_exits_1_on_assertion_failure() {
     let output = bioassert(&["assert", "tests/data/empty_file.txt file.lines gt 999"]);
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("FAIL."));
@@ -25,8 +25,17 @@ fn assert_exits_1_on_failure() {
 
 #[test]
 fn assert_exits_1_for_missing_file() {
+    // file.exists returns false (not an error) for a nonexistent file — exit 1
     let output = bioassert(&["assert", "tests/data/nonexistent_file.txt file.exists eq true"]);
-    assert!(!output.status.success());
+    assert_eq!(output.status.code(), Some(1));
+}
+
+#[test]
+fn assert_exits_2_on_error() {
+    // file.size on a nonexistent file is a runtime error — exit 2
+    let output = bioassert(&["assert", "tests/data/nonexistent_file.txt file.size gt 0B"]);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("ERROR."));
 }
 
 // run subcommand
@@ -35,15 +44,15 @@ fn assert_exits_1_for_missing_file() {
 fn run_exits_1_when_assertion_fails() {
     let output = bioassert(&["run", "tests/data/failing_assertions.txt"]);
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(!output.status.success());
+    assert_eq!(output.status.code(), Some(1));
     assert!(stdout.contains("PASS."), "expected at least one PASS line");
     assert!(stdout.contains("FAIL."), "expected at least one FAIL line");
 }
 
 #[test]
-fn run_exits_1_for_invalid_metric() {
+fn run_exits_2_for_invalid_metric() {
     let output = bioassert(&["run", "tests/data/invalid_metric.txt"]);
-    assert!(!output.status.success());
+    assert_eq!(output.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&output.stderr).contains("ERROR."));
 }
 
