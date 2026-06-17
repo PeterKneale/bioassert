@@ -36,23 +36,7 @@ pub fn parse_comparator(s: &str) -> Result<Comparator, ComparatorError> {
         }
     }
 }
-pub fn check_supports_boolean_comparison(comparator: Comparator) -> Result<(), ComparatorError> {
-    check_supported(comparator, &[Comparator::Eq, Comparator::Ne])
-}
-pub fn check_supported(comparator: Comparator, supported: &[Comparator]) -> Result<(), ComparatorError> {
-    if !supported.contains(&comparator) {
-        let expected = supported
-            .iter()
-            .map(ToString::to_string)
-            .collect::<Vec<_>>()
-            .join(", ");
-        return Err(ComparatorError::UnsupportedComparator(format!(
-            "unsupported comparator: {} (expected: {})",
-            comparator, expected
-        )));
-    }
-    Ok(())
-}
+
 impl Comparator {
     pub fn compare<T>(self, actual: T, expected: T) -> bool
     where
