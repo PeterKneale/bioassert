@@ -17,7 +17,5 @@ pub use values::parse_boolean;
 pub use values::parse_bytes;
 pub use values::parse_integer;
 pub use values::Value;
-pub use values::ValueParseError;
-pub use values::Value::IntegerValue;
 pub use values::Value::BytesValue;
-pub use values::Value::BooleanValue;
+pub use values::ValueParseError;
