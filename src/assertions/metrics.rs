@@ -39,10 +39,10 @@ pub fn parse_metric(value: &str) -> Result<Metric, MetricError> {
         FILE_SIZE_METRIC => Ok(Metric::FileSize),
         FILE_EMPTY_METRIC => Ok(Metric::FileEmpty),
         FILE_LINES_METRIC => Ok(Metric::FileLines),
-        s if s.starts_with("csv.") || s.starts_with("tsv.") => {
+        s if s.starts_with("csv.") || s.starts_with("tsv.") || s.starts_with("psv.") => {
             parse_delimited_metric(s).ok_or_else(|| {
                 MetricError::UnknownMetric(format!(
-                    "unknown delimited metric: {} (expected: csv.columns.count, csv.lines.count, csv.line.N.column.M)",
+                    "unknown delimited metric: {} (expected: <csv|tsv|psv>.columns.count, .lines.count, or .line.N.column.M)",
                     s
                 ))
             })
@@ -64,6 +64,7 @@ fn parse_delimited_metric(s: &str) -> Option<Metric> {
     let delimiter = match parts.first()? {
         s if *s == "csv" => ',',
         s if *s == "tsv" => '\t',
+        s if *s == "psv" => '|',
         _ => return None,
     };
     match parts.as_slice() {
@@ -85,6 +86,7 @@ fn delimiter_prefix(d: char) -> &'static str {
     match d {
         ',' => "csv",
         '\t' => "tsv",
+        '|' => "psv",
         _ => "delimited",
     }
 }

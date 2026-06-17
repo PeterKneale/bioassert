@@ -107,3 +107,23 @@ tests/example.tsv tsv.line.3.column.3 eq "Los Angeles"
 tests/example.tsv tsv.line.2.column.1 starts A
 tests/example.tsv tsv.line.2.column.1 contains lic
 tests/example.tsv tsv.line.2.column.1 ends e
+
+# psv — column and line counts
+tests/example.psv psv.columns.count gt 2
+tests/example.psv psv.columns.count eq 3
+tests/example.psv psv.columns.count lt 4
+tests/example.psv psv.lines.count gt 2
+tests/example.psv psv.lines.count eq 3
+tests/example.psv psv.lines.count lt 4
+
+# psv — cell eq
+tests/example.psv psv.line.1.column.1 eq name
+tests/example.psv psv.line.1.column.2 eq age
+tests/example.psv psv.line.1.column.3 eq city
+tests/example.psv psv.line.2.column.1 eq Alice
+tests/example.psv psv.line.3.column.3 eq "Los Angeles"
+
+# psv — string comparators
+tests/example.psv psv.line.2.column.1 starts A
+tests/example.psv psv.line.2.column.1 contains lic
+tests/example.psv psv.line.2.column.1 ends e

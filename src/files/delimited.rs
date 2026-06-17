@@ -134,4 +134,17 @@ mod tests {
         let f = csv_file("name,age\n");
         assert!(cell(f.path(), ',', 1, 99).is_err());
     }
+
+    #[test]
+    fn column_count_counts_psv_header_fields() {
+        let f = csv_file("name|age|city\nAlice|30|New York\n");
+        assert_eq!(column_count(f.path(), '|').unwrap(), Value::IntegerValue(3));
+    }
+
+    #[test]
+    fn cell_returns_psv_value() {
+        let f = csv_file("name|age|city\nAlice|30|New York\n");
+        assert_eq!(cell(f.path(), '|', 1, 1).unwrap(), "name");
+        assert_eq!(cell(f.path(), '|', 2, 3).unwrap(), "New York");
+    }
 }
