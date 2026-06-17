@@ -1,6 +1,6 @@
+use crate::assertions::{DelimitedCellExecutor, DelimitedColumnCountExecutor, DelimitedLineCountExecutor, FileEmptyExecutor, FileExistsExecutor, FileLinesExecutor, FileSizeExecutor, AssertionExecutor};
 use crate::comparisons::Comparator;
 use crate::errors::BioAssertError;
-use crate::assertions::{DelimitedCellExecutor, DelimitedColumnCountExecutor, DelimitedLineCountExecutor, FileEmptyExecutor, FileExistsExecutor, FileLinesExecutor, FileSizeExecutor, MetricExecutor};
 use crate::parser::Assertion;
 
 pub fn execute(assertion: Assertion) -> Result<bool, BioAssertError> {
@@ -14,7 +14,7 @@ pub fn execute(assertion: Assertion) -> Result<bool, BioAssertError> {
     Err(BioAssertError::Metric(assertion.metric))
 }
 
-fn dispatch<E: MetricExecutor>(executor: E, assertion: &Assertion) -> Result<bool, BioAssertError> {
+fn dispatch<E: AssertionExecutor>(executor: E, assertion: &Assertion) -> Result<bool, BioAssertError> {
     let comparator: Comparator = assertion.comparator.parse()?;
     let result = executor.execute(assertion)?;
     let message = format!(
