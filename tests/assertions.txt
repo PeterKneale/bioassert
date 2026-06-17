@@ -1,0 +1,21 @@
+# Test file.exists
+tests/empty_file.txt file.exists eq true
+tests/empty_file.txt file.exists ne false
+# Test file.size
+## eq
+tests/empty_file.txt file.size eq 0B
+tests/size_5B.txt file.size eq 5B
+tests/size_5B.txt file.size eq 5b
+tests/size_1K.txt file.size eq 1024B
+tests/size_1K.txt file.size eq 1kb
+## ne
+tests/empty_file.txt file.size ne 1B
+tests/size_5B.txt file.size ne 4B
+tests/size_1K.txt file.size ne 1023B
+## lt
+tests/empty_file.txt file.size lt 1B
+tests/size_5B.txt file.size lt 6B
+tests/size_1K.txt file.size lt 2KB
+## gt
+tests/size_5B.txt file.size gt 4B
+tests/size_1K.txt file.size gt 500B

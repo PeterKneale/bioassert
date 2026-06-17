@@ -1,0 +1,35 @@
+WHITESPACE = _{ " " | "\t" }
+
+number = @{ ASCII_DIGIT+ }
+
+single_quoted = @{"'" ~ (!"'" ~ ANY)* ~ "'"}
+double_quoted = @{"\"" ~ (!"\"" ~ ANY)* ~ "\""}
+unquoted = @{ (!WHITESPACE ~ ANY)+ }
+file = { unquoted | single_quoted | double_quoted }
+
+identifier = @{
+    ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")*
+}
+
+metric = @{
+    identifier ~ ("." ~ identifier)+
+}
+comparator = { ^"gt" | ^"gte" | ^"lt" | ^"lte" | ^"eq" | ^"ne" }
+size_unit = { ^"B" | ^"KB" | ^"MB" | ^"GB" | ^"TB" }
+count_unit = { ^"K" | ^"M" | ^"G" }
+boolean_unit = { "true" | "false" }
+size_value = @{ number ~ size_unit? }
+count_value = @{ number ~ count_unit? }
+value = { size_value | count_value | boolean_unit }
+
+assertion = {
+    file ~ metric ~ comparator ~ value
+}
+
+assertions = {
+    (assertion)
+}
+
+file_contents = {
+    SOI ~ (assertions) * ~ EOI
+}
