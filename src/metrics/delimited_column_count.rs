@@ -1,3 +1,4 @@
+use super::delimited_utils::{delimiter_for_prefix, parse_fields};
 use super::MetricExecutor;
 use crate::assertions::{parse_comparator, parse_integer, Value};
 use crate::parser::Assertion;
@@ -14,11 +15,17 @@ fn column_count(file: &Path, delimiter: char) -> io::Result<Value> {
     let mut reader = io::BufReader::new(File::open(file)?);
     let mut first_line = String::new();
     reader.read_line(&mut first_line)?;
-    let count = super::parse_fields(first_line.trim_end_matches(['\n', '\r']), delimiter).len();
+    let count = parse_fields(first_line.trim_end_matches(['\n', '\r']), delimiter).len();
     Ok(Value::IntegerValue(count as u64))
 }
 
 impl MetricExecutor for DelimitedColumnCountExecutor {
+    fn try_parse(metric: &str) -> Option<Self> {
+        let (prefix, rest) = metric.split_once('.')?;
+        let delimiter = delimiter_for_prefix(prefix)?;
+        (rest == "columns.count").then_some(Self { delimiter })
+    }
+
     fn execute(self, assertion: Assertion) -> Result<(bool, String), Box<dyn std::error::Error>> {
         let file = PathBuf::from(&assertion.file);
         let comparator = parse_comparator(assertion.comparator.as_str())?;
@@ -54,10 +61,7 @@ mod tests {
     #[test]
     fn counts_tsv_header_fields() {
         let f = temp_file("name\tage\tcity\nAlice\t30\tNew York\n");
-        assert_eq!(
-            column_count(f.path(), '\t').unwrap(),
-            Value::IntegerValue(3)
-        );
+        assert_eq!(column_count(f.path(), '\t').unwrap(), Value::IntegerValue(3));
     }
 
     #[test]
@@ -70,5 +74,31 @@ mod tests {
     fn counts_single_column() {
         let f = temp_file("name\nAlice\n");
         assert_eq!(column_count(f.path(), ',').unwrap(), Value::IntegerValue(1));
+    }
+
+    #[test]
+    fn try_parse_csv_columns_count() {
+        assert!(matches!(
+            DelimitedColumnCountExecutor::try_parse("csv.columns.count"),
+            Some(DelimitedColumnCountExecutor { delimiter: ',' })
+        ));
+    }
+
+    #[test]
+    fn try_parse_tsv_columns_count() {
+        assert!(matches!(
+            DelimitedColumnCountExecutor::try_parse("tsv.columns.count"),
+            Some(DelimitedColumnCountExecutor { delimiter: '\t' })
+        ));
+    }
+
+    #[test]
+    fn try_parse_rejects_unknown_prefix() {
+        assert!(DelimitedColumnCountExecutor::try_parse("dsv.columns.count").is_none());
+    }
+
+    #[test]
+    fn try_parse_rejects_wrong_suffix() {
+        assert!(DelimitedColumnCountExecutor::try_parse("csv.lines.count").is_none());
     }
 }

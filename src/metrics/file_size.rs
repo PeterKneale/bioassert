@@ -17,6 +17,10 @@ fn size(file: &Path) -> Result<Value, std::io::Error> {
 }
 
 impl MetricExecutor for FileSizeExecutor {
+    fn try_parse(metric: &str) -> Option<Self> {
+        (metric == "file.size").then_some(Self)
+    }
+
     fn execute(self, assertion: Assertion) -> Result<(bool, String), Box<dyn std::error::Error>> {
         let file = PathBuf::from(&assertion.file);
         let comparator = parse_comparator(assertion.comparator.as_str())?;

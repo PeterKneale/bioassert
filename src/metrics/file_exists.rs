@@ -10,6 +10,10 @@ fn exists(file: &PathBuf) -> std::io::Result<Value> {
 }
 
 impl MetricExecutor for FileExistsExecutor {
+    fn try_parse(metric: &str) -> Option<Self> {
+        (metric == "file.exists").then_some(Self)
+    }
+
     fn execute(self, assertion: Assertion) -> Result<(bool, String), Box<dyn std::error::Error>> {
         let file = PathBuf::from(&assertion.file);
         let comparator = parse_comparator(assertion.comparator.as_str())?;

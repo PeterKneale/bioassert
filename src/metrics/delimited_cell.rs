@@ -1,3 +1,4 @@
+use super::delimited_utils::{delimiter_for_prefix, parse_fields};
 use super::MetricExecutor;
 use crate::assertions::parse_comparator;
 use crate::parser::Assertion;
@@ -20,7 +21,7 @@ fn cell(file: &Path, delimiter: char, line: usize, column: usize) -> io::Result<
             format!("line {} not found", line),
         )
     })??;
-    super::parse_fields(&raw, delimiter)
+    parse_fields(&raw, delimiter)
         .into_iter()
         .nth(column - 1)
         .ok_or_else(|| {
@@ -42,6 +43,19 @@ fn strip_quotes(s: &str) -> &str {
 }
 
 impl MetricExecutor for DelimitedCellExecutor {
+    fn try_parse(metric: &str) -> Option<Self> {
+        let parts: Vec<&str> = metric.split('.').collect();
+        match parts.as_slice() {
+            [prefix, "line", n, "column", m] => {
+                let delimiter = delimiter_for_prefix(prefix)?;
+                let line = n.parse::<usize>().ok().filter(|&x| x > 0)?;
+                let col = m.parse::<usize>().ok().filter(|&x| x > 0)?;
+                Some(Self { delimiter, line, col })
+            }
+            _ => None,
+        }
+    }
+
     fn execute(self, assertion: Assertion) -> Result<(bool, String), Box<dyn std::error::Error>> {
         let file = PathBuf::from(&assertion.file);
         let comparator = parse_comparator(assertion.comparator.as_str())?;
@@ -127,5 +141,36 @@ mod tests {
     fn strip_quotes_leaves_short_string() {
         assert_eq!(strip_quotes("a"), "a");
         assert_eq!(strip_quotes(""), "");
+    }
+
+    #[test]
+    fn try_parse_csv_cell() {
+        assert!(matches!(
+            DelimitedCellExecutor::try_parse("csv.line.2.column.3"),
+            Some(DelimitedCellExecutor { delimiter: ',', line: 2, col: 3 })
+        ));
+    }
+
+    #[test]
+    fn try_parse_tsv_cell() {
+        assert!(matches!(
+            DelimitedCellExecutor::try_parse("tsv.line.1.column.1"),
+            Some(DelimitedCellExecutor { delimiter: '\t', line: 1, col: 1 })
+        ));
+    }
+
+    #[test]
+    fn try_parse_rejects_zero_line() {
+        assert!(DelimitedCellExecutor::try_parse("csv.line.0.column.1").is_none());
+    }
+
+    #[test]
+    fn try_parse_rejects_zero_column() {
+        assert!(DelimitedCellExecutor::try_parse("csv.line.1.column.0").is_none());
+    }
+
+    #[test]
+    fn try_parse_rejects_unknown_prefix() {
+        assert!(DelimitedCellExecutor::try_parse("dsv.line.1.column.1").is_none());
     }
 }

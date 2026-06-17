@@ -1,3 +1,4 @@
+use super::delimited_utils::delimiter_for_prefix;
 use super::MetricExecutor;
 use crate::assertions::{parse_comparator, parse_integer, Value};
 use crate::parser::Assertion;
@@ -11,6 +12,12 @@ fn line_count(file: &Path) -> std::io::Result<Value> {
 }
 
 impl MetricExecutor for DelimitedLineCountExecutor {
+    fn try_parse(metric: &str) -> Option<Self> {
+        let (prefix, rest) = metric.split_once('.')?;
+        delimiter_for_prefix(prefix)?;
+        (rest == "lines.count").then_some(Self)
+    }
+
     fn execute(self, assertion: Assertion) -> Result<(bool, String), Box<dyn std::error::Error>> {
         let file = PathBuf::from(&assertion.file);
         let comparator = parse_comparator(assertion.comparator.as_str())?;
@@ -53,5 +60,25 @@ mod tests {
     fn returns_zero_for_empty_file() {
         let f = temp_file("");
         assert_eq!(line_count(f.path()).unwrap(), Value::IntegerValue(0));
+    }
+
+    #[test]
+    fn try_parse_csv_lines_count() {
+        assert!(DelimitedLineCountExecutor::try_parse("csv.lines.count").is_some());
+    }
+
+    #[test]
+    fn try_parse_tsv_lines_count() {
+        assert!(DelimitedLineCountExecutor::try_parse("tsv.lines.count").is_some());
+    }
+
+    #[test]
+    fn try_parse_rejects_unknown_prefix() {
+        assert!(DelimitedLineCountExecutor::try_parse("dsv.lines.count").is_none());
+    }
+
+    #[test]
+    fn try_parse_rejects_wrong_suffix() {
+        assert!(DelimitedLineCountExecutor::try_parse("csv.columns.count").is_none());
     }
 }
