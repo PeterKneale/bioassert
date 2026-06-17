@@ -10,6 +10,10 @@ pub enum Comparator {
     Le,
     Gt,
     Ge,
+    Starts,
+    Ends,
+    Contains,
+    Matches,
 }
 pub fn parse_comparator(s: &str) -> Result<Comparator, ComparatorError> {
     match s {
@@ -19,9 +23,13 @@ pub fn parse_comparator(s: &str) -> Result<Comparator, ComparatorError> {
         "lte" => Ok(Comparator::Le),
         "gt" => Ok(Comparator::Gt),
         "gte" => Ok(Comparator::Ge),
+        "starts" => Ok(Comparator::Starts),
+        "ends" => Ok(Comparator::Ends),
+        "contains" => Ok(Comparator::Contains),
+        "matches" => Ok(Comparator::Matches),
         _ => {
             let message = format!(
-                "unknown comparator: {} (expected: eq, ne, lt, le, gt, ge)",
+                "unknown comparator: {} (expected: eq, ne, lt, lte, gt, gte, starts, ends, contains, matches)",
                 s
             );
             Err(UnknownComparator(message))
@@ -57,6 +65,25 @@ impl Comparator {
             Self::Le => actual <= expected,
             Self::Gt => actual > expected,
             Self::Ge => actual >= expected,
+            _ => false,
+        }
+    }
+
+    pub fn compare_string(self, actual: &str, expected: &str) -> Result<bool, Box<dyn std::error::Error>> {
+        match self {
+            Self::Eq => Ok(actual == expected),
+            Self::Ne => Ok(actual != expected),
+            Self::Starts => Ok(actual.starts_with(expected)),
+            Self::Ends => Ok(actual.ends_with(expected)),
+            Self::Contains => Ok(actual.contains(expected)),
+            Self::Matches => {
+                let re = regex::Regex::new(expected)?;
+                Ok(re.is_match(actual))
+            }
+            _ => Err(Box::new(ComparatorError::UnsupportedComparator(format!(
+                "unsupported comparator for string comparison: {}",
+                self
+            )))),
         }
     }
 }
@@ -70,6 +97,10 @@ impl Display for Comparator {
             Self::Le => "<=",
             Self::Gt => ">",
             Self::Ge => ">=",
+            Self::Starts => "starts_with",
+            Self::Ends => "ends_with",
+            Self::Contains => "contains",
+            Self::Matches => "matches",
         };
 
         write!(f, "{s}")

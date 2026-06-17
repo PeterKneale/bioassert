@@ -67,3 +67,23 @@ tests/lines_100.txt file.lines gt 99
 # file.lines — gte
 tests/lines_10.txt file.lines gte 10
 tests/lines_10.txt file.lines gte 9
+
+# csv — column and line counts
+tests/example.csv csv.columns.count gt 2
+tests/example.csv csv.columns.count eq 3
+tests/example.csv csv.columns.count lt 4
+tests/example.csv csv.lines.count gt 2
+tests/example.csv csv.lines.count eq 3
+tests/example.csv csv.lines.count lt 4
+
+# csv — cell eq
+tests/example.csv csv.line.1.column.1 eq name
+tests/example.csv csv.line.1.column.2 eq age
+tests/example.csv csv.line.1.column.3 eq city
+tests/example.csv csv.line.2.column.1 eq Alice
+tests/example.csv csv.line.3.column.3 eq "Los Angeles"
+
+# csv — string comparators
+tests/example.csv csv.line.2.column.1 starts A
+tests/example.csv csv.line.2.column.1 contains lic
+tests/example.csv csv.line.2.column.1 ends e

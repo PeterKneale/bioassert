@@ -11,16 +11,19 @@ identifier = @{
     ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")*
 }
 
+metric_segment = _{ identifier | number }
 metric = @{
-    identifier ~ ("." ~ identifier)+
+    identifier ~ ("." ~ metric_segment)+
 }
-comparator = { ^"gte" | ^"gt" | ^"lte" | ^"lt" | ^"eq" | ^"ne" }
+comparator = { ^"gte" | ^"gt" | ^"lte" | ^"lt" | ^"eq" | ^"ne" | ^"starts" | ^"ends" | ^"contains" | ^"matches" }
 size_unit = { ^"B" | ^"KB" | ^"MB" | ^"GB" | ^"TB" }
 count_unit = { ^"K" | ^"M" | ^"G" }
 boolean_unit = { "true" | "false" }
 size_value = @{ number ~ size_unit? }
 count_value = @{ number ~ count_unit? }
-value = { size_value | count_value | boolean_unit }
+unquoted_string = @{ ASCII_ALPHANUMERIC+ }
+string_value = _{ single_quoted | double_quoted | unquoted_string }
+value = { size_value | count_value | boolean_unit | string_value }
 
 assertion = {
     file ~ metric ~ comparator ~ value
