@@ -1,0 +1,10 @@
+[package]
+name = "bioassert-delimited"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bioassert-core = { path = "../bioassert-core" }
+
+[dev-dependencies]
+tempfile = "3"

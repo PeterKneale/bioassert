@@ -1,6 +1,6 @@
 mod cli;
 
-use bioassert::parser::Assertion;
+use bioassert::Assertion;
 use clap::Parser;
 use cli::{Cli, Commands};
 use std::fs;
@@ -16,7 +16,7 @@ fn main() {
 
     let outcomes: Vec<Outcome> = match cli.command {
         Commands::Assert { assertion } => {
-            let assertion = match assertion.parse::<Assertion>() {
+            let assertion = match bioassert::parser::parse_assertion(&assertion) {
                 Ok(a) => a,
                 Err(e) => {
                     eprintln!("ERROR. {}", e);

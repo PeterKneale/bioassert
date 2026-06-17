@@ -1,7 +1,6 @@
-use crate::assertions::{DelimitedCellExecutor, DelimitedColumnCountExecutor, DelimitedLineCountExecutor, FileEmptyExecutor, FileExistsExecutor, FileLinesExecutor, FileSizeExecutor, AssertionExecutor};
-use crate::comparisons::Comparator;
-use crate::errors::BioAssertError;
-use crate::parser::Assertion;
+use bioassert_core::{Assertion, AssertionExecutor, BioAssertError, Comparator};
+use bioassert_delimited::{DelimitedCellExecutor, DelimitedColumnCountExecutor, DelimitedLineCountExecutor};
+use bioassert_file::{FileEmptyExecutor, FileExistsExecutor, FileLinesExecutor, FileSizeExecutor};
 
 pub fn execute(assertion: Assertion) -> Result<bool, BioAssertError> {
     if let Some(e) = FileExistsExecutor::try_parse(&assertion.metric) { return dispatch(e, &assertion); }
