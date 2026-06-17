@@ -16,9 +16,9 @@ pub fn parse_comparator(s: &str) -> Result<Comparator, ComparatorError> {
         "eq" => Ok(Comparator::Eq),
         "ne" => Ok(Comparator::Ne),
         "lt" => Ok(Comparator::Lt),
-        "le" => Ok(Comparator::Le),
+        "lte" => Ok(Comparator::Le),
         "gt" => Ok(Comparator::Gt),
-        "ge" => Ok(Comparator::Ge),
+        "gte" => Ok(Comparator::Ge),
         _ => {
             let message = format!(
                 "unknown comparator: {} (expected: eq, ne, lt, le, gt, ge)",

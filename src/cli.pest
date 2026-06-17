@@ -14,7 +14,7 @@ identifier = @{
 metric = @{
     identifier ~ ("." ~ identifier)+
 }
-comparator = { ^"gt" | ^"gte" | ^"lt" | ^"lte" | ^"eq" | ^"ne" }
+comparator = { ^"gte" | ^"gt" | ^"lte" | ^"lt" | ^"eq" | ^"ne" }
 size_unit = { ^"B" | ^"KB" | ^"MB" | ^"GB" | ^"TB" }
 count_unit = { ^"K" | ^"M" | ^"G" }
 boolean_unit = { "true" | "false" }

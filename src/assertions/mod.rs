@@ -15,6 +15,7 @@ pub use metrics_error::MetricError;
 
 pub use values::parse_boolean;
 pub use values::parse_bytes;
+pub use values::parse_integer;
 pub use values::Value;
 pub use values::ValueParseError;
 pub use values::Value::IntegerValue;

@@ -1,21 +1,69 @@
-# Test file.exists
+# file.exists
 tests/empty_file.txt file.exists eq true
 tests/empty_file.txt file.exists ne false
-# Test file.size
-## eq
+tests/size_5B.txt file.exists eq true
+tests/size_1K.txt file.exists eq true
+
+# file.size — eq
 tests/empty_file.txt file.size eq 0B
 tests/size_5B.txt file.size eq 5B
 tests/size_5B.txt file.size eq 5b
 tests/size_1K.txt file.size eq 1024B
 tests/size_1K.txt file.size eq 1kb
-## ne
+
+# file.size — ne
 tests/empty_file.txt file.size ne 1B
 tests/size_5B.txt file.size ne 4B
 tests/size_1K.txt file.size ne 1023B
-## lt
+
+# file.size — lt
 tests/empty_file.txt file.size lt 1B
 tests/size_5B.txt file.size lt 6B
 tests/size_1K.txt file.size lt 2KB
-## gt
+
+# file.size — lte
+tests/size_5B.txt file.size lte 5B
+tests/size_5B.txt file.size lte 6B
+tests/size_1K.txt file.size lte 1kb
+
+# file.size — gt
 tests/size_5B.txt file.size gt 4B
 tests/size_1K.txt file.size gt 500B
+
+# file.size — gte
+tests/size_5B.txt file.size gte 5B
+tests/size_5B.txt file.size gte 4B
+tests/size_1K.txt file.size gte 1kb
+
+# file.empty
+tests/empty_file.txt file.empty eq true
+tests/empty_file.txt file.empty ne false
+tests/size_5B.txt file.empty eq false
+tests/size_5B.txt file.empty ne true
+tests/size_1K.txt file.empty eq false
+
+# file.lines — eq
+tests/empty_file.txt file.lines eq 0
+tests/lines_1.txt file.lines eq 1
+tests/lines_10.txt file.lines eq 10
+tests/lines_100.txt file.lines eq 100
+
+# file.lines — ne
+tests/lines_10.txt file.lines ne 9
+tests/lines_10.txt file.lines ne 11
+
+# file.lines — lt
+tests/lines_10.txt file.lines lt 11
+tests/lines_100.txt file.lines lt 101
+
+# file.lines — lte
+tests/lines_10.txt file.lines lte 10
+tests/lines_10.txt file.lines lte 11
+
+# file.lines — gt
+tests/lines_10.txt file.lines gt 9
+tests/lines_100.txt file.lines gt 99
+
+# file.lines — gte
+tests/lines_10.txt file.lines gte 10
+tests/lines_10.txt file.lines gte 9

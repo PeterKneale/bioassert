@@ -28,7 +28,6 @@ pub fn parse_raw_assertion(input: &str) -> Result<Assertion, Box<dyn std::error:
         comparator: inner.next().unwrap().as_str().to_string(),
         expected: inner.next().unwrap().as_str().to_string(),
     };
-    println!("{:#?}", model);
     Ok(model)
 }
 
