@@ -50,10 +50,39 @@ fn run_exits_1_when_assertion_fails() {
 }
 
 #[test]
+fn run_fail_message_is_human_readable() {
+    let output = bioassert(&["run", "tests/data/failing_assertions.txt"]);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert_eq!(
+        stdout.trim_end(),
+        "Running assertions in tests/data/failing_assertions.txt\n\
+         PASS. Expected tests/data/empty_file.txt file.exists == true, got true\n\
+         FAIL. Expected tests/data/empty_file.txt file.lines > 999, got 0"
+    );
+    assert!(output.stderr.is_empty());
+}
+
+#[test]
 fn run_exits_2_for_invalid_metric() {
     let output = bioassert(&["run", "tests/data/invalid_metric.txt"]);
     assert_eq!(output.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&output.stderr).contains("ERROR."));
+}
+
+#[test]
+fn run_error_message_is_human_readable() {
+    let output = bioassert(&["run", "tests/data/invalid_metric.txt"]);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(
+        stdout.trim_end(),
+        "Running assertions in tests/data/invalid_metric.txt\n\
+         PASS. Expected tests/data/empty_file.txt file.exists == true, got true"
+    );
+    assert_eq!(
+        stderr.trim_end(),
+        "ERROR. unknown metric: file.explode (expected one of: file.exists, file.size, file.empty, file.lines, or csv.*/tsv.* metrics)"
+    );
 }
 
 #[test]

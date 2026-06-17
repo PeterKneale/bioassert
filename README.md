@@ -1,6 +1,7 @@
 # bioassert
 
-A CLI tool for asserting properties of files using a simple declarative syntax. Designed for validating pipeline outputs in bioinformatics workflows.
+A CLI tool for asserting properties of files using a simple declarative syntax. Designed for validating pipeline outputs
+in bioinformatics workflows.
 
 ## Quick start
 
@@ -25,46 +26,46 @@ cargo build --release
 
 ### File metrics
 
-| Metric        | Description                     | Comparators           | Value    |
-|---------------|---------------------------------|-----------------------|----------|
-| `file.exists` | Whether the file exists         | `eq`, `ne`            | boolean  |
-| `file.empty`  | Whether the file is zero bytes  | `eq`, `ne`            | boolean  |
-| `file.size`   | File size                       | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | size |
-| `file.lines`  | Line count                      | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | count |
+| Metric        | Description                    | Comparators                          | Value   |
+|---------------|--------------------------------|--------------------------------------|---------|
+| `file.exists` | Whether the file exists        | `eq`, `ne`                           | boolean |
+| `file.empty`  | Whether the file is zero bytes | `eq`, `ne`                           | boolean |
+| `file.size`   | File size                      | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | size    |
+| `file.lines`  | Line count                     | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | count   |
 
 ### Delimited file metrics (CSV, TSV, PSV)
 
-| Metric                      | Description                               |
-|-----------------------------|-------------------------------------------|
-| `csv.columns.count`         | Number of columns in the first (header) row |
-| `csv.lines.count`           | Number of lines in the file               |
-| `csv.line.N.column.M`       | Content of cell at line N, column M (1-indexed) |
+| Metric                | Description                                     |
+|-----------------------|-------------------------------------------------|
+| `csv.columns.count`   | Number of columns in the first (header) row     |
+| `csv.lines.count`     | Number of lines in the file                     |
+| `csv.line.N.column.M` | Content of cell at line N, column M (1-indexed) |
 
 Replace `csv` with `tsv` (tab-separated) or `psv` (pipe-separated) for those formats.
 
 ### Comparators
 
-| Comparator | Meaning       | Use with          |
-|------------|---------------|-------------------|
-| `eq`       | equal         | any               |
-| `ne`       | not equal     | any               |
-| `lt`       | less than     | size, count       |
-| `lte`      | less or equal | size, count       |
-| `gt`       | greater than  | size, count       |
-| `gte`      | >=            | size, count       |
-| `starts`   | starts with   | string (cell)     |
-| `ends`     | ends with     | string (cell)     |
-| `contains` | contains      | string (cell)     |
-| `matches`  | regex match   | string (cell)     |
+| Comparator | Meaning       | Use with      |
+|------------|---------------|---------------|
+| `eq`       | equal         | any           |
+| `ne`       | not equal     | any           |
+| `lt`       | less than     | size, count   |
+| `lte`      | less or equal | size, count   |
+| `gt`       | greater than  | size, count   |
+| `gte`      | >=            | size, count   |
+| `starts`   | starts with   | string (cell) |
+| `ends`     | ends with     | string (cell) |
+| `contains` | contains      | string (cell) |
+| `matches`  | regex match   | string (cell) |
 
 ### Values
 
-| Type    | Examples                          |
-|---------|-----------------------------------|
-| boolean | `true`, `false`                   |
-| size    | `5B`, `1KB`, `2MB`, `1GB`         |
-| count   | `10`, `1K`, `2M`                  |
-| string  | `Alice`, `"New York"`, `'hello'`  |
+| Type    | Examples                         |
+|---------|----------------------------------|
+| boolean | `true`, `false`                  |
+| size    | `5B`, `1KB`, `2MB`, `1GB`        |
+| count   | `10`, `1K`, `2M`                 |
+| string  | `Alice`, `"New York"`, `'hello'` |
 
 ## Examples
 
