@@ -1,6 +1,7 @@
 # bioassert
 
-A CLI tool for asserting properties of files using a simple declarative syntax. Useful for validating pipeline outputs in bioinformatics workflows.
+A CLI tool for asserting properties of files using a simple declarative syntax. Useful for validating pipeline outputs
+in bioinformatics workflows.
 
 ## Installation
 
@@ -30,12 +31,12 @@ bioassert run assertions.txt
 <file> <metric> <comparator> <value>
 ```
 
-| Part | Options |
-|------|---------|
-| `file` | Path to the file (unquoted, single-quoted, or double-quoted) |
-| `metric` | `file.exists`, `file.size`, `file.empty`, `file.lines` |
-| `comparator` | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` |
-| `value` | See below |
+| Part         | Options                                                      |
+|--------------|--------------------------------------------------------------|
+| `file`       | Path to the file (unquoted, single-quoted, or double-quoted) |
+| `metric`     | `file.exists`, `file.size`, `file.empty`, `file.lines`       |
+| `comparator` | `eq`, `ne`, `lt`, `lte`, `gt`, `gte`                         |
+| `value`      | See below                                                    |
 
 ### Values
 
@@ -89,12 +90,12 @@ FAIL. Expected results.tsv file.lines >= 1, got 0
 
 ## Metrics
 
-| Metric | Description | Value type |
-|--------|-------------|------------|
-| `file.exists` | Whether the file exists | boolean |
-| `file.size` | File size in bytes | size |
-| `file.empty` | Whether the file has zero bytes | boolean |
-| `file.lines` | Number of lines in the file | count |
+| Metric        | Description                     | Value type |
+|---------------|---------------------------------|------------|
+| `file.exists` | Whether the file exists         | boolean    |
+| `file.size`   | File size in bytes              | size       |
+| `file.empty`  | Whether the file has zero bytes | boolean    |
+| `file.lines`  | Number of lines in the file     | count      |
 
 ## Development
 
