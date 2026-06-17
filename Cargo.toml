@@ -11,4 +11,5 @@ pest_derive = "2.8.6"
 regex = "1"
 
 [dev-dependencies]
+insta = "1.48.0"
 tempfile = "3"

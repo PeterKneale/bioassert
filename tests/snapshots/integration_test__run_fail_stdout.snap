@@ -1,0 +1,8 @@
+---
+source: tests/integration_test.rs
+assertion_line: 57
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+Running assertions in tests/data/failing_assertions.txt
+PASS. Expected tests/data/empty_file.txt file.exists == true, got true
+FAIL. Expected tests/data/empty_file.txt file.lines > 999, got 0

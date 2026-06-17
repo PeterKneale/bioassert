@@ -1,0 +1,6 @@
+---
+source: tests/integration_test.rs
+assertion_line: 73
+expression: "String::from_utf8_lossy(&output.stderr)"
+---
+ERROR. unknown metric: file.explode (expected one of: file.exists, file.size, file.empty, file.lines, or csv.*/tsv.* metrics)
