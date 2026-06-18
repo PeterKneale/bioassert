@@ -5,7 +5,7 @@ pub struct DelimitedLineCountExecutor;
 impl AssertionExecutor for DelimitedLineCountExecutor {
     fn try_parse(metric: &str) -> Option<Self> {
         let (prefix, rest) = metric.split_once('.')?;
-        super::super::functions::delimiter_for_prefix(prefix)?;
+        super::functions::delimiter_for_prefix(prefix)?;
         (rest == "lines.count").then_some(Self)
     }
 
