@@ -1,5 +1,4 @@
-use bioassert_core::{AssertionExecutionResult, AssertionExecutor, Assertion, BioAssertError, Comparator, Value};
-use std::path::PathBuf;
+use bioassert_core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
 
 pub struct FileEmptyExecutor;
 
@@ -8,12 +7,10 @@ impl AssertionExecutor for FileEmptyExecutor {
         (metric == "file.empty").then_some(Self)
     }
 
-    fn execute(self, assertion: &Assertion) -> Result<AssertionExecutionResult, BioAssertError> {
-        let file = PathBuf::from(&assertion.file);
-        let comparator: Comparator = assertion.comparator.parse()?;
-        let expected = Value::from_boolean(&assertion.expected)?;
-        let actual = super::functions::empty(&file)?;
-        let success = comparator.compare(&actual, &expected);
+    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+        let expected = Value::from_boolean(&request.expected)?;
+        let actual = super::functions::empty(&request.file)?;
+        let success = request.comparator.compare(&actual, &expected);
         Ok(AssertionExecutionResult { success, actual })
     }
 }

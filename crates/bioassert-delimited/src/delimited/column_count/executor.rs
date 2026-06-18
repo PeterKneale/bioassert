@@ -1,5 +1,4 @@
-use bioassert_core::{AssertionExecutionResult, AssertionExecutor, Assertion, BioAssertError, Comparator, Value};
-use std::path::PathBuf;
+use bioassert_core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
 
 pub struct DelimitedColumnCountExecutor {
     pub delimiter: char,
@@ -12,12 +11,10 @@ impl AssertionExecutor for DelimitedColumnCountExecutor {
         (rest == "columns.count").then_some(Self { delimiter })
     }
 
-    fn execute(self, assertion: &Assertion) -> Result<AssertionExecutionResult, BioAssertError> {
-        let file = PathBuf::from(&assertion.file);
-        let comparator: Comparator = assertion.comparator.parse()?;
-        let expected = Value::from_integer(&assertion.expected)?;
-        let actual = super::functions::column_count(&file, self.delimiter)?;
-        let success = comparator.compare(&actual, &expected);
+    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+        let expected = Value::from_integer(&request.expected)?;
+        let actual = super::functions::column_count(&request.file, self.delimiter)?;
+        let success = request.comparator.compare(&actual, &expected);
         Ok(AssertionExecutionResult { success, actual })
     }
 }

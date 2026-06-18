@@ -1,4 +1,4 @@
-use bioassert_core::Assertion;
+use crate::assertion::Assertion;
 use pest::Parser;
 use pest_derive::Parser;
 

@@ -1,11 +1,11 @@
-pub mod assertion;
+pub mod assertion_request;
 pub mod comparisons;
 pub mod errors;
 pub mod executor;
 pub mod file_error;
 pub mod values;
 
-pub use assertion::Assertion;
+pub use assertion_request::AssertionRequest;
 pub use comparisons::Comparator;
 pub use errors::BioAssertError;
 pub use executor::{AssertionExecutionResult, AssertionExecutor};

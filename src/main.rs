@@ -1,10 +1,23 @@
-mod cli;
-
-use bioassert::Assertion;
-use clap::Parser;
-use cli::{Cli, Commands};
+use clap::{Parser, Subcommand};
+use std::path::PathBuf;
+use bioassert_engine::Assertion;
 use std::fs;
 
+#[derive(Parser)]
+pub struct Cli {
+    #[command(subcommand)]
+    pub command: Commands,
+
+}
+#[derive(Subcommand)]
+pub enum Commands {
+    Assert {
+        assertion: String,
+    },
+    Run {
+        file: PathBuf,
+    },
+}
 enum Outcome {
     Pass,
     Fail,
@@ -16,7 +29,7 @@ fn main() {
 
     let outcomes: Vec<Outcome> = match cli.command {
         Commands::Assert { assertion } => {
-            let assertion = match bioassert::parser::parse_assertion(&assertion) {
+            let assertion = match bioassert_engine::parser::parse_assertion(&assertion) {
                 Ok(a) => a,
                 Err(e) => {
                     eprintln!("ERROR. {}", e);
@@ -35,7 +48,7 @@ fn main() {
                     std::process::exit(2);
                 }
             };
-            match bioassert::parser::parse_file(&contents) {
+            match bioassert_engine::parser::parse_file(&contents) {
                 Ok(assertions) => assertions.into_iter().map(run_one).collect(),
                 Err(e) => {
                     eprintln!("ERROR. {}", e);
@@ -54,7 +67,7 @@ fn main() {
 }
 
 fn run_one(assertion: Assertion) -> Outcome {
-    match bioassert::executor::execute(assertion) {
+    match bioassert_engine::executor::execute(assertion) {
         Ok(true) => Outcome::Pass,
         Ok(false) => Outcome::Fail,
         Err(e) => {

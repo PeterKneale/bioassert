@@ -1,6 +1,5 @@
 use super::functions;
-use bioassert_core::{AssertionExecutionResult, AssertionExecutor, Assertion, BioAssertError, Comparator, Value};
-use std::path::PathBuf;
+use bioassert_core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
 
 pub struct FileLinesExecutor;
 
@@ -9,12 +8,10 @@ impl AssertionExecutor for FileLinesExecutor {
         (metric == "file.lines").then_some(Self)
     }
 
-    fn execute(self, assertion: &Assertion) -> Result<AssertionExecutionResult, BioAssertError> {
-        let file = PathBuf::from(&assertion.file);
-        let comparator: Comparator = assertion.comparator.parse()?;
-        let expected = Value::from_integer(&assertion.expected)?;
-        let actual = functions::count_lines(&file)?;
-        let success = comparator.compare(&actual, &expected);
+    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+        let expected = Value::from_integer(&request.expected)?;
+        let actual = functions::count_lines(&request.file)?;
+        let success = request.comparator.compare(&actual, &expected);
         Ok(AssertionExecutionResult { success, actual })
     }
 }

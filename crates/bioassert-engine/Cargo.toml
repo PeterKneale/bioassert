@@ -1,0 +1,11 @@
+[package]
+name = "bioassert-engine"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bioassert-core = { path = "../bioassert-core" }
+bioassert-file = { path = "../bioassert-file" }
+bioassert-delimited = { path = "../bioassert-delimited" }
+pest = "2.8.6"
+pest_derive = "2.8.6"

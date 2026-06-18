@@ -1,5 +1,4 @@
-use bioassert_core::{AssertionExecutionResult, AssertionExecutor, Assertion, BioAssertError, Comparator, Value};
-use std::path::PathBuf;
+use bioassert_core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
 
 pub struct DelimitedLineCountExecutor;
 
@@ -10,12 +9,10 @@ impl AssertionExecutor for DelimitedLineCountExecutor {
         (rest == "lines.count").then_some(Self)
     }
 
-    fn execute(self, assertion: &Assertion) -> Result<AssertionExecutionResult, BioAssertError> {
-        let file = PathBuf::from(&assertion.file);
-        let comparator: Comparator = assertion.comparator.parse()?;
-        let expected = Value::from_integer(&assertion.expected)?;
-        let actual = super::functions::line_count(&file)?;
-        let success = comparator.compare(&actual, &expected);
+    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+        let expected = Value::from_integer(&request.expected)?;
+        let actual = super::functions::line_count(&request.file)?;
+        let success = request.comparator.compare(&actual, &expected);
         Ok(AssertionExecutionResult { success, actual })
     }
 }

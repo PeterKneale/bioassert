@@ -4,6 +4,7 @@ members = [
     "crates/bioassert-core",
     "crates/bioassert-file",
     "crates/bioassert-delimited",
+    "crates/bioassert-engine",
 ]
 resolver = "2"
 
@@ -13,12 +14,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bioassert-core = { path = "crates/bioassert-core" }
-bioassert-file = { path = "crates/bioassert-file" }
-bioassert-delimited = { path = "crates/bioassert-delimited" }
+bioassert-engine = { path = "crates/bioassert-engine" }
 clap = { version = "4.6.1", features = ["derive"] }
-pest = "2.8.6"
-pest_derive = "2.8.6"
 
 [dev-dependencies]
 insta = "1.48.0"

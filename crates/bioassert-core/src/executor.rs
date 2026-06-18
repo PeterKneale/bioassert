@@ -1,4 +1,4 @@
-use crate::assertion::Assertion;
+use crate::assertion_request::AssertionRequest;
 use crate::errors::BioAssertError;
 use crate::values::Value;
 
@@ -11,5 +11,5 @@ pub trait AssertionExecutor {
     fn try_parse(metric: &str) -> Option<Self>
     where
         Self: Sized;
-    fn execute(self, assertion: &Assertion) -> Result<AssertionExecutionResult, BioAssertError>;
+    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError>;
 }

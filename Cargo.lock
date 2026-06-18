@@ -72,13 +72,9 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 name = "bioassert"
 version = "0.1.0"
 dependencies = [
- "bioassert-core",
- "bioassert-delimited",
- "bioassert-file",
+ "bioassert-engine",
  "clap",
  "insta",
- "pest",
- "pest_derive",
  "tempfile",
 ]
 
@@ -95,6 +91,17 @@ version = "0.1.0"
 dependencies = [
  "bioassert-core",
  "tempfile",
+]
+
+[[package]]
+name = "bioassert-engine"
+version = "0.1.0"
+dependencies = [
+ "bioassert-core",
+ "bioassert-delimited",
+ "bioassert-file",
+ "pest",
+ "pest_derive",
 ]
 
 [[package]]

@@ -1,7 +1,5 @@
 use super::functions::get_file_size;
-use bioassert_core::{AssertionExecutionResult, AssertionExecutor, Assertion, BioAssertError, Comparator, Value};
-use std::path::PathBuf;
-use std::str::FromStr;
+use bioassert_core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
 
 pub struct FileSizeExecutor;
 
@@ -10,12 +8,10 @@ impl AssertionExecutor for FileSizeExecutor {
         (metric == "file.size").then_some(Self)
     }
 
-    fn execute(self, assertion: &Assertion) -> Result<AssertionExecutionResult, BioAssertError> {
-        let file = PathBuf::from(&assertion.file);
-        let comparator = Comparator::from_str(&assertion.comparator)?;
-        let expected = Value::from_bytes(&assertion.expected)?;
-        let actual = get_file_size(&file)?;
-        let success = comparator.compare(&actual, &expected);
+    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+        let expected = Value::from_bytes(&request.expected)?;
+        let actual = get_file_size(&request.file)?;
+        let success = request.comparator.compare(&actual, &expected);
         Ok(AssertionExecutionResult { success, actual })
     }
 }
