@@ -1,11 +1,14 @@
 [package]
 name = "bioassert-engine"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Execution engine for bioassert assertion pipelines"
 
 [dependencies]
-bioassert-core = { path = "../bioassert-core" }
-bioassert-file = { path = "../bioassert-file" }
-bioassert-delimited = { path = "../bioassert-delimited" }
+bioassert-core = { path = "../bioassert-core", version = "0.1.0" }
+bioassert-file = { path = "../bioassert-file", version = "0.1.0" }
+bioassert-delimited = { path = "../bioassert-delimited", version = "0.1.0" }
 pest = "2.8.6"
 pest_derive = "2.8.6"

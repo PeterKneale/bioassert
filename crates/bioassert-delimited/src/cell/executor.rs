@@ -11,7 +11,7 @@ impl AssertionExecutor for DelimitedCellExecutor {
         let parts: Vec<&str> = metric.split('.').collect();
         match parts.as_slice() {
             [prefix, "line", n, "column", m] => {
-                let delimiter = super::functions::delimiter_for_prefix(prefix)?;
+                let delimiter = crate::functions::delimiter_for_prefix(prefix)?;
                 let line = n.parse::<usize>().ok().filter(|&x| x > 0)?;
                 let col = m.parse::<usize>().ok().filter(|&x| x > 0)?;
                 Some(Self { delimiter, line, col })

@@ -1,4 +1,4 @@
-pub(super) fn delimiter_for_prefix(prefix: &str) -> Option<char> {
+pub(crate) fn delimiter_for_prefix(prefix: &str) -> Option<char> {
     match prefix {
         "csv" => Some(','),
         "tsv" => Some('\t'),
@@ -7,7 +7,7 @@ pub(super) fn delimiter_for_prefix(prefix: &str) -> Option<char> {
     }
 }
 
-pub(super) fn parse_fields(line: &str, delimiter: char) -> Vec<String> {
+pub(crate) fn parse_fields(line: &str, delimiter: char) -> Vec<String> {
     let mut fields = Vec::new();
     let mut current = String::new();
     let mut in_quotes = false;

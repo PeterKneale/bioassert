@@ -7,7 +7,7 @@ pub struct DelimitedColumnCountExecutor {
 impl AssertionExecutor for DelimitedColumnCountExecutor {
     fn try_parse(metric: &str) -> Option<Self> {
         let (prefix, rest) = metric.split_once('.')?;
-        let delimiter = super::functions::delimiter_for_prefix(prefix)?;
+        let delimiter = crate::functions::delimiter_for_prefix(prefix)?;
         (rest == "columns.count").then_some(Self { delimiter })
     }
 
