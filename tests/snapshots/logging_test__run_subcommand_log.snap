@@ -1,0 +1,13 @@
+---
+source: tests/logging_test.rs
+expression: normalize_log(&contents)
+---
+[TIMESTAMP] DEBUG bioassert: reading assertions from: tests/data/failing_assertions.txt
+[TIMESTAMP]  INFO bioassert: Running assertions in tests/data/failing_assertions.txt
+[TIMESTAMP] DEBUG bioassert: parsed 2 assertion(s)
+[TIMESTAMP] DEBUG bioassert_engine::executor: executing assertion file=tests/data/empty_file.txt metric=file.exists comparator=eq expected=true
+[TIMESTAMP] DEBUG bioassert_engine::executor: assertion result success=true actual=true
+[TIMESTAMP]  INFO bioassert_engine::executor: PASS. Expected tests/data/empty_file.txt file.exists == true, got true
+[TIMESTAMP] DEBUG bioassert_engine::executor: executing assertion file=tests/data/empty_file.txt metric=file.lines comparator=gt expected=999
+[TIMESTAMP] DEBUG bioassert_engine::executor: assertion result success=false actual=0
+[TIMESTAMP]  INFO bioassert_engine::executor: FAIL. Expected tests/data/empty_file.txt file.lines > 999, got 0

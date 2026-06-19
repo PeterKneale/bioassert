@@ -5,6 +5,7 @@ use bioassert_file::{FileEmptyExecutor, FileExistsExecutor, FileLinesExecutor, F
 use std::path::PathBuf;
 
 pub fn execute(assertion: Assertion) -> Result<bool, BioAssertError> {
+    tracing::debug!(file = %assertion.file, metric = %assertion.metric, comparator = %assertion.comparator, expected = %assertion.expected, "executing assertion");
     let request = AssertionRequest {
         file: PathBuf::from(&assertion.file),
         comparator: assertion.comparator.parse()?,
@@ -22,14 +23,15 @@ pub fn execute(assertion: Assertion) -> Result<bool, BioAssertError> {
 
 fn dispatch<E: AssertionExecutor>(executor: E, assertion: &Assertion, request: AssertionRequest) -> Result<bool, BioAssertError> {
     let result = executor.execute(&request)?;
+    tracing::debug!(success = result.success, actual = %result.actual, "assertion result");
     let message = format!(
         "Expected {} {} {} {}, got {}",
         assertion.file, assertion.metric, request.comparator, request.expected, result.actual
     );
     if result.success {
-        println!("PASS. {}", message);
+        tracing::info!("PASS. {}", message);
     } else {
-        println!("FAIL. {}", message);
+        tracing::info!("FAIL. {}", message);
     }
     Ok(result.success)
 }

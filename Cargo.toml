@@ -22,9 +22,14 @@ license.workspace = true
 repository.workspace = true
 description = "CLI tool for asserting properties of files in bioinformatics pipelines"
 
+[workspace.dependencies]
+tracing = "0.1"
+
 [dependencies]
 bioassert-engine = { path = "crates/bioassert-engine", version = "1.1.0" }
 clap = { version = "4.6.1", features = ["derive"] }
+tracing = { workspace = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [dev-dependencies]
 insta = "1.48.0"
