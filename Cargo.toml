@@ -9,7 +9,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "1.1.0"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/peterkneale/bioassert"
@@ -23,7 +23,7 @@ repository.workspace = true
 description = "CLI tool for asserting properties of files in bioinformatics pipelines"
 
 [dependencies]
-bioassert-engine = { path = "crates/bioassert-engine", version = "0.1.0" }
+bioassert-engine = { path = "crates/bioassert-engine", version = "1.1.0" }
 clap = { version = "4.6.1", features = ["derive"] }
 
 [dev-dependencies]
