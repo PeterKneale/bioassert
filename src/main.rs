@@ -1,5 +1,5 @@
 use clap::Parser;
-use bioassert_engine::{executor, Assertion, AssertionReport, Outcome};
+use bioassert::engine::{executor, Assertion, AssertionReport, Outcome};
 
 mod cli;
 mod report;
@@ -44,12 +44,12 @@ fn main() {
 /// unreadable assertions file.
 fn gather_assertions(command: &Commands) -> Result<Vec<Assertion>, String> {
     match command {
-        Commands::Assert { assertion } => bioassert_engine::parser::parse_assertion(assertion)
+        Commands::Assert { assertion } => bioassert::engine::parser::parse_assertion(assertion)
             .map(|a| vec![a])
             .map_err(|e| e.to_string()),
         Commands::Run { file } => {
             let contents = std::fs::read_to_string(file).map_err(|e| format!("{}: {}", file.display(), e))?;
-            bioassert_engine::parser::parse_file(&contents).map_err(|e| e.to_string())
+            bioassert::engine::parser::parse_file(&contents).map_err(|e| e.to_string())
         }
     }
 }

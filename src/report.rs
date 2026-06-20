@@ -1,4 +1,4 @@
-use bioassert_engine::{AssertionReport, AssertionResult, Outcome};
+use bioassert::engine::{AssertionReport, AssertionResult, Outcome};
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};

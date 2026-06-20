@@ -1,30 +1,18 @@
 [workspace]
-members = [
-    ".",
-    "crates/bioassert-core",
-    "crates/bioassert-file",
-    "crates/bioassert-delimited",
-    "crates/bioassert-engine",
-]
-resolver = "2"
 
-[workspace.package]
+[package]
+name = "bioassert"
 version = "1.2.0"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/peterkneale/bioassert"
-
-[package]
-name = "bioassert"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-repository.workspace = true
 description = "CLI tool for asserting properties of files in bioinformatics pipelines"
 
 [dependencies]
-bioassert-engine = { path = "crates/bioassert-engine", version = "1.2.0" }
 clap = { version = "4.6.1", features = ["derive"] }
+regex = "1"
+pest = "2.8.6"
+pest_derive = "2.8.6"
 
 [dev-dependencies]
 insta = "1.48.0"
