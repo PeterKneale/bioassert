@@ -1,6 +1,6 @@
 ---
-source: tests/run_subcommand_test.rs
-expression: "String::from_utf8_lossy(&output.stdout)"
+source: tests/report_test.rs
+expression: contents
 ---
 PASS. Expected tests/data/empty_file.txt file.exists == true, got true
 FAIL. Expected tests/data/empty_file.txt file.lines > 999, got 0

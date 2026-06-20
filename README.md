@@ -14,17 +14,111 @@ cargo install bioassert
 ### Docker
 
 ```bash
-docker pull cmri/bioassert
-docker run --rm -v "$PWD":/data cmri/bioassert assert "/data/output.bam file.exists eq true"
+docker pull ghcr.io/peterkneale/bioassert
+docker run --rm -v "$PWD":/data ghcr.io/peterkneale/bioassert assert "/data/output.bam file.exists eq true"
 ```
 
 Mount your working directory to `/data` and use that path prefix in your assertions. To run an assertions file:
 
 ```bash
-docker run --rm -v "$PWD":/data cmri/bioassert run /data/checks.txt
+docker run --rm -v "$PWD":/data ghcr.io/peterkneale/bioassert run /data/checks.txt
 ```
 
+## Command-line interface
+
+```
+bioassert [OPTIONS] <COMMAND>
+```
+
+### Commands
+
+| Command           | Description                                                                  |
+|-------------------|------------------------------------------------------------------------------|
+| `assert "<...>"`  | Evaluate a single assertion passed as one quoted string.                     |
+| `run <file>`      | Evaluate every assertion in a file. Blank lines and `#` comments are skipped. |
+
+### Options
+
+| Option                    | Default | Description                                                                                  |
+|---------------------------|---------|----------------------------------------------------------------------------------------------|
+| `--report-file <FILE>`    | derived | Write the assertion report to `FILE` instead of the default location (see Output below).      |
+| `--color <WHEN>`          | `auto`  | When to use ANSI color in console output: `auto`, `always` or `never` (see Color below). Also spelled `--colour`. |
+| `--icons <WHEN>`          | `auto`  | When to prefix `PASS`/`FAIL`/`ERROR` console lines with a status icon: `auto`, `always` or `never` (see Icons below). |
+| `-h`, `--help`            |         | Print help.                                                                                  |
+| `-V`, `--version`         |         | Print the version.                                                                           |
+
+`--report-file`, `--color` and `--icons` are global, so they may appear either before or after the subcommand. For example, `bioassert run checks.txt --color=never` and `bioassert --color=never run checks.txt` are equivalent.
+
+### Results and exit codes
+
+Result lines are written to **stdout**, one per assertion: `PASS.` when the assertion holds and `FAIL.` when it does not. Errors (invalid syntax, an unknown metric, an unreadable file) are written to **stderr** as `ERROR.` lines. The process exit code reflects the worst outcome across all assertions:
+
+| Exit code | Meaning                                              |
+|-----------|------------------------------------------------------|
+| `0`       | Every assertion passed.                              |
+| `1`       | At least one assertion failed (but none errored).    |
+| `2`       | At least one assertion could not be evaluated.       |
+
+This makes `bioassert` easy to gate a pipeline step on: a non-zero exit halts the workflow.
+
+### Output
+
+Alongside the console output, `bioassert` writes an **assertion report**: a file built from the results of every executed assertion. It is plain text, one `PASS.`/`FAIL.`/`ERROR.` line per assertion, with no level or module prefixes, no timestamps, no ANSI color and no icons, so it stays easy to read and `grep`. Its location is resolved as follows:
+
+1. `--report-file <FILE>` if given.
+2. Otherwise for `run <file>`, the derived path `<file>.log` (for example `checks.txt` reports to `checks.txt.log`).
+3. Otherwise `assertions.log` in the current directory.
+
+For example, the report for a failing run reads:
+
+```text
+PASS. Expected output.bam file.exists == true, got true
+FAIL. Expected results.vcf file.lines > 999, got 0
+```
+
+### Color
+
+`--color` controls ANSI color on the console only. The leading `PASS` keyword is colored green, and `FAIL`/`ERROR` are colored red. The assertion report file is never colored, regardless of this setting. The flag is also accepted spelled `--colour`.
+
+| Value    | Behaviour                                                                                  |
+|----------|--------------------------------------------------------------------------------------------|
+| `auto`   | Color only when stdout is a terminal and the `NO_COLOR` environment variable is unset. This is the default, so output stays plain when piped or redirected. |
+| `always` | Always color, even when piped. Overrides `NO_COLOR`.                                        |
+| `never`  | Never color.                                                                               |
+
+`auto` follows the [`NO_COLOR`](https://no-color.org) convention: setting `NO_COLOR` to any non-empty value disables color. An explicit `--color=always` takes priority over it.
+
+### Icons
+
+`--icons` prefixes each console result line with a status icon: 🟢 for `PASS`, 🔴 for `FAIL` and 🔥 for `ERROR`. It takes the same `auto`/`always`/`never` values as `--color` and follows the same resolution logic, but controls the icons rather than the color:
+
+| Value    | Behaviour                                                                                  |
+|----------|--------------------------------------------------------------------------------------------|
+| `auto`   | Icons only when stdout is a terminal and `NO_COLOR` is unset. This is the default, so output stays plain when piped or redirected. |
+| `always` | Always show icons, even when piped. Overrides `NO_COLOR`.                                   |
+| `never`  | Never show icons.                                                                          |
+
+Color and icons are resolved independently, so either can be on while the other is off. The assertion report file is never iconified, so it stays easy to `grep`.
+
 ## Examples
+
+### Console output with color and icons
+
+On a terminal, `auto` shows both by default. To force them on (for example when piping into a pager that understands ANSI), use `--color=always --icons=always`:
+
+```bash
+bioassert --color=always --icons=always run checks.txt
+```
+
+Each result line is prefixed with its status icon, and the leading keyword is colored (green `PASS`, red `FAIL`/`ERROR`):
+
+```text
+🟢  PASS. Expected output.bam file.exists == true, got true
+🔴  FAIL. Expected results.vcf file.lines > 999, got 0
+🔥  ERROR. unknown metric: file.explode
+```
+
+(`PASS`/`FAIL` lines go to stdout and `ERROR` lines to stderr; the icons render here, but the green/red keyword coloring only shows on an ANSI-capable terminal.)
 
 ### File checks
 
@@ -94,13 +188,12 @@ samples.csv   csv.line.2.column.1  starts  SAMPLE_
 bioassert run checks.txt
 ```
 
-Output:
+Output (also written to the report file `checks.txt.log`):
 
 ```
-Running assertions in checks.txt
 PASS. Expected output.bam file.exists == true, got true
 PASS. Expected results.vcf file.exists == true, got true
-PASS. Expected output.bam file.size > 1048576, got 5242880
+PASS. Expected output.bam file.size > 1MB, got 5.00MB
 PASS. Expected results.vcf file.empty == false, got false
 PASS. Expected results.vcf file.lines >= 1, got 42
 PASS. Expected samples.csv csv.columns.count == 5, got 5

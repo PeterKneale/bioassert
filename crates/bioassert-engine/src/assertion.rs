@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Assertion {
     pub file: String,
     pub metric: String,

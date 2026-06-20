@@ -2,7 +2,9 @@ use insta::assert_snapshot;
 use std::process::{Command, Output};
 
 fn exec(args: &[&str]) -> Output {
+    // disable console color so output assertions and snapshots match the plain text exactly
     Command::new(env!("CARGO_BIN_EXE_bioassert"))
+        .arg("--color=never")
         .args(args)
         .output()
         .expect("failed to run bioassert")

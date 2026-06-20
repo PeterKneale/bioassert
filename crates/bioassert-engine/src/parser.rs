@@ -25,3 +25,29 @@ pub fn parse_file(contents: &str) -> Result<Vec<Assertion>, Box<dyn std::error::
         .map(parse_assertion)
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_a_well_formed_assertion() {
+        let a = parse_assertion("output.bam file.exists eq true").unwrap();
+        assert_eq!(a.file, "output.bam");
+        assert_eq!(a.metric, "file.exists");
+        assert_eq!(a.comparator, "eq");
+        assert_eq!(a.expected, "true");
+    }
+
+    // The grammar must consume the whole line; a value that merely starts with a
+    // valid token ("true" in "truexx") must not be silently truncated to "true".
+    #[test]
+    fn rejects_value_with_trailing_characters() {
+        assert!(parse_assertion("output.bam file.exists eq truexx").is_err());
+    }
+
+    #[test]
+    fn rejects_an_extra_trailing_token() {
+        assert!(parse_assertion("output.bam file.exists eq true xx").is_err());
+    }
+}

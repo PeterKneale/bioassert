@@ -1,8 +1,7 @@
 ---
-source: tests/integration_test.rs
+source: tests/run_subcommand_test.rs
 expression: "String::from_utf8_lossy(&output.stdout)"
 ---
-Running assertions in tests/data/assertions.txt
 PASS. Expected tests/data/empty_file.txt file.exists == true, got true
 PASS. Expected tests/data/empty_file.txt file.exists != false, got true
 PASS. Expected tests/data/size_5B.txt file.exists == true, got true

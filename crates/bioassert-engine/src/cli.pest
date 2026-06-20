@@ -26,7 +26,7 @@ string_value = _{ single_quoted | double_quoted | unquoted_string }
 value = { size_value | count_value | boolean_unit | string_value }
 
 assertion = {
-    file ~ metric ~ comparator ~ value
+    file ~ metric ~ comparator ~ value ~ EOI
 }
 
 assertions = {
