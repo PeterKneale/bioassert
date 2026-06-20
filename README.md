@@ -47,6 +47,8 @@ bioassert [OPTIONS] <COMMAND>
 | `-h`, `--help`            |         | Print help.                                                                                  |
 | `-V`, `--version`         |         | Print the version.                                                                           |
 
+`--report-file`, `--color` and `--icons` are global, so they may appear either before or after the subcommand. For example, `bioassert run checks.txt --color=never` and `bioassert --color=never run checks.txt` are equivalent.
+
 ### Results and exit codes
 
 Result lines are written to **stdout**, one per assertion: `PASS.` when the assertion holds and `FAIL.` when it does not. Errors (invalid syntax, an unknown metric, an unreadable file) are written to **stderr** as `ERROR.` lines. The process exit code reflects the worst outcome across all assertions:

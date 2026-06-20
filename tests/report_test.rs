@@ -311,3 +311,24 @@ fn explicit_report_file_overrides_derived_path() {
     assert!(explicit.exists(), "expected explicit report file");
     assert!(!derived.exists(), "expected derived report file NOT to be created");
 }
+
+// The global options are accepted after the subcommand and its arguments, not only
+// before it, so `assert <str> --colour=always` works the same as `--colour=always assert <str>`.
+
+#[test]
+fn global_flags_are_accepted_after_the_subcommand() {
+    let dir = TempDir::new().unwrap();
+    let output = exec_in(&dir, &["assert", passing_assertion(), "--color=always", "--icons=always"]);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("🟢"), "expected icon from trailing --icons: {stdout:?}");
+    assert!(stdout.contains(&format!("{GREEN}PASS")), "expected color from trailing --color: {stdout:?}");
+}
+
+#[test]
+fn report_file_flag_is_accepted_after_the_subcommand() {
+    let dir = TempDir::new().unwrap();
+    let file = write_assertions(&dir);
+    let explicit = dir.path().join("trailing.log");
+    exec(&["run", file.to_str().unwrap(), "--report-file", explicit.to_str().unwrap()]);
+    assert!(explicit.exists(), "expected trailing --report-file to be honored");
+}

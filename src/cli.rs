@@ -7,11 +7,12 @@ pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
 
-    #[arg(long, value_name = "FILE", help = "Write the assertion report to FILE instead of the default location")]
+    #[arg(long, global = true, value_name = "FILE", help = "Write the assertion report to FILE instead of the default location")]
     pub report_file: Option<PathBuf>,
 
     #[arg(
         long,
+        global = true,
         visible_alias = "colour",
         value_enum,
         default_value_t = When::Auto,
@@ -22,6 +23,7 @@ pub struct Cli {
 
     #[arg(
         long,
+        global = true,
         value_enum,
         default_value_t = When::Auto,
         value_name = "WHEN",
