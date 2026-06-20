@@ -1,0 +1,5 @@
+---
+source: tests/report_test.rs
+expression: contents
+---
+PASS. Expected tests/data/empty_file.txt file.exists == false, got false

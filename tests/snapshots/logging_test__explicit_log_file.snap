@@ -1,8 +1,0 @@
----
-source: tests/logging_test.rs
-expression: normalize_log(&contents)
----
-[TIMESTAMP] DEBUG bioassert: parsing assertion: tests/data/empty_file.txt file.exists eq false
-[TIMESTAMP] DEBUG bioassert_engine::executor: executing assertion file=tests/data/empty_file.txt metric=file.exists comparator=eq expected=false
-[TIMESTAMP] DEBUG bioassert_engine::executor: assertion result success=false actual=true
-[TIMESTAMP]  INFO bioassert_engine::executor: FAIL. Expected tests/data/empty_file.txt file.exists == false, got true

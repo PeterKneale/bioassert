@@ -4,7 +4,7 @@ use std::process::{Command, Output};
 fn exec(args: &[&str]) -> Output {
     // disable console color so output assertions and snapshots match the plain text exactly
     Command::new(env!("CARGO_BIN_EXE_bioassert"))
-        .arg("--color-console-log=false")
+        .arg("--color=never")
         .args(args)
         .output()
         .expect("failed to run bioassert")

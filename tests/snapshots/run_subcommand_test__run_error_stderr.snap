@@ -1,6 +1,5 @@
 ---
-source: tests/integration_test.rs
-assertion_line: 73
+source: tests/run_subcommand_test.rs
 expression: "String::from_utf8_lossy(&output.stderr)"
 ---
 ERROR. unknown metric: file.explode
