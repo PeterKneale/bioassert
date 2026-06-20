@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0](https://github.com/PeterKneale/bioassert/compare/v1.2.0...v1.3.0) - 2026-06-20
+
+### Added
+
+- make --color, --icons and --report-file global options
+- decouple assertion report from application logging
+- add version command to CLI
+
+### Other
+
+- merge workspace crates into single bioassert crate
+
 ## [1.2.0](https://github.com/PeterKneale/bioassert/compare/bioassert-v1.1.0...bioassert-v1.2.0) - 2026-06-19
 
 ### Added
