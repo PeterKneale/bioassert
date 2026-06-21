@@ -3,17 +3,6 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
-pub fn strip_quotes(s: &str) -> &str {
-    if s.len() >= 2 {
-        let b = s.as_bytes();
-        if (b[0] == b'\'' && b[s.len() - 1] == b'\'') || (b[0] == b'"' && b[s.len() - 1] == b'"')
-        {
-            return &s[1..s.len() - 1];
-        }
-    }
-    s
-}
-
 pub fn cell(file: &Path, delimiter: char, line: usize, column: usize) -> Result<String, FileError> {
     let reader = io::BufReader::new(File::open(file).map_err(|e| FileError::new(file, e))?);
     let raw = reader
@@ -41,27 +30,6 @@ mod tests {
         let mut f = NamedTempFile::new().unwrap();
         f.write_all(contents.as_bytes()).unwrap();
         f
-    }
-
-    #[test]
-    fn strip_quotes_removes_double_quotes() {
-        assert_eq!(strip_quotes("\"hello\""), "hello");
-    }
-
-    #[test]
-    fn strip_quotes_removes_single_quotes() {
-        assert_eq!(strip_quotes("'hello'"), "hello");
-    }
-
-    #[test]
-    fn strip_quotes_leaves_unquoted_string() {
-        assert_eq!(strip_quotes("hello"), "hello");
-    }
-
-    #[test]
-    fn strip_quotes_leaves_short_string() {
-        assert_eq!(strip_quotes("a"), "a");
-        assert_eq!(strip_quotes(""), "");
     }
 
     #[test]

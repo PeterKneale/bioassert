@@ -13,6 +13,7 @@ clap = { version = "4.6.1", features = ["derive"] }
 regex = "1"
 pest = "2.8.6"
 pest_derive = "2.8.6"
+noodles = { version = "0.111", features = ["bam", "sam"] }
 
 [dev-dependencies]
 insta = "1.48.0"

@@ -4,6 +4,7 @@
 //! [`core`] (shared types and traits), [`file`] and [`delimited`] (metric
 //! executors), and [`engine`] (parsing, dispatch, and reporting).
 
+pub mod bam;
 pub mod core;
 pub mod delimited;
 pub mod engine;

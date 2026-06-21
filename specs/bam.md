@@ -11,13 +11,13 @@ markers. This feature adds assertions that test both the **presence** and the **
 fields, focused on read groups, using the [`noodles`](https://docs.rs/noodles-bam/latest/noodles_bam/) crate to
 parse BAM.
 
-The intended outcome: a user can write checks like `sample.bam bam.rg.0.sm eq NA12878` in an assertions file
+The intended outcome: a user can write checks like `sample.bam bam.header.rg.0.sm eq NA12878` in an assertions file
 and have them pass/fail like any other metric.
 
 ## Constraints and key facts
 
 - **No pest grammar change is needed.** `src/engine/cli.pest` defines `metric = @{ identifier ~ ("." ~ metric_segment)+ }`,
-  which already accepts any dot-separated chain of identifiers/numbers (e.g. `bam.rg.0.sm`). Executors do all real
+  which already accepts any dot-separated chain of identifiers/numbers (e.g. `bam.header.rg.0.sm`). Executors do all real
   parsing in `try_parse` via `metric.split('.')` + slice matching — exactly the pattern `DelimitedCellExecutor`
   uses for `csv.line.2.column.3` (`src/delimited/cell/executor.rs`).
 - **Values with special characters must be quoted.** The grammar's bare string is `ASCII_ALPHANUMERIC+` only, so
@@ -35,12 +35,16 @@ and have them pass/fail like any other metric.
 
 ## Design decisions
 
-- **Read groups addressed by index** (`bam.rg.0.sm`), following header order — robust given that read-group IDs
+- **Read groups addressed by index** (`bam.header.rg.0.sm`), following header order — robust given that read-group IDs
   contain dots (`H0164.2`) which collide with the dot-delimited metric grammar.
 - **Presence via count + boolean `.present` suffix** — a missing tag/RG yields `false`, not an error.
 - **Scope**: read groups (full) plus counts for `@SQ`/`@PG` and `@HD` fields.
+- **Namespaced under `bam.header.*`.** A BAM has two sections — the header and the alignment records. Every
+  metric here is a header metric, so they live under `bam.header.*`. This reserves a sibling namespace for
+  future record/body metrics (e.g. `bam.records.count`, mapped/unmapped/duplicate counts, MAPQ thresholds) and
+  file-integrity checks (e.g. BGZF EOF / not-truncated, index present), which are the obvious next additions.
 - **Header read once, then cached for the whole workflow.** A `run` over an assertions file typically issues
-  many `bam.*` assertions against the same file. Each would otherwise re-open, bgzf-decompress, and re-parse the
+  many `bam.header.*` assertions against the same file. Each would otherwise re-open, bgzf-decompress, and re-parse the
   header. Instead, `src/bam/functions.rs` holds a process-scoped cache keyed by file path, so the header for a
   given BAM is parsed exactly once per invocation. See "Header caching" below.
 
@@ -48,14 +52,14 @@ and have them pass/fail like any other metric.
 
 | Metric | Value type | Meaning |
 |---|---|---|
-| `bam.rg.count` | integer | number of `@RG` lines |
-| `bam.sq.count` | integer | number of `@SQ` reference sequences |
-| `bam.pg.count` | integer | number of `@PG` program records |
-| `bam.rg.<n>.<tag>` | string | tag value of the nth read group (`id`, `sm`, `lb`, `pl`, `pu`, `pi`, `dt`, `cn`, `ds`, `pm`, ...) |
-| `bam.rg.<n>.present` | bool | whether a read group exists at index n |
-| `bam.rg.<n>.<tag>.present` | bool | whether that tag is set on read group n |
-| `bam.hd.vn` | string | `@HD` version (VN) |
-| `bam.hd.so` | string | `@HD` sort order (SO) |
+| `bam.header.rg.count` | integer | number of `@RG` lines |
+| `bam.header.sq.count` | integer | number of `@SQ` reference sequences |
+| `bam.header.pg.count` | integer | number of `@PG` program records |
+| `bam.header.rg.<n>.<tag>` | string | tag value of the nth read group (`id`, `sm`, `lb`, `pl`, `pu`, `pi`, `dt`, `cn`, `ds`, `pm`, ...) |
+| `bam.header.rg.<n>.present` | bool | whether a read group exists at index n |
+| `bam.header.rg.<n>.<tag>.present` | bool | whether that tag is set on read group n |
+| `bam.header.hd.vn` | string | `@HD` version (VN) |
+| `bam.header.hd.so` | string | `@HD` sort order (SO) |
 
 `<n>` is a 0-based index. `<tag>` is the lowercased 2-letter SAM tag; `id` resolves to the read-group key,
 all others to `other_fields`.
@@ -76,63 +80,63 @@ All examples below are evaluated against the sample header above. The trailing c
 
 #### Counts
 ```
-sample.bam bam.rg.count        eq  2            # PASS
-sample.bam bam.rg.count        gte 1            # PASS
-sample.bam bam.rg.count        lt  5            # PASS
-sample.bam bam.sq.count        eq  1            # PASS
-sample.bam bam.pg.count        eq  1            # PASS
-sample.bam bam.rg.count        eq  3            # FAIL (actual 2)
+sample.bam bam.header.rg.count        eq  2            # PASS
+sample.bam bam.header.rg.count        gte 1            # PASS
+sample.bam bam.header.rg.count        lt  5            # PASS
+sample.bam bam.header.sq.count        eq  1            # PASS
+sample.bam bam.header.pg.count        eq  1            # PASS
+sample.bam bam.header.rg.count        eq  3            # FAIL (actual 2)
 ```
 
 #### Read-group tag values
 Values containing a dot, dash, or colon must be quoted; bare values must be alphanumeric.
 ```
-sample.bam bam.rg.0.id         eq  'H0164.1'           # PASS (ID is the @RG key)
-sample.bam bam.rg.1.id         eq  'H0164.2'           # PASS
-sample.bam bam.rg.0.sm         eq  NA12878             # PASS
-sample.bam bam.rg.1.sm         eq  NA12878             # PASS
-sample.bam bam.rg.0.pl         eq  ILLUMINA            # PASS
-sample.bam bam.rg.0.lb         eq  'Solexa-272222'     # PASS
-sample.bam bam.rg.0.pu         eq  'H0164ALXX140820.1' # PASS
-sample.bam bam.rg.1.pu         eq  'H0164ALXX140820.2' # PASS
-sample.bam bam.rg.0.sm         ne  NA12891             # PASS (not equal)
-sample.bam bam.rg.0.pl         contains LUM            # PASS
-sample.bam bam.rg.0.lb         starts Solexa           # PASS
-sample.bam bam.rg.0.pu         ends   .1               # FAIL (".1" is unquoted, parses as 1; use 'H0164ALXX140820.1')
-sample.bam bam.rg.0.pl         matches '^ILL.*A$'      # PASS (regex)
-sample.bam bam.rg.0.sm         eq  WRONG               # FAIL (actual NA12878)
+sample.bam bam.header.rg.0.id         eq  'H0164.1'           # PASS (ID is the @RG key)
+sample.bam bam.header.rg.1.id         eq  'H0164.2'           # PASS
+sample.bam bam.header.rg.0.sm         eq  NA12878             # PASS
+sample.bam bam.header.rg.1.sm         eq  NA12878             # PASS
+sample.bam bam.header.rg.0.pl         eq  ILLUMINA            # PASS
+sample.bam bam.header.rg.0.lb         eq  'Solexa-272222'     # PASS
+sample.bam bam.header.rg.0.pu         eq  'H0164ALXX140820.1' # PASS
+sample.bam bam.header.rg.1.pu         eq  'H0164ALXX140820.2' # PASS
+sample.bam bam.header.rg.0.sm         ne  NA12891             # PASS (not equal)
+sample.bam bam.header.rg.0.pl         contains LUM            # PASS
+sample.bam bam.header.rg.0.lb         starts Solexa           # PASS
+sample.bam bam.header.rg.0.pu         ends   .1               # FAIL (".1" is unquoted, parses as 1; use 'H0164ALXX140820.1')
+sample.bam bam.header.rg.0.pl         matches '^ILL.*A$'      # PASS (regex)
+sample.bam bam.header.rg.0.sm         eq  WRONG               # FAIL (actual NA12878)
 ```
 
 #### Presence (never errors on absence)
 ```
-sample.bam bam.rg.0.present    eq  true     # PASS (RG 0 exists)
-sample.bam bam.rg.1.present    eq  true     # PASS (RG 1 exists)
-sample.bam bam.rg.2.present    eq  false    # PASS (only 2 read groups)
-sample.bam bam.rg.0.sm.present eq  true     # PASS (SM is set)
-sample.bam bam.rg.0.pu.present eq  true     # PASS (PU is set)
-sample.bam bam.rg.0.dt.present eq  false    # PASS (no DT tag in sample)
-sample.bam bam.rg.0.cn.present eq  false    # PASS (no CN tag in sample)
-sample.bam bam.rg.0.pi.present eq  false    # PASS (no PI tag in sample)
+sample.bam bam.header.rg.0.present    eq  true     # PASS (RG 0 exists)
+sample.bam bam.header.rg.1.present    eq  true     # PASS (RG 1 exists)
+sample.bam bam.header.rg.2.present    eq  false    # PASS (only 2 read groups)
+sample.bam bam.header.rg.0.sm.present eq  true     # PASS (SM is set)
+sample.bam bam.header.rg.0.pu.present eq  true     # PASS (PU is set)
+sample.bam bam.header.rg.0.dt.present eq  false    # PASS (no DT tag in sample)
+sample.bam bam.header.rg.0.cn.present eq  false    # PASS (no CN tag in sample)
+sample.bam bam.header.rg.0.pi.present eq  false    # PASS (no PI tag in sample)
 ```
 
 #### Header line (@HD)
 ```
-sample.bam bam.hd.vn           eq  '1.6'        # PASS (quote: dot)
-sample.bam bam.hd.so           eq  coordinate   # PASS
-sample.bam bam.hd.so           ne  queryname    # PASS
+sample.bam bam.header.hd.vn           eq  '1.6'        # PASS (quote: dot)
+sample.bam bam.header.hd.so           eq  coordinate   # PASS
+sample.bam bam.header.hd.so           ne  queryname    # PASS
 ```
 
 #### Errors (exit code 2)
 ```
-sample.bam bam.rg.2.sm         eq  NA12878   # ERROR (read-group index out of range)
-sample.bam bam.rg.0.dt         eq  X         # ERROR (tag not present — use .present to test softly)
-missing.bam bam.rg.count       eq  2         # ERROR (file cannot be opened)
-notabam.txt  bam.rg.count      eq  2         # ERROR (not a valid BAM)
+sample.bam bam.header.rg.2.sm         eq  NA12878   # ERROR (read-group index out of range)
+sample.bam bam.header.rg.0.dt         eq  X         # ERROR (tag not present — use .present to test softly)
+missing.bam bam.header.rg.count       eq  2         # ERROR (file cannot be opened)
+notabam.txt  bam.header.rg.count      eq  2         # ERROR (not a valid BAM)
 ```
 
 ### Semantics
 
-Value metrics (`bam.rg.<n>.<tag>`, `bam.hd.*`) **error** if the RG index / tag / `@HD` is absent (consistent
+Value metrics (`bam.header.rg.<n>.<tag>`, `bam.header.hd.*`) **error** if the RG index / tag / `@HD` is absent (consistent
 with `DelimitedCellExecutor` erroring on a missing cell). The `.present` metrics **never error** on absence —
 they return `false`. This is how a user safely tests "is this set" versus "what is its value".
 
@@ -158,7 +162,7 @@ noodles = { version = "<latest>", features = ["bam", "sam"] }
     `reference_count`, `program_count`, `read_group_tag(header, n, tag) -> Option<String>`,
     `read_group_present(header, n) -> bool`, `hd_field(header, field) -> Option<String>`.
   - tag lookup: `id` → nth key of `read_groups()`; otherwise build `Tag` from the uppercased 2 bytes and read `other_fields()`.
-  - every `bam.*` executor's `execute` calls `read_header` and then a helper; none open the file directly.
+  - every `bam.header.*` executor's `execute` calls `read_header` and then a helper; none open the file directly.
 - `src/bam/count/executor.rs` — `BamCountExecutor`: `try_parse` matches `[ "bam", kind, "count" ]` for
   `kind ∈ {rg, sq, pg}`; `execute` returns `Value::from_integer(expected)` numeric-compared against the count.
 - `src/bam/read_group/executor.rs` — two executors (exact-shape `try_parse`, so dispatch order is irrelevant):
@@ -172,7 +176,7 @@ prefix/tag/index), matching `src/delimited/cell/executor.rs` tests.
 
 ### 3. Header caching
 
-The header for a given BAM must be parsed exactly once per invocation, then reused across every `bam.*`
+The header for a given BAM must be parsed exactly once per invocation, then reused across every `bam.header.*`
 assertion in the workflow. The binary runs once per `run`/`assert` invocation, so a process-scoped cache is
 workflow-scoped in practice. Keep it inside `src/bam/functions.rs` so the rest of the codebase (and the
 `AssertionExecutor` trait) is untouched:
@@ -286,16 +290,16 @@ add a short note that expected values containing non-alphanumeric characters (do
 3. `cargo insta review` (or `INSTA_UPDATE=always cargo test`) — accept the new BAM snapshot.
 4. Manual end-to-end against the fixture:
    ```bash
-   cargo run -- assert "tests/data/sample.bam bam.rg.count eq 2"           # PASS, exit 0
-   cargo run -- assert "tests/data/sample.bam bam.rg.0.sm eq NA12878"      # PASS
-   cargo run -- assert "tests/data/sample.bam bam.rg.1.id eq 'H0164.2'"    # PASS
-   cargo run -- assert "tests/data/sample.bam bam.hd.vn eq '1.6'"          # PASS
-   cargo run -- assert "tests/data/sample.bam bam.rg.0.dt.present eq false" # PASS (no DT tag)
-   cargo run -- assert "tests/data/sample.bam bam.rg.0.sm eq WRONG"        # FAIL, exit 1
-   cargo run -- assert "tests/data/sample.bam bam.rg.2.sm eq X"            # ERROR (index out of range), exit 2
+   cargo run -- assert "tests/data/sample.bam bam.header.rg.count eq 2"           # PASS, exit 0
+   cargo run -- assert "tests/data/sample.bam bam.header.rg.0.sm eq NA12878"      # PASS
+   cargo run -- assert "tests/data/sample.bam bam.header.rg.1.id eq 'H0164.2'"    # PASS
+   cargo run -- assert "tests/data/sample.bam bam.header.hd.vn eq '1.6'"          # PASS
+   cargo run -- assert "tests/data/sample.bam bam.header.rg.0.dt.present eq false" # PASS (no DT tag)
+   cargo run -- assert "tests/data/sample.bam bam.header.rg.0.sm eq WRONG"        # FAIL, exit 1
+   cargo run -- assert "tests/data/sample.bam bam.header.rg.2.sm eq X"            # ERROR (index out of range), exit 2
    cargo run -- run tests/data/bam_assertions.txt                          # batch report
    ```
 5. Confirm a value-assert on a genuinely missing tag exits with ERROR while the matching `.present` check returns
    `false` (PASS against `eq false`).
-6. Confirm caching: the caching unit test passes, and a `run` over an assertions file with many `bam.*` lines
+6. Confirm caching: the caching unit test passes, and a `run` over an assertions file with many `bam.header.*` lines
    against one BAM parses the header only once (the `read_header` cache test guards this).
