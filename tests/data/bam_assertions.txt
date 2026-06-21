@@ -7,7 +7,7 @@ tests/data/sample.bam bam.header.rg.count gte 1
 tests/data/sample.bam bam.header.sq.count eq 1
 tests/data/sample.bam bam.header.pg.count eq 1
 
-# Read-group tag values (dots/dashes must be quoted)
+# Read-group tag values (dots, dashes, and colons must be quoted)
 tests/data/sample.bam bam.header.rg.0.id eq 'H0164.1'
 tests/data/sample.bam bam.header.rg.1.id eq 'H0164.2'
 tests/data/sample.bam bam.header.rg.0.sm eq NA12878
