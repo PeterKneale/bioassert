@@ -243,6 +243,51 @@ PASS. Expected output.bam bam.header.rg.0.pl == ILLUMINA, got ILLUMINA
 PASS. Expected output.bam bam.header.hd.so == coordinate, got coordinate
 ```
 
+### Nextflow
+
+`bioassert` works well as a validation step in a [Nextflow](https://www.nextflow.io/) pipeline. Write the
+assertions to a file, then run them with the `run` subcommand. The `--report-file` flag persists the report
+so it can be captured as a process output, and a non-zero exit code (1 for a failed assertion, 2 for an error)
+fails the task automatically.
+
+```groovy
+process REFERENCE_GENOME_ANNOTATIONS_ASSERTIONS {
+
+    tag "reference_genome_annotations"
+    label 'process_medium'
+    conda "${moduleDir}/environment.yml"
+    container "ghcr.io/peterkneale/bioassert:1.3.1"
+
+    input:
+    path(annotation)
+    path(annotation_decompressed)
+
+    output:
+    path("*.log"), emit: log
+    tuple val("${task.process}"), val('bioassert'), eval('bioassert --version | sed "1!d;s/.* //"'), emit: versions_bioassert, topic: versions
+
+    script:
+    """
+    cat <<EOF > assertions.txt
+    ${annotation} file.exists eq true
+    ${annotation} file.size gt 10MB
+    ${annotation_decompressed} file.exists eq true
+    ${annotation_decompressed} file.size gt 50MB
+    EOF
+
+    bioassert \\
+        --report-file reference_genome_annotations_assertions.log \\
+        run assertions.txt
+    """
+}
+```
+
+Notes:
+
+- Assertions reference the staged file paths directly. The unquoted heredoc (`<<EOF`) lets Nextflow interpolate
+  `${annotation}` into the real filename, and the grammar accepts dotted names like `genome.gff.gz` unquoted.
+- Global flags such as `--report-file` go before the `run` subcommand; the assertions file is its positional argument.
+
 ## Syntax
 
 ```
