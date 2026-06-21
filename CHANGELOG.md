@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.2](https://github.com/PeterKneale/bioassert/compare/v1.3.1...v1.3.2) - 2026-06-21
+
+### Fixed
+
+- *(docker)* install procps for Nextflow task metrics ([#19](https://github.com/PeterKneale/bioassert/pull/19))
+
+### Other
+
+- add Nextflow process example to README ([#23](https://github.com/PeterKneale/bioassert/pull/23))
+- Add BAM header assertions ([#20](https://github.com/PeterKneale/bioassert/pull/20))
+
 ## [1.3.1](https://github.com/PeterKneale/bioassert/compare/v1.3.0...v1.3.1) - 2026-06-21
 
 ### Other
