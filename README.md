@@ -35,7 +35,7 @@ bioassert [OPTIONS] <COMMAND>
 | Command           | Description                                                                  |
 |-------------------|------------------------------------------------------------------------------|
 | `assert "<...>"`  | Evaluate a single assertion passed as one quoted string.                     |
-| `run <file>`      | Evaluate every assertion in a file. Blank lines and `#` comments are skipped. |
+| `run [file]`      | Evaluate every assertion in a file (defaults to `assertions.txt`). Blank lines and `#` comments are skipped. |
 
 ### Options
 

@@ -67,6 +67,7 @@ pub enum Commands {
         assertion: String,
     },
     Run {
+        #[arg(default_value = "assertions.txt", help = "Path to the assertions file to evaluate")]
         file: PathBuf,
     },
 }
