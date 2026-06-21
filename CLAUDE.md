@@ -68,7 +68,7 @@ previously separate workspace crates and were merged back into one; their bounda
 2. Re-export the new `*Executor` from that module's `mod.rs`.
 3. Add a `try_parse` dispatch line in `src/engine/executor.rs`.
 4. Extend `src/engine/cli.pest` if new metric or value syntax is needed. The `metric` rule already accepts any
-   dot-separated chain of identifiers/numbers (e.g. `bam.rg.0.sm`), so most new metrics need no grammar change.
+   dot-separated chain of identifiers/numbers (e.g. `bam.header.rg.0.sm`), so most new metrics need no grammar change.
 
 Expected values are matched by the grammar as a bare alphanumeric string, a quoted string, a number (with optional
 size/count unit), or a boolean. Values containing dots, dashes, or colons (e.g. `'H0164.2'`, `'1.6'`,
