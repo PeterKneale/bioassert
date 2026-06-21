@@ -11,6 +11,30 @@ fn exec(args: &[&str]) -> Output {
 }
 
 #[test]
+fn run_defaults_to_assertions_txt_in_cwd() {
+    // `run` with no path should pick up ./assertions.txt. Use a temp dir as the working
+    // directory so the default file and its derived report file land there, not in the repo.
+    let dir = tempfile::tempdir().expect("create temp dir");
+    std::fs::write(dir.path().join("assertions.txt"), "missing.txt file.exists eq false\n")
+        .expect("write assertions.txt");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_bioassert"))
+        .arg("--color=never")
+        .arg("run")
+        .current_dir(dir.path())
+        .output()
+        .expect("failed to run bioassert");
+
+    assert!(
+        output.status.success(),
+        "expected exit code 0, got {}\nstderr:\n{}",
+        output.status,
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
+}
+
+#[test]
 fn exits_0_for_all_passing_assertions() {
     let output = exec(&["run", "tests/data/assertions.txt"]);
     assert!(
