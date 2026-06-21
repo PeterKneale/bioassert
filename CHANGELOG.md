@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1](https://github.com/PeterKneale/bioassert/compare/v1.3.0...v1.3.1) - 2026-06-21
+
+### Other
+
+- use PAT for release-plz so releases trigger docker workflow
+
 ## [1.3.0](https://github.com/PeterKneale/bioassert/compare/v1.2.0...v1.3.0) - 2026-06-20
 
 ### Added
