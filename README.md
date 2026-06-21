@@ -158,6 +158,38 @@ bioassert assert "samples.csv csv.line.2.column.3 starts New"
 bioassert assert "results.tsv tsv.line.2.column.2 matches '^[0-9]+$'"
 ```
 
+### BAM header checks
+
+Assertions on a BAM file's SAM header live under `bam.header.*`. Read groups (`@RG`) are addressed by 0-based
+index. Values containing dots, dashes or colons (read-group IDs, library names, ISO dates, version strings) must
+be quoted.
+
+```bash
+# At least one read group is present
+bioassert assert "output.bam bam.header.rg.count gte 1"
+
+# Sample name of the first read group (what variant callers group by)
+bioassert assert "output.bam bam.header.rg.0.sm eq NA12878"
+
+# Sequencing platform
+bioassert assert "output.bam bam.header.rg.0.pl eq ILLUMINA"
+
+# Library name (quoted: contains a dash)
+bioassert assert "output.bam bam.header.rg.0.lb eq 'Solexa-272222'"
+
+# Read-group ID of the second read group (quoted: contains a dot)
+bioassert assert "output.bam bam.header.rg.1.id eq 'H0164.2'"
+
+# A platform unit tag is set on the first read group
+bioassert assert "output.bam bam.header.rg.0.pu.present eq true"
+
+# The file is coordinate-sorted
+bioassert assert "output.bam bam.header.hd.so eq coordinate"
+
+# Exactly one reference sequence
+bioassert assert "output.bam bam.header.sq.count eq 1"
+```
+
 ### Assertions file
 
 Lines beginning with `#` are comments. Blank lines are ignored.
@@ -182,6 +214,12 @@ samples.csv   csv.lines.count    gte  2
 
 # Spot-check a cell
 samples.csv   csv.line.2.column.1  starts  SAMPLE_
+
+# Validate BAM header provenance
+output.bam    bam.header.rg.count   gte  1
+output.bam    bam.header.rg.0.sm    eq   NA12878
+output.bam    bam.header.rg.0.pl    eq   ILLUMINA
+output.bam    bam.header.hd.so      eq   coordinate
 ```
 
 ```bash
@@ -199,6 +237,10 @@ PASS. Expected results.vcf file.lines >= 1, got 42
 PASS. Expected samples.csv csv.columns.count == 5, got 5
 PASS. Expected samples.csv csv.lines.count >= 2, got 101
 PASS. Expected samples.csv csv.line.2.column.1 starts_with SAMPLE_, got SAMPLE_001
+PASS. Expected output.bam bam.header.rg.count >= 1, got 2
+PASS. Expected output.bam bam.header.rg.0.sm == NA12878, got NA12878
+PASS. Expected output.bam bam.header.rg.0.pl == ILLUMINA, got ILLUMINA
+PASS. Expected output.bam bam.header.hd.so == coordinate, got coordinate
 ```
 
 ## Syntax
@@ -228,6 +270,27 @@ PASS. Expected samples.csv csv.line.2.column.1 starts_with SAMPLE_, got SAMPLE_0
 
 Replace `csv` with `tsv` (tab-separated) or `psv` (pipe-separated) for those formats.
 
+### BAM header metrics
+
+Metrics on a BAM file's SAM header, all under the `bam.header.*` namespace. Read groups (`@RG`) are addressed by
+0-based index `N`, following header order. `<tag>` is a lowercased 2-letter SAM tag.
+
+| Metric                          | Description                                            | Comparators                          | Value   |
+|---------------------------------|--------------------------------------------------------|--------------------------------------|---------|
+| `bam.header.rg.count`           | Number of `@RG` read groups                            | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | count   |
+| `bam.header.sq.count`           | Number of `@SQ` reference sequences                    | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | count   |
+| `bam.header.pg.count`           | Number of `@PG` program records                        | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | count   |
+| `bam.header.rg.N.<tag>`         | Tag value of read group N (`id`, `sm`, `lb`, `pl`, `pu`, ...) | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
+| `bam.header.rg.N.present`       | Whether read group N exists                            | `eq`, `ne`                           | boolean |
+| `bam.header.rg.N.<tag>.present` | Whether `<tag>` is set on read group N                 | `eq`, `ne`                           | boolean |
+| `bam.header.hd.vn`              | `@HD` format version (VN)                              | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
+| `bam.header.hd.so`              | `@HD` sort order (SO), e.g. `coordinate`               | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
+
+`id` resolves to the read-group identifier (the `@RG ID` field); other tags resolve to the read group's
+remaining fields. Reading a tag value (or `@HD` field) that is not set, or a read group whose index is out of
+range, is an **error**; use the `.present` form to test for presence without erroring. Quote values that contain
+dots, dashes or colons (`'H0164.2'`, `'Solexa-272222'`, `'1.6'`).
+
 ### Comparators
 
 | Comparator | Meaning       | Use with      |
@@ -238,10 +301,10 @@ Replace `csv` with `tsv` (tab-separated) or `psv` (pipe-separated) for those for
 | `lte`      | less or equal | size, count   |
 | `gt`       | greater than  | size, count   |
 | `gte`      | >=            | size, count   |
-| `starts`   | starts with   | string (cell) |
-| `ends`     | ends with     | string (cell) |
-| `contains` | contains      | string (cell) |
-| `matches`  | regex match   | string (cell) |
+| `starts`   | starts with   | string        |
+| `ends`     | ends with     | string        |
+| `contains` | contains      | string        |
+| `matches`  | regex match   | string        |
 
 ### Values
 

@@ -1,0 +1,36 @@
+# BAM header assertions against tests/data/sample.bam (all passing).
+# Regenerate the fixture with: cargo run --example gen_sample_bam
+
+# Counts
+tests/data/sample.bam bam.header.rg.count eq 2
+tests/data/sample.bam bam.header.rg.count gte 1
+tests/data/sample.bam bam.header.sq.count eq 1
+tests/data/sample.bam bam.header.pg.count eq 1
+
+# Read-group tag values (dots, dashes, and colons must be quoted)
+tests/data/sample.bam bam.header.rg.0.id eq 'H0164.1'
+tests/data/sample.bam bam.header.rg.1.id eq 'H0164.2'
+tests/data/sample.bam bam.header.rg.0.sm eq NA12878
+tests/data/sample.bam bam.header.rg.1.sm eq NA12878
+tests/data/sample.bam bam.header.rg.0.pl eq ILLUMINA
+tests/data/sample.bam bam.header.rg.0.lb eq 'Solexa-272222'
+tests/data/sample.bam bam.header.rg.0.pu eq 'H0164ALXX140820.1'
+tests/data/sample.bam bam.header.rg.1.pu eq 'H0164ALXX140820.2'
+tests/data/sample.bam bam.header.rg.0.sm ne NA12891
+tests/data/sample.bam bam.header.rg.0.pl contains LUM
+tests/data/sample.bam bam.header.rg.0.lb starts Solexa
+tests/data/sample.bam bam.header.rg.0.pl matches '^ILL.*A$'
+
+# Presence (never errors on absence)
+tests/data/sample.bam bam.header.rg.0.present eq true
+tests/data/sample.bam bam.header.rg.1.present eq true
+tests/data/sample.bam bam.header.rg.2.present eq false
+tests/data/sample.bam bam.header.rg.0.sm.present eq true
+tests/data/sample.bam bam.header.rg.0.pu.present eq true
+tests/data/sample.bam bam.header.rg.0.dt.present eq false
+tests/data/sample.bam bam.header.rg.0.cn.present eq false
+
+# Header line (@HD)
+tests/data/sample.bam bam.header.hd.vn eq '1.6'
+tests/data/sample.bam bam.header.hd.so eq coordinate
+tests/data/sample.bam bam.header.hd.so ne queryname

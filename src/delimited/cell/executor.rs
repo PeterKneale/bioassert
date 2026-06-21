@@ -21,7 +21,7 @@ impl AssertionExecutor for DelimitedCellExecutor {
     }
 
     fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
-        let expected_str = super::functions::strip_quotes(&request.expected).to_string();
+        let expected_str = crate::core::strip_quotes(&request.expected).to_string();
         let actual_str = super::functions::cell(&request.file, self.delimiter, self.line, self.col)?;
         let success = request.comparator.compare_string(&actual_str, &expected_str)?;
         Ok(AssertionExecutionResult { success, actual: Value::StringValue(actual_str) })

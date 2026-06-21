@@ -1,0 +1,30 @@
+---
+source: tests/bam_subcommand_test.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+PASS. Expected tests/data/sample.bam bam.header.rg.count == 2, got 2
+PASS. Expected tests/data/sample.bam bam.header.rg.count >= 1, got 2
+PASS. Expected tests/data/sample.bam bam.header.sq.count == 1, got 1
+PASS. Expected tests/data/sample.bam bam.header.pg.count == 1, got 1
+PASS. Expected tests/data/sample.bam bam.header.rg.0.id == 'H0164.1', got H0164.1
+PASS. Expected tests/data/sample.bam bam.header.rg.1.id == 'H0164.2', got H0164.2
+PASS. Expected tests/data/sample.bam bam.header.rg.0.sm == NA12878, got NA12878
+PASS. Expected tests/data/sample.bam bam.header.rg.1.sm == NA12878, got NA12878
+PASS. Expected tests/data/sample.bam bam.header.rg.0.pl == ILLUMINA, got ILLUMINA
+PASS. Expected tests/data/sample.bam bam.header.rg.0.lb == 'Solexa-272222', got Solexa-272222
+PASS. Expected tests/data/sample.bam bam.header.rg.0.pu == 'H0164ALXX140820.1', got H0164ALXX140820.1
+PASS. Expected tests/data/sample.bam bam.header.rg.1.pu == 'H0164ALXX140820.2', got H0164ALXX140820.2
+PASS. Expected tests/data/sample.bam bam.header.rg.0.sm != NA12891, got NA12878
+PASS. Expected tests/data/sample.bam bam.header.rg.0.pl contains LUM, got ILLUMINA
+PASS. Expected tests/data/sample.bam bam.header.rg.0.lb starts_with Solexa, got Solexa-272222
+PASS. Expected tests/data/sample.bam bam.header.rg.0.pl matches '^ILL.*A$', got ILLUMINA
+PASS. Expected tests/data/sample.bam bam.header.rg.0.present == true, got true
+PASS. Expected tests/data/sample.bam bam.header.rg.1.present == true, got true
+PASS. Expected tests/data/sample.bam bam.header.rg.2.present == false, got false
+PASS. Expected tests/data/sample.bam bam.header.rg.0.sm.present == true, got true
+PASS. Expected tests/data/sample.bam bam.header.rg.0.pu.present == true, got true
+PASS. Expected tests/data/sample.bam bam.header.rg.0.dt.present == false, got false
+PASS. Expected tests/data/sample.bam bam.header.rg.0.cn.present == false, got false
+PASS. Expected tests/data/sample.bam bam.header.hd.vn == '1.6', got 1.6
+PASS. Expected tests/data/sample.bam bam.header.hd.so == coordinate, got coordinate
+PASS. Expected tests/data/sample.bam bam.header.hd.so != queryname, got coordinate
