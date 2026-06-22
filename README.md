@@ -3,6 +3,63 @@
 A CLI tool for asserting properties of files using a simple declarative syntax. Designed for validating pipeline outputs
 in bioinformatics workflows.
 
+## Quick start
+
+Install with cargo (see [Installation](#installation) for Docker):
+
+```bash
+cargo install bioassert
+```
+
+Write your checks to an assertions file. Each line is `<file> <metric> <comparator> <value>`; blank lines and lines
+beginning with `#` are ignored, and whitespace between fields is flexible so you can align columns for readability:
+
+```text
+# assertions.txt
+
+# Outputs were created and are non-trivial
+output.bam     file.exists   eq   true
+output.bam     file.size     gt   1MB
+results.vcf    file.empty    eq   false
+
+# The sample sheet has the columns we expect
+samples.csv    csv.columns.count   eq   5
+samples.csv    csv.lines.count     gte  2
+
+# BAM header provenance is intact
+output.bam     bam.header.rg.count   gte  1
+output.bam     bam.header.hd.so      eq   coordinate
+
+# The reference genome has the right number of contigs
+ref.fasta      fasta.seq.count   eq   25
+```
+
+Run them:
+
+```bash
+bioassert run assertions.txt
+```
+
+`run` defaults to `assertions.txt` when you give no path, so plain `bioassert run` works too.
+
+Each assertion prints a `PASS.`/`FAIL.` line, and the process exits non-zero if any assertion fails or errors, so it
+gates a pipeline step cleanly:
+
+```text
+PASS. Expected output.bam file.exists == true, got true
+PASS. Expected output.bam file.size > 1MB, got 5.00MB
+PASS. Expected results.vcf file.empty == false, got false
+PASS. Expected samples.csv csv.columns.count == 5, got 5
+PASS. Expected samples.csv csv.lines.count >= 2, got 101
+PASS. Expected output.bam bam.header.rg.count >= 1, got 2
+PASS. Expected output.bam bam.header.hd.so == coordinate, got coordinate
+PASS. Expected ref.fasta fasta.seq.count == 25, got 25
+```
+
+The same lines are written to a report file (here `assertions.txt.log`) so they can be captured as a pipeline artifact.
+See [Writing assertions](#writing-assertions) for more examples, [Metrics](#metrics) for the full reference, and
+[Results and exit codes](#results-and-exit-codes) for how exit codes map to outcomes.
+
 ## Installation
 
 ### cargo
@@ -15,13 +72,18 @@ cargo install bioassert
 
 ```bash
 docker pull ghcr.io/peterkneale/bioassert
-docker run --rm -v "$PWD":/data ghcr.io/peterkneale/bioassert assert "/data/output.bam file.exists eq true"
 ```
 
 Mount your working directory to `/data` and use that path prefix in your assertions. To run an assertions file:
 
 ```bash
-docker run --rm -v "$PWD":/data ghcr.io/peterkneale/bioassert run /data/checks.txt
+docker run --rm -v "$PWD":/data ghcr.io/peterkneale/bioassert run /data/assertions.txt
+```
+
+A single assertion can also be passed inline (see the `assert` subcommand below):
+
+```bash
+docker run --rm -v "$PWD":/data ghcr.io/peterkneale/bioassert assert "/data/output.bam file.exists eq true"
 ```
 
 ## Command-line interface
@@ -34,8 +96,11 @@ bioassert [OPTIONS] <COMMAND>
 
 | Command           | Description                                                                  |
 |-------------------|------------------------------------------------------------------------------|
-| `assert "<...>"`  | Evaluate a single assertion passed as one quoted string.                     |
 | `run [file]`      | Evaluate every assertion in a file (defaults to `assertions.txt`). Blank lines and `#` comments are skipped. |
+| `assert "<...>"`  | Evaluate a single assertion passed as one quoted string.                     |
+
+`run` is the primary workflow: keep your checks in a version-controlled assertions file and run them as a pipeline step.
+`assert` is handy for one-off checks and quick experimentation at the shell.
 
 ### Options
 
@@ -100,7 +165,82 @@ FAIL. Expected results.vcf file.lines > 999, got 0
 
 Color and icons are resolved independently, so either can be on while the other is off. The assertion report file is never iconified, so it stays easy to `grep`.
 
-## Examples
+## Writing assertions
+
+An assertions file has one assertion per line:
+
+```
+<file> <metric> <comparator> <value>
+```
+
+Lines beginning with `#` are comments and blank lines are ignored. Whitespace between fields is flexible, so columns can
+be aligned for readability. Pass the file to `bioassert run`.
+
+Bare values must be alphanumeric. Values that contain dots, dashes, colons, or spaces (read-group IDs, version strings,
+sequence names, descriptions) must be single- or double-quoted: `'H0164.2'`, `'1.6'`, `'Solexa-272222'`,
+`'NC_000001.11'`, `'Homo sapiens chromosome 1'`.
+
+### File checks
+
+```text
+output.bam    file.exists   eq   true     # file exists
+results.vcf   file.empty    eq   false    # not empty
+output.bam    file.size     gte  1MB      # at least 1 MB
+results.tsv   file.lines    eq   1000     # exactly 1000 lines
+results.tsv   file.lines    gte  1        # at least one line
+```
+
+### CSV / TSV / PSV checks
+
+Replace `csv` with `tsv` (tab-separated) or `psv` (pipe-separated) for those formats. Lines and columns are 1-indexed.
+
+```text
+samples.csv   csv.columns.count    eq   3                  # 3 columns
+counts.tsv    tsv.lines.count      gt   10                 # more than 10 lines
+report.psv    psv.line.2.column.1  eq   Alice              # cell value
+samples.csv   csv.line.2.column.3  starts  New             # cell prefix
+results.tsv   tsv.line.2.column.2  matches '^[0-9]+$'      # cell regex
+```
+
+### BAM header checks
+
+Assertions on a BAM file's SAM header live under `bam.header.*`. Read groups (`@RG`) are addressed by 0-based index.
+Values containing dots, dashes or colons (read-group IDs, library names, ISO dates, version strings) must be quoted.
+
+```text
+output.bam   bam.header.rg.count        gte  1                  # at least one read group
+output.bam   bam.header.rg.0.sm         eq   NA12878            # sample name (callers group by this)
+output.bam   bam.header.rg.0.pl         eq   ILLUMINA           # sequencing platform
+output.bam   bam.header.rg.0.lb         eq   'Solexa-272222'    # library name (quoted: dash)
+output.bam   bam.header.rg.1.id         eq   'H0164.2'          # second read-group ID (quoted: dot)
+output.bam   bam.header.rg.0.pu.present eq   true               # a platform-unit tag is set
+output.bam   bam.header.hd.so           eq   coordinate         # file is coordinate-sorted
+output.bam   bam.header.sq.count        eq   1                  # exactly one reference sequence
+```
+
+### FASTA checks
+
+Assertions on a FASTA file's records live under `fasta.seq.*`, with `fasta.length` as a whole-file total across all
+records. Records are addressed by 0-based index, following file order. Sequence names and descriptions that contain
+dots, dashes, colons, or spaces must be quoted.
+
+```text
+ref.fasta   fasta.seq.count          eq   25                          # 25 records
+ref.fasta   fasta.length             gte  3000000000                  # total bases across all records
+ref.fasta   fasta.seq.0.name         eq   chr1                        # first record's name
+ref.fasta   fasta.seq.0.length       gte  20000000                    # first record's length
+ref.fasta   fasta.seq.0.description  eq   'Homo sapiens chromosome 1' # description (quoted: spaces)
+ref.fasta   fasta.seq.0.name         matches '^chr[0-9XYM]+$'         # name matches a regex
+ref.fasta   fasta.seq.24.present     eq   true                        # a record exists at this index
+```
+
+### A single inline assertion
+
+For a one-off check you can skip the file and pass a single assertion to the `assert` subcommand:
+
+```bash
+bioassert assert "output.bam file.size gte 1MB"
+```
 
 ### Console output with color and icons
 
@@ -120,129 +260,6 @@ Each result line is prefixed with its status icon, and the leading keyword is co
 
 (`PASS`/`FAIL` lines go to stdout and `ERROR` lines to stderr; the icons render here, but the green/red keyword coloring only shows on an ANSI-capable terminal.)
 
-### File checks
-
-```bash
-# File exists
-bioassert assert "output.bam file.exists eq true"
-
-# File is not empty
-bioassert assert "results.vcf file.empty eq false"
-
-# File is at least 1 MB
-bioassert assert "output.bam file.size gte 1MB"
-
-# Exactly 1000 lines
-bioassert assert "results.tsv file.lines eq 1000"
-
-# At least one line
-bioassert assert "results.tsv file.lines gte 1"
-```
-
-### CSV / TSV / PSV checks
-
-```bash
-# CSV has 3 columns
-bioassert assert "samples.csv csv.columns.count eq 3"
-
-# TSV has more than 10 data lines
-bioassert assert "counts.tsv tsv.lines.count gt 10"
-
-# PSV cell value equals a string
-bioassert assert "report.psv psv.line.2.column.1 eq Alice"
-
-# CSV cell starts with a prefix
-bioassert assert "samples.csv csv.line.2.column.3 starts New"
-
-# TSV cell matches a regex
-bioassert assert "results.tsv tsv.line.2.column.2 matches '^[0-9]+$'"
-```
-
-### BAM header checks
-
-Assertions on a BAM file's SAM header live under `bam.header.*`. Read groups (`@RG`) are addressed by 0-based
-index. Values containing dots, dashes or colons (read-group IDs, library names, ISO dates, version strings) must
-be quoted.
-
-```bash
-# At least one read group is present
-bioassert assert "output.bam bam.header.rg.count gte 1"
-
-# Sample name of the first read group (what variant callers group by)
-bioassert assert "output.bam bam.header.rg.0.sm eq NA12878"
-
-# Sequencing platform
-bioassert assert "output.bam bam.header.rg.0.pl eq ILLUMINA"
-
-# Library name (quoted: contains a dash)
-bioassert assert "output.bam bam.header.rg.0.lb eq 'Solexa-272222'"
-
-# Read-group ID of the second read group (quoted: contains a dot)
-bioassert assert "output.bam bam.header.rg.1.id eq 'H0164.2'"
-
-# A platform unit tag is set on the first read group
-bioassert assert "output.bam bam.header.rg.0.pu.present eq true"
-
-# The file is coordinate-sorted
-bioassert assert "output.bam bam.header.hd.so eq coordinate"
-
-# Exactly one reference sequence
-bioassert assert "output.bam bam.header.sq.count eq 1"
-```
-
-### Assertions file
-
-Lines beginning with `#` are comments. Blank lines are ignored.
-
-```
-# checks.txt
-
-# Confirm outputs were created
-output.bam    file.exists    eq   true
-results.vcf   file.exists    eq   true
-
-# Validate sizes
-output.bam    file.size      gt   1MB
-results.vcf   file.empty     eq   false
-
-# Check line counts
-results.vcf   file.lines     gte  1
-
-# Validate CSV structure
-samples.csv   csv.columns.count  eq   5
-samples.csv   csv.lines.count    gte  2
-
-# Spot-check a cell
-samples.csv   csv.line.2.column.1  starts  SAMPLE_
-
-# Validate BAM header provenance
-output.bam    bam.header.rg.count   gte  1
-output.bam    bam.header.rg.0.sm    eq   NA12878
-output.bam    bam.header.rg.0.pl    eq   ILLUMINA
-output.bam    bam.header.hd.so      eq   coordinate
-```
-
-```bash
-bioassert run checks.txt
-```
-
-Output (also written to the report file `checks.txt.log`):
-
-```
-PASS. Expected output.bam file.exists == true, got true
-PASS. Expected results.vcf file.exists == true, got true
-PASS. Expected output.bam file.size > 1MB, got 5.00MB
-PASS. Expected results.vcf file.empty == false, got false
-PASS. Expected results.vcf file.lines >= 1, got 42
-PASS. Expected samples.csv csv.columns.count == 5, got 5
-PASS. Expected samples.csv csv.lines.count >= 2, got 101
-PASS. Expected samples.csv csv.line.2.column.1 starts_with SAMPLE_, got SAMPLE_001
-PASS. Expected output.bam bam.header.rg.count >= 1, got 2
-PASS. Expected output.bam bam.header.rg.0.sm == NA12878, got NA12878
-PASS. Expected output.bam bam.header.rg.0.pl == ILLUMINA, got ILLUMINA
-PASS. Expected output.bam bam.header.hd.so == coordinate, got coordinate
-```
-
 ### Nextflow
 
 `bioassert` works well as a validation step in a [Nextflow](https://www.nextflow.io/) pipeline. Write the
@@ -256,7 +273,7 @@ process REFERENCE_GENOME_ANNOTATIONS_ASSERTIONS {
     tag "reference_genome_annotations"
     label 'process_medium'
     conda "${moduleDir}/environment.yml"
-    container "ghcr.io/peterkneale/bioassert:1.3.1"
+    container "ghcr.io/peterkneale/bioassert:1.4.0"
 
     input:
     path(annotation)
@@ -336,6 +353,25 @@ remaining fields. Reading a tag value (or `@HD` field) that is not set, or a rea
 range, is an **error**; use the `.present` form to test for presence without erroring. Quote values that contain
 dots, dashes or colons (`'H0164.2'`, `'Solexa-272222'`, `'1.6'`).
 
+### FASTA metrics
+
+Metrics on a FASTA file's records, under the `fasta.seq.*` namespace for per-record metrics plus the `fasta.length`
+whole-file aggregate. Records are addressed by 0-based index `N`, following file order.
+
+| Metric                            | Description                                                | Comparators                          | Value   |
+|-----------------------------------|------------------------------------------------------------|--------------------------------------|---------|
+| `fasta.seq.count`                 | Number of sequence records                                 | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | count   |
+| `fasta.length`                    | Total bases summed across all records                      | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | count   |
+| `fasta.seq.N.name`                | Name (ID) of record N — the first whitespace-delimited header token | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
+| `fasta.seq.N.description`         | Description of record N — header text after the name       | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
+| `fasta.seq.N.length`              | Length in bases of record N's sequence                     | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | count   |
+| `fasta.seq.N.present`             | Whether a record exists at index N                         | `eq`, `ne`                           | boolean |
+| `fasta.seq.N.description.present` | Whether record N has a (non-empty) description             | `eq`, `ne`                           | boolean |
+
+`name` is always present for a record; `description` is optional. Reading the name, description, or length of a record
+whose index is out of range is an **error**; use the `.present` form to test for presence without erroring. Quote names
+and descriptions that contain dots, dashes, colons or spaces (`'NC_000001.11'`, `'Homo sapiens chromosome 1'`).
+
 ### Comparators
 
 | Comparator | Meaning       | Use with      |
@@ -357,5 +393,5 @@ dots, dashes or colons (`'H0164.2'`, `'Solexa-272222'`, `'1.6'`).
 |---------|----------------------------------|
 | boolean | `true`, `false`                  |
 | size    | `5B`, `1KB`, `2MB`, `1GB`        |
-| count   | `10`, `1K`, `2M`                 |
+| count   | `0`, `10`, `1000`                |
 | string  | `Alice`, `"New York"`, `'hello'` |
