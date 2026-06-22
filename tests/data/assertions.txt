@@ -1,129 +1,282 @@
-# file.exists
+# Exhaustive passing assertions covering every metric, using the fixtures in tests/data/.
+# Run with: cargo run -- run tests/data/assertions.txt
+# This drives the run_all_passing_stdout snapshot, so every line here must PASS.
+#
+# Comparator rules exercised below:
+#   numeric metrics (sizes, line/column counts, lengths): eq, ne, lt, lte, gt, gte
+#   string metrics  (cells, tags, names, descriptions):   eq, ne, starts, ends, contains, matches
+#   boolean metrics (exists, empty, *.present):           eq, ne
+
+# ===========================================================================
+# file.exists (boolean)
+# ===========================================================================
 tests/data/empty_file.txt file.exists eq true
 tests/data/empty_file.txt file.exists ne false
 tests/data/size_5B.txt file.exists eq true
 tests/data/size_1K.txt file.exists eq true
+# a missing file reports false rather than erroring
+tests/data/does_not_exist.txt file.exists eq false
+tests/data/does_not_exist.txt file.exists ne true
 
-# file.size — eq
-tests/data/empty_file.txt file.size eq 0B
-tests/data/size_5B.txt file.size eq 5B
-tests/data/size_5B.txt file.size eq 5b
-tests/data/size_1K.txt file.size eq 1024B
-tests/data/size_1K.txt file.size eq 1kb
-
-# file.size — ne
-tests/data/empty_file.txt file.size ne 1B
-tests/data/size_5B.txt file.size ne 4B
-tests/data/size_1K.txt file.size ne 1023B
-
-# file.size — lt
-tests/data/empty_file.txt file.size lt 1B
-tests/data/size_5B.txt file.size lt 6B
-tests/data/size_1K.txt file.size lt 2KB
-
-# file.size — lte
-tests/data/size_5B.txt file.size lte 5B
-tests/data/size_5B.txt file.size lte 6B
-tests/data/size_1K.txt file.size lte 1kb
-
-# file.size — gt
-tests/data/size_5B.txt file.size gt 4B
-tests/data/size_1K.txt file.size gt 500B
-
-# file.size — gte
-tests/data/size_5B.txt file.size gte 5B
-tests/data/size_5B.txt file.size gte 4B
-tests/data/size_1K.txt file.size gte 1kb
-
-# file.empty
+# ===========================================================================
+# file.empty (boolean)
+# ===========================================================================
 tests/data/empty_file.txt file.empty eq true
 tests/data/empty_file.txt file.empty ne false
 tests/data/size_5B.txt file.empty eq false
 tests/data/size_5B.txt file.empty ne true
 tests/data/size_1K.txt file.empty eq false
 
-# file.lines — eq
+# ===========================================================================
+# file.size (bytes): eq, ne, lt, lte, gt, gte; units B/KB and lowercase
+# ===========================================================================
+tests/data/empty_file.txt file.size eq 0B
+tests/data/empty_file.txt file.size ne 1B
+tests/data/empty_file.txt file.size lt 1B
+tests/data/empty_file.txt file.size lte 0B
+tests/data/empty_file.txt file.size gte 0B
+tests/data/size_5B.txt file.size eq 5B
+tests/data/size_5B.txt file.size eq 5b
+tests/data/size_5B.txt file.size ne 4B
+tests/data/size_5B.txt file.size lt 6B
+tests/data/size_5B.txt file.size lte 5B
+tests/data/size_5B.txt file.size gt 4B
+tests/data/size_5B.txt file.size gte 5B
+tests/data/size_1K.txt file.size eq 1024B
+tests/data/size_1K.txt file.size eq 1KB
+tests/data/size_1K.txt file.size eq 1kb
+tests/data/size_1K.txt file.size ne 1023B
+tests/data/size_1K.txt file.size lt 2KB
+tests/data/size_1K.txt file.size lte 1KB
+tests/data/size_1K.txt file.size gt 500B
+tests/data/size_1K.txt file.size gte 1024B
+
+# ===========================================================================
+# file.lines (integer): eq, ne, lt, lte, gt, gte
+# ===========================================================================
 tests/data/empty_file.txt file.lines eq 0
+tests/data/empty_file.txt file.lines ne 1
+tests/data/empty_file.txt file.lines lt 1
+tests/data/empty_file.txt file.lines lte 0
+tests/data/empty_file.txt file.lines gte 0
+# size_5B.txt is "hello" with no trailing newline, so it counts as one line
+tests/data/size_5B.txt file.lines eq 1
+tests/data/size_5B.txt file.lines gt 0
 tests/data/lines_1.txt file.lines eq 1
 tests/data/lines_10.txt file.lines eq 10
-tests/data/lines_100.txt file.lines eq 100
-
-# file.lines — ne
 tests/data/lines_10.txt file.lines ne 9
-tests/data/lines_10.txt file.lines ne 11
-
-# file.lines — lt
 tests/data/lines_10.txt file.lines lt 11
-tests/data/lines_100.txt file.lines lt 101
-
-# file.lines — lte
 tests/data/lines_10.txt file.lines lte 10
-tests/data/lines_10.txt file.lines lte 11
-
-# file.lines — gt
 tests/data/lines_10.txt file.lines gt 9
+tests/data/lines_10.txt file.lines gte 10
+tests/data/lines_100.txt file.lines eq 100
+tests/data/lines_100.txt file.lines lt 101
 tests/data/lines_100.txt file.lines gt 99
 
-# file.lines — gte
-tests/data/lines_10.txt file.lines gte 10
-tests/data/lines_10.txt file.lines gte 9
-
-# csv — column and line counts
-tests/data/example.csv csv.columns.count gt 2
+# ===========================================================================
+# csv (comma): columns.count, lines.count, cell (line.N.column.M)
+# ===========================================================================
 tests/data/example.csv csv.columns.count eq 3
+tests/data/example.csv csv.columns.count ne 2
+tests/data/example.csv csv.columns.count gt 2
+tests/data/example.csv csv.columns.count gte 3
 tests/data/example.csv csv.columns.count lt 4
-tests/data/example.csv csv.lines.count gt 2
+tests/data/example.csv csv.columns.count lte 3
 tests/data/example.csv csv.lines.count eq 3
+tests/data/example.csv csv.lines.count ne 2
+tests/data/example.csv csv.lines.count gt 2
+tests/data/example.csv csv.lines.count gte 3
 tests/data/example.csv csv.lines.count lt 4
-
-# csv — cell eq
+tests/data/example.csv csv.lines.count lte 3
 tests/data/example.csv csv.line.1.column.1 eq name
 tests/data/example.csv csv.line.1.column.2 eq age
 tests/data/example.csv csv.line.1.column.3 eq city
 tests/data/example.csv csv.line.2.column.1 eq Alice
+tests/data/example.csv csv.line.2.column.2 eq 30
+tests/data/example.csv csv.line.2.column.3 eq "New York"
+tests/data/example.csv csv.line.3.column.1 eq Bob
 tests/data/example.csv csv.line.3.column.3 eq "Los Angeles"
-
-# csv — string comparators
+tests/data/example.csv csv.line.2.column.1 ne Bob
 tests/data/example.csv csv.line.2.column.1 starts A
-tests/data/example.csv csv.line.2.column.1 contains lic
 tests/data/example.csv csv.line.2.column.1 ends e
+tests/data/example.csv csv.line.2.column.1 contains lic
+tests/data/example.csv csv.line.2.column.1 matches '^A.*e$'
+tests/data/example.csv csv.line.3.column.3 contains Angeles
 
-# tsv — column and line counts
-tests/data/example.tsv tsv.columns.count gt 2
+# ===========================================================================
+# tsv (tab): columns.count, lines.count, cell
+# ===========================================================================
 tests/data/example.tsv tsv.columns.count eq 3
+tests/data/example.tsv tsv.columns.count ne 2
+tests/data/example.tsv tsv.columns.count gt 2
+tests/data/example.tsv tsv.columns.count gte 3
 tests/data/example.tsv tsv.columns.count lt 4
-tests/data/example.tsv tsv.lines.count gt 2
+tests/data/example.tsv tsv.columns.count lte 3
 tests/data/example.tsv tsv.lines.count eq 3
+tests/data/example.tsv tsv.lines.count gt 2
 tests/data/example.tsv tsv.lines.count lt 4
-
-# tsv — cell eq
 tests/data/example.tsv tsv.line.1.column.1 eq name
 tests/data/example.tsv tsv.line.1.column.2 eq age
 tests/data/example.tsv tsv.line.1.column.3 eq city
 tests/data/example.tsv tsv.line.2.column.1 eq Alice
 tests/data/example.tsv tsv.line.3.column.3 eq "Los Angeles"
-
-# tsv — string comparators
+tests/data/example.tsv tsv.line.2.column.1 ne Bob
 tests/data/example.tsv tsv.line.2.column.1 starts A
 tests/data/example.tsv tsv.line.2.column.1 contains lic
 tests/data/example.tsv tsv.line.2.column.1 ends e
+tests/data/example.tsv tsv.line.2.column.1 matches '^A.*e$'
 
-# psv — column and line counts
-tests/data/example.psv psv.columns.count gt 2
+# ===========================================================================
+# psv (pipe): columns.count, lines.count, cell
+# ===========================================================================
 tests/data/example.psv psv.columns.count eq 3
+tests/data/example.psv psv.columns.count ne 2
+tests/data/example.psv psv.columns.count gt 2
+tests/data/example.psv psv.columns.count gte 3
 tests/data/example.psv psv.columns.count lt 4
-tests/data/example.psv psv.lines.count gt 2
+tests/data/example.psv psv.columns.count lte 3
 tests/data/example.psv psv.lines.count eq 3
+tests/data/example.psv psv.lines.count gt 2
 tests/data/example.psv psv.lines.count lt 4
-
-# psv — cell eq
 tests/data/example.psv psv.line.1.column.1 eq name
 tests/data/example.psv psv.line.1.column.2 eq age
 tests/data/example.psv psv.line.1.column.3 eq city
 tests/data/example.psv psv.line.2.column.1 eq Alice
 tests/data/example.psv psv.line.3.column.3 eq "Los Angeles"
-
-# psv — string comparators
+tests/data/example.psv psv.line.2.column.1 ne Bob
 tests/data/example.psv psv.line.2.column.1 starts A
 tests/data/example.psv psv.line.2.column.1 contains lic
 tests/data/example.psv psv.line.2.column.1 ends e
+tests/data/example.psv psv.line.2.column.1 matches '^A.*e$'
+
+# ===========================================================================
+# whole-column: column.<n>.all (every line) and column.<n>.data.all (skip header)
+# Column index is 1-based. String comparators only.
+# ===========================================================================
+
+# example files: data rows only, across csv/tsv/psv
+tests/data/example.csv csv.column.2.data.all matches '^[0-9]+$'
+tests/data/example.csv csv.column.1.data.all matches '^[A-Z][a-z]+$'
+tests/data/example.csv csv.column.1.all matches '^[A-Za-z]+$'
+tests/data/example.tsv tsv.column.2.data.all matches '^[0-9]+$'
+tests/data/example.tsv tsv.column.1.all matches '^[A-Za-z]+$'
+tests/data/example.psv psv.column.2.data.all matches '^[0-9]+$'
+tests/data/example.psv psv.column.1.all matches '^[A-Za-z]+$'
+
+# junctions.tsv: a richer BED-like fixture, exercising every string comparator
+tests/data/junctions.tsv tsv.column.6.data.all matches '^[+-]$'
+tests/data/junctions.tsv tsv.column.1.data.all matches '^chr[0-9]+$'
+tests/data/junctions.tsv tsv.column.1.data.all starts chr
+tests/data/junctions.tsv tsv.column.4.data.all contains JUNC
+tests/data/junctions.tsv tsv.column.4.data.all ne chrom
+tests/data/junctions.tsv tsv.column.10.data.all eq 2
+tests/data/junctions.tsv tsv.column.10.data.all ends 2
+tests/data/junctions.tsv tsv.column.12.data.all matches '^[01]$'
+tests/data/junctions.tsv tsv.column.1.all matches chr
+
+# ===========================================================================
+# bam.header.* against tests/data/sample.bam
+# Regenerate the fixture with: cargo run --example gen_sample_bam
+# ===========================================================================
+
+# Counts: rg, sq, pg
+tests/data/sample.bam bam.header.rg.count eq 2
+tests/data/sample.bam bam.header.rg.count ne 0
+tests/data/sample.bam bam.header.rg.count gt 1
+tests/data/sample.bam bam.header.rg.count gte 1
+tests/data/sample.bam bam.header.rg.count lt 3
+tests/data/sample.bam bam.header.rg.count lte 2
+tests/data/sample.bam bam.header.sq.count eq 1
+tests/data/sample.bam bam.header.sq.count gte 1
+tests/data/sample.bam bam.header.sq.count lt 2
+tests/data/sample.bam bam.header.pg.count eq 1
+tests/data/sample.bam bam.header.pg.count ne 0
+
+# Read-group tag values (dots, dashes, and colons must be quoted)
+tests/data/sample.bam bam.header.rg.0.id eq 'H0164.1'
+tests/data/sample.bam bam.header.rg.1.id eq 'H0164.2'
+tests/data/sample.bam bam.header.rg.0.sm eq NA12878
+tests/data/sample.bam bam.header.rg.1.sm eq NA12878
+tests/data/sample.bam bam.header.rg.0.sm ne NA12891
+tests/data/sample.bam bam.header.rg.0.sm starts NA
+tests/data/sample.bam bam.header.rg.0.sm ends 878
+tests/data/sample.bam bam.header.rg.0.sm contains 128
+tests/data/sample.bam bam.header.rg.0.sm matches '^NA[0-9]+$'
+tests/data/sample.bam bam.header.rg.0.pl eq ILLUMINA
+tests/data/sample.bam bam.header.rg.0.pl contains LUM
+tests/data/sample.bam bam.header.rg.0.pl matches '^ILL.*A$'
+tests/data/sample.bam bam.header.rg.0.lb eq 'Solexa-272222'
+tests/data/sample.bam bam.header.rg.0.lb starts Solexa
+tests/data/sample.bam bam.header.rg.0.pu eq 'H0164ALXX140820.1'
+tests/data/sample.bam bam.header.rg.0.pu ends '.1'
+tests/data/sample.bam bam.header.rg.1.pu eq 'H0164ALXX140820.2'
+
+# Presence (never errors on absence)
+tests/data/sample.bam bam.header.rg.0.present eq true
+tests/data/sample.bam bam.header.rg.1.present eq true
+tests/data/sample.bam bam.header.rg.2.present eq false
+tests/data/sample.bam bam.header.rg.0.sm.present eq true
+tests/data/sample.bam bam.header.rg.0.pu.present eq true
+tests/data/sample.bam bam.header.rg.0.dt.present eq false
+tests/data/sample.bam bam.header.rg.0.cn.present eq false
+
+# Header line (@HD)
+tests/data/sample.bam bam.header.hd.vn eq '1.6'
+tests/data/sample.bam bam.header.hd.so eq coordinate
+tests/data/sample.bam bam.header.hd.so ne queryname
+
+# ===========================================================================
+# fasta.* against tests/data/sample.fasta and tests/data/empty.fasta
+# ===========================================================================
+
+# Counts and total length
+tests/data/sample.fasta fasta.seq.count eq 3
+tests/data/sample.fasta fasta.seq.count ne 0
+tests/data/sample.fasta fasta.seq.count gt 0
+tests/data/sample.fasta fasta.seq.count gte 1
+tests/data/sample.fasta fasta.seq.count lt 10
+tests/data/sample.fasta fasta.seq.count lte 3
+tests/data/sample.fasta fasta.length eq 42
+tests/data/sample.fasta fasta.length ne 0
+tests/data/sample.fasta fasta.length gt 41
+tests/data/sample.fasta fasta.length gte 40
+tests/data/sample.fasta fasta.length lt 43
+tests/data/sample.fasta fasta.length lte 42
+
+# Names and descriptions (dots, dashes, colons, and spaces must be quoted)
+tests/data/sample.fasta fasta.seq.0.name eq chr1
+tests/data/sample.fasta fasta.seq.1.name eq chr2
+tests/data/sample.fasta fasta.seq.2.name eq 'NC_000001.11'
+tests/data/sample.fasta fasta.seq.0.name ne chr2
+tests/data/sample.fasta fasta.seq.0.name starts ch
+tests/data/sample.fasta fasta.seq.0.name ends 1
+tests/data/sample.fasta fasta.seq.0.name contains chr
+tests/data/sample.fasta fasta.seq.0.name matches '^chr[0-9]+$'
+tests/data/sample.fasta fasta.seq.2.name matches '^NC_[0-9]+\.[0-9]+$'
+tests/data/sample.fasta fasta.seq.0.description eq 'Homo sapiens chromosome 1'
+tests/data/sample.fasta fasta.seq.0.description starts Homo
+tests/data/sample.fasta fasta.seq.0.description contains sapiens
+tests/data/sample.fasta fasta.seq.2.description eq 'alternate assembly'
+
+# Per-record length
+tests/data/sample.fasta fasta.seq.0.length eq 28
+tests/data/sample.fasta fasta.seq.0.length ne 0
+tests/data/sample.fasta fasta.seq.0.length gt 27
+tests/data/sample.fasta fasta.seq.0.length gte 20
+tests/data/sample.fasta fasta.seq.0.length lt 29
+tests/data/sample.fasta fasta.seq.0.length lte 28
+tests/data/sample.fasta fasta.seq.1.length eq 10
+tests/data/sample.fasta fasta.seq.2.length eq 4
+
+# Presence (never errors on absence)
+tests/data/sample.fasta fasta.seq.0.present eq true
+tests/data/sample.fasta fasta.seq.2.present eq true
+tests/data/sample.fasta fasta.seq.3.present eq false
+tests/data/sample.fasta fasta.seq.0.description.present eq true
+tests/data/sample.fasta fasta.seq.1.description.present eq false
+
+# Empty FASTA: zero records, zero bases
+tests/data/empty.fasta fasta.seq.count eq 0
+tests/data/empty.fasta fasta.seq.count lt 1
+tests/data/empty.fasta fasta.seq.count lte 0
+tests/data/empty.fasta fasta.length eq 0

@@ -6,83 +6,207 @@ PASS. Expected tests/data/empty_file.txt file.exists == true, got true
 PASS. Expected tests/data/empty_file.txt file.exists != false, got true
 PASS. Expected tests/data/size_5B.txt file.exists == true, got true
 PASS. Expected tests/data/size_1K.txt file.exists == true, got true
-PASS. Expected tests/data/empty_file.txt file.size == 0B, got 0B
-PASS. Expected tests/data/size_5B.txt file.size == 5B, got 5B
-PASS. Expected tests/data/size_5B.txt file.size == 5b, got 5B
-PASS. Expected tests/data/size_1K.txt file.size == 1024B, got 1.00KB
-PASS. Expected tests/data/size_1K.txt file.size == 1kb, got 1.00KB
-PASS. Expected tests/data/empty_file.txt file.size != 1B, got 0B
-PASS. Expected tests/data/size_5B.txt file.size != 4B, got 5B
-PASS. Expected tests/data/size_1K.txt file.size != 1023B, got 1.00KB
-PASS. Expected tests/data/empty_file.txt file.size < 1B, got 0B
-PASS. Expected tests/data/size_5B.txt file.size < 6B, got 5B
-PASS. Expected tests/data/size_1K.txt file.size < 2KB, got 1.00KB
-PASS. Expected tests/data/size_5B.txt file.size <= 5B, got 5B
-PASS. Expected tests/data/size_5B.txt file.size <= 6B, got 5B
-PASS. Expected tests/data/size_1K.txt file.size <= 1kb, got 1.00KB
-PASS. Expected tests/data/size_5B.txt file.size > 4B, got 5B
-PASS. Expected tests/data/size_1K.txt file.size > 500B, got 1.00KB
-PASS. Expected tests/data/size_5B.txt file.size >= 5B, got 5B
-PASS. Expected tests/data/size_5B.txt file.size >= 4B, got 5B
-PASS. Expected tests/data/size_1K.txt file.size >= 1kb, got 1.00KB
+PASS. Expected tests/data/does_not_exist.txt file.exists == false, got false
+PASS. Expected tests/data/does_not_exist.txt file.exists != true, got false
 PASS. Expected tests/data/empty_file.txt file.empty == true, got true
 PASS. Expected tests/data/empty_file.txt file.empty != false, got true
 PASS. Expected tests/data/size_5B.txt file.empty == false, got false
 PASS. Expected tests/data/size_5B.txt file.empty != true, got false
 PASS. Expected tests/data/size_1K.txt file.empty == false, got false
+PASS. Expected tests/data/empty_file.txt file.size == 0B, got 0B
+PASS. Expected tests/data/empty_file.txt file.size != 1B, got 0B
+PASS. Expected tests/data/empty_file.txt file.size < 1B, got 0B
+PASS. Expected tests/data/empty_file.txt file.size <= 0B, got 0B
+PASS. Expected tests/data/empty_file.txt file.size >= 0B, got 0B
+PASS. Expected tests/data/size_5B.txt file.size == 5B, got 5B
+PASS. Expected tests/data/size_5B.txt file.size == 5b, got 5B
+PASS. Expected tests/data/size_5B.txt file.size != 4B, got 5B
+PASS. Expected tests/data/size_5B.txt file.size < 6B, got 5B
+PASS. Expected tests/data/size_5B.txt file.size <= 5B, got 5B
+PASS. Expected tests/data/size_5B.txt file.size > 4B, got 5B
+PASS. Expected tests/data/size_5B.txt file.size >= 5B, got 5B
+PASS. Expected tests/data/size_1K.txt file.size == 1024B, got 1.00KB
+PASS. Expected tests/data/size_1K.txt file.size == 1KB, got 1.00KB
+PASS. Expected tests/data/size_1K.txt file.size == 1kb, got 1.00KB
+PASS. Expected tests/data/size_1K.txt file.size != 1023B, got 1.00KB
+PASS. Expected tests/data/size_1K.txt file.size < 2KB, got 1.00KB
+PASS. Expected tests/data/size_1K.txt file.size <= 1KB, got 1.00KB
+PASS. Expected tests/data/size_1K.txt file.size > 500B, got 1.00KB
+PASS. Expected tests/data/size_1K.txt file.size >= 1024B, got 1.00KB
 PASS. Expected tests/data/empty_file.txt file.lines == 0, got 0
+PASS. Expected tests/data/empty_file.txt file.lines != 1, got 0
+PASS. Expected tests/data/empty_file.txt file.lines < 1, got 0
+PASS. Expected tests/data/empty_file.txt file.lines <= 0, got 0
+PASS. Expected tests/data/empty_file.txt file.lines >= 0, got 0
+PASS. Expected tests/data/size_5B.txt file.lines == 1, got 1
+PASS. Expected tests/data/size_5B.txt file.lines > 0, got 1
 PASS. Expected tests/data/lines_1.txt file.lines == 1, got 1
 PASS. Expected tests/data/lines_10.txt file.lines == 10, got 10
-PASS. Expected tests/data/lines_100.txt file.lines == 100, got 100
 PASS. Expected tests/data/lines_10.txt file.lines != 9, got 10
-PASS. Expected tests/data/lines_10.txt file.lines != 11, got 10
 PASS. Expected tests/data/lines_10.txt file.lines < 11, got 10
-PASS. Expected tests/data/lines_100.txt file.lines < 101, got 100
 PASS. Expected tests/data/lines_10.txt file.lines <= 10, got 10
-PASS. Expected tests/data/lines_10.txt file.lines <= 11, got 10
 PASS. Expected tests/data/lines_10.txt file.lines > 9, got 10
-PASS. Expected tests/data/lines_100.txt file.lines > 99, got 100
 PASS. Expected tests/data/lines_10.txt file.lines >= 10, got 10
-PASS. Expected tests/data/lines_10.txt file.lines >= 9, got 10
-PASS. Expected tests/data/example.csv csv.columns.count > 2, got 3
+PASS. Expected tests/data/lines_100.txt file.lines == 100, got 100
+PASS. Expected tests/data/lines_100.txt file.lines < 101, got 100
+PASS. Expected tests/data/lines_100.txt file.lines > 99, got 100
 PASS. Expected tests/data/example.csv csv.columns.count == 3, got 3
+PASS. Expected tests/data/example.csv csv.columns.count != 2, got 3
+PASS. Expected tests/data/example.csv csv.columns.count > 2, got 3
+PASS. Expected tests/data/example.csv csv.columns.count >= 3, got 3
 PASS. Expected tests/data/example.csv csv.columns.count < 4, got 3
-PASS. Expected tests/data/example.csv csv.lines.count > 2, got 3
+PASS. Expected tests/data/example.csv csv.columns.count <= 3, got 3
 PASS. Expected tests/data/example.csv csv.lines.count == 3, got 3
+PASS. Expected tests/data/example.csv csv.lines.count != 2, got 3
+PASS. Expected tests/data/example.csv csv.lines.count > 2, got 3
+PASS. Expected tests/data/example.csv csv.lines.count >= 3, got 3
 PASS. Expected tests/data/example.csv csv.lines.count < 4, got 3
+PASS. Expected tests/data/example.csv csv.lines.count <= 3, got 3
 PASS. Expected tests/data/example.csv csv.line.1.column.1 == name, got name
 PASS. Expected tests/data/example.csv csv.line.1.column.2 == age, got age
 PASS. Expected tests/data/example.csv csv.line.1.column.3 == city, got city
 PASS. Expected tests/data/example.csv csv.line.2.column.1 == Alice, got Alice
+PASS. Expected tests/data/example.csv csv.line.2.column.2 == 30, got 30
+PASS. Expected tests/data/example.csv csv.line.2.column.3 == "New York", got New York
+PASS. Expected tests/data/example.csv csv.line.3.column.1 == Bob, got Bob
 PASS. Expected tests/data/example.csv csv.line.3.column.3 == "Los Angeles", got Los Angeles
+PASS. Expected tests/data/example.csv csv.line.2.column.1 != Bob, got Alice
 PASS. Expected tests/data/example.csv csv.line.2.column.1 starts_with A, got Alice
-PASS. Expected tests/data/example.csv csv.line.2.column.1 contains lic, got Alice
 PASS. Expected tests/data/example.csv csv.line.2.column.1 ends_with e, got Alice
-PASS. Expected tests/data/example.tsv tsv.columns.count > 2, got 3
+PASS. Expected tests/data/example.csv csv.line.2.column.1 contains lic, got Alice
+PASS. Expected tests/data/example.csv csv.line.2.column.1 matches '^A.*e$', got Alice
+PASS. Expected tests/data/example.csv csv.line.3.column.3 contains Angeles, got Los Angeles
 PASS. Expected tests/data/example.tsv tsv.columns.count == 3, got 3
+PASS. Expected tests/data/example.tsv tsv.columns.count != 2, got 3
+PASS. Expected tests/data/example.tsv tsv.columns.count > 2, got 3
+PASS. Expected tests/data/example.tsv tsv.columns.count >= 3, got 3
 PASS. Expected tests/data/example.tsv tsv.columns.count < 4, got 3
-PASS. Expected tests/data/example.tsv tsv.lines.count > 2, got 3
+PASS. Expected tests/data/example.tsv tsv.columns.count <= 3, got 3
 PASS. Expected tests/data/example.tsv tsv.lines.count == 3, got 3
+PASS. Expected tests/data/example.tsv tsv.lines.count > 2, got 3
 PASS. Expected tests/data/example.tsv tsv.lines.count < 4, got 3
 PASS. Expected tests/data/example.tsv tsv.line.1.column.1 == name, got name
 PASS. Expected tests/data/example.tsv tsv.line.1.column.2 == age, got age
 PASS. Expected tests/data/example.tsv tsv.line.1.column.3 == city, got city
 PASS. Expected tests/data/example.tsv tsv.line.2.column.1 == Alice, got Alice
 PASS. Expected tests/data/example.tsv tsv.line.3.column.3 == "Los Angeles", got Los Angeles
+PASS. Expected tests/data/example.tsv tsv.line.2.column.1 != Bob, got Alice
 PASS. Expected tests/data/example.tsv tsv.line.2.column.1 starts_with A, got Alice
 PASS. Expected tests/data/example.tsv tsv.line.2.column.1 contains lic, got Alice
 PASS. Expected tests/data/example.tsv tsv.line.2.column.1 ends_with e, got Alice
-PASS. Expected tests/data/example.psv psv.columns.count > 2, got 3
+PASS. Expected tests/data/example.tsv tsv.line.2.column.1 matches '^A.*e$', got Alice
 PASS. Expected tests/data/example.psv psv.columns.count == 3, got 3
+PASS. Expected tests/data/example.psv psv.columns.count != 2, got 3
+PASS. Expected tests/data/example.psv psv.columns.count > 2, got 3
+PASS. Expected tests/data/example.psv psv.columns.count >= 3, got 3
 PASS. Expected tests/data/example.psv psv.columns.count < 4, got 3
-PASS. Expected tests/data/example.psv psv.lines.count > 2, got 3
+PASS. Expected tests/data/example.psv psv.columns.count <= 3, got 3
 PASS. Expected tests/data/example.psv psv.lines.count == 3, got 3
+PASS. Expected tests/data/example.psv psv.lines.count > 2, got 3
 PASS. Expected tests/data/example.psv psv.lines.count < 4, got 3
 PASS. Expected tests/data/example.psv psv.line.1.column.1 == name, got name
 PASS. Expected tests/data/example.psv psv.line.1.column.2 == age, got age
 PASS. Expected tests/data/example.psv psv.line.1.column.3 == city, got city
 PASS. Expected tests/data/example.psv psv.line.2.column.1 == Alice, got Alice
 PASS. Expected tests/data/example.psv psv.line.3.column.3 == "Los Angeles", got Los Angeles
+PASS. Expected tests/data/example.psv psv.line.2.column.1 != Bob, got Alice
 PASS. Expected tests/data/example.psv psv.line.2.column.1 starts_with A, got Alice
 PASS. Expected tests/data/example.psv psv.line.2.column.1 contains lic, got Alice
 PASS. Expected tests/data/example.psv psv.line.2.column.1 ends_with e, got Alice
+PASS. Expected tests/data/example.psv psv.line.2.column.1 matches '^A.*e$', got Alice
+PASS. Expected tests/data/example.csv csv.column.2.data.all matches '^[0-9]+$', got 2 rows checked
+PASS. Expected tests/data/example.csv csv.column.1.data.all matches '^[A-Z][a-z]+$', got 2 rows checked
+PASS. Expected tests/data/example.csv csv.column.1.all matches '^[A-Za-z]+$', got 3 rows checked
+PASS. Expected tests/data/example.tsv tsv.column.2.data.all matches '^[0-9]+$', got 2 rows checked
+PASS. Expected tests/data/example.tsv tsv.column.1.all matches '^[A-Za-z]+$', got 3 rows checked
+PASS. Expected tests/data/example.psv psv.column.2.data.all matches '^[0-9]+$', got 2 rows checked
+PASS. Expected tests/data/example.psv psv.column.1.all matches '^[A-Za-z]+$', got 3 rows checked
+PASS. Expected tests/data/junctions.tsv tsv.column.6.data.all matches '^[+-]$', got 3 rows checked
+PASS. Expected tests/data/junctions.tsv tsv.column.1.data.all matches '^chr[0-9]+$', got 3 rows checked
+PASS. Expected tests/data/junctions.tsv tsv.column.1.data.all starts_with chr, got 3 rows checked
+PASS. Expected tests/data/junctions.tsv tsv.column.4.data.all contains JUNC, got 3 rows checked
+PASS. Expected tests/data/junctions.tsv tsv.column.4.data.all != chrom, got 3 rows checked
+PASS. Expected tests/data/junctions.tsv tsv.column.10.data.all == 2, got 3 rows checked
+PASS. Expected tests/data/junctions.tsv tsv.column.10.data.all ends_with 2, got 3 rows checked
+PASS. Expected tests/data/junctions.tsv tsv.column.12.data.all matches '^[01]$', got 3 rows checked
+PASS. Expected tests/data/junctions.tsv tsv.column.1.all matches chr, got 4 rows checked
+PASS. Expected tests/data/sample.bam bam.header.rg.count == 2, got 2
+PASS. Expected tests/data/sample.bam bam.header.rg.count != 0, got 2
+PASS. Expected tests/data/sample.bam bam.header.rg.count > 1, got 2
+PASS. Expected tests/data/sample.bam bam.header.rg.count >= 1, got 2
+PASS. Expected tests/data/sample.bam bam.header.rg.count < 3, got 2
+PASS. Expected tests/data/sample.bam bam.header.rg.count <= 2, got 2
+PASS. Expected tests/data/sample.bam bam.header.sq.count == 1, got 1
+PASS. Expected tests/data/sample.bam bam.header.sq.count >= 1, got 1
+PASS. Expected tests/data/sample.bam bam.header.sq.count < 2, got 1
+PASS. Expected tests/data/sample.bam bam.header.pg.count == 1, got 1
+PASS. Expected tests/data/sample.bam bam.header.pg.count != 0, got 1
+PASS. Expected tests/data/sample.bam bam.header.rg.0.id == 'H0164.1', got H0164.1
+PASS. Expected tests/data/sample.bam bam.header.rg.1.id == 'H0164.2', got H0164.2
+PASS. Expected tests/data/sample.bam bam.header.rg.0.sm == NA12878, got NA12878
+PASS. Expected tests/data/sample.bam bam.header.rg.1.sm == NA12878, got NA12878
+PASS. Expected tests/data/sample.bam bam.header.rg.0.sm != NA12891, got NA12878
+PASS. Expected tests/data/sample.bam bam.header.rg.0.sm starts_with NA, got NA12878
+PASS. Expected tests/data/sample.bam bam.header.rg.0.sm ends_with 878, got NA12878
+PASS. Expected tests/data/sample.bam bam.header.rg.0.sm contains 128, got NA12878
+PASS. Expected tests/data/sample.bam bam.header.rg.0.sm matches '^NA[0-9]+$', got NA12878
+PASS. Expected tests/data/sample.bam bam.header.rg.0.pl == ILLUMINA, got ILLUMINA
+PASS. Expected tests/data/sample.bam bam.header.rg.0.pl contains LUM, got ILLUMINA
+PASS. Expected tests/data/sample.bam bam.header.rg.0.pl matches '^ILL.*A$', got ILLUMINA
+PASS. Expected tests/data/sample.bam bam.header.rg.0.lb == 'Solexa-272222', got Solexa-272222
+PASS. Expected tests/data/sample.bam bam.header.rg.0.lb starts_with Solexa, got Solexa-272222
+PASS. Expected tests/data/sample.bam bam.header.rg.0.pu == 'H0164ALXX140820.1', got H0164ALXX140820.1
+PASS. Expected tests/data/sample.bam bam.header.rg.0.pu ends_with '.1', got H0164ALXX140820.1
+PASS. Expected tests/data/sample.bam bam.header.rg.1.pu == 'H0164ALXX140820.2', got H0164ALXX140820.2
+PASS. Expected tests/data/sample.bam bam.header.rg.0.present == true, got true
+PASS. Expected tests/data/sample.bam bam.header.rg.1.present == true, got true
+PASS. Expected tests/data/sample.bam bam.header.rg.2.present == false, got false
+PASS. Expected tests/data/sample.bam bam.header.rg.0.sm.present == true, got true
+PASS. Expected tests/data/sample.bam bam.header.rg.0.pu.present == true, got true
+PASS. Expected tests/data/sample.bam bam.header.rg.0.dt.present == false, got false
+PASS. Expected tests/data/sample.bam bam.header.rg.0.cn.present == false, got false
+PASS. Expected tests/data/sample.bam bam.header.hd.vn == '1.6', got 1.6
+PASS. Expected tests/data/sample.bam bam.header.hd.so == coordinate, got coordinate
+PASS. Expected tests/data/sample.bam bam.header.hd.so != queryname, got coordinate
+PASS. Expected tests/data/sample.fasta fasta.seq.count == 3, got 3
+PASS. Expected tests/data/sample.fasta fasta.seq.count != 0, got 3
+PASS. Expected tests/data/sample.fasta fasta.seq.count > 0, got 3
+PASS. Expected tests/data/sample.fasta fasta.seq.count >= 1, got 3
+PASS. Expected tests/data/sample.fasta fasta.seq.count < 10, got 3
+PASS. Expected tests/data/sample.fasta fasta.seq.count <= 3, got 3
+PASS. Expected tests/data/sample.fasta fasta.length == 42, got 42
+PASS. Expected tests/data/sample.fasta fasta.length != 0, got 42
+PASS. Expected tests/data/sample.fasta fasta.length > 41, got 42
+PASS. Expected tests/data/sample.fasta fasta.length >= 40, got 42
+PASS. Expected tests/data/sample.fasta fasta.length < 43, got 42
+PASS. Expected tests/data/sample.fasta fasta.length <= 42, got 42
+PASS. Expected tests/data/sample.fasta fasta.seq.0.name == chr1, got chr1
+PASS. Expected tests/data/sample.fasta fasta.seq.1.name == chr2, got chr2
+PASS. Expected tests/data/sample.fasta fasta.seq.2.name == 'NC_000001.11', got NC_000001.11
+PASS. Expected tests/data/sample.fasta fasta.seq.0.name != chr2, got chr1
+PASS. Expected tests/data/sample.fasta fasta.seq.0.name starts_with ch, got chr1
+PASS. Expected tests/data/sample.fasta fasta.seq.0.name ends_with 1, got chr1
+PASS. Expected tests/data/sample.fasta fasta.seq.0.name contains chr, got chr1
+PASS. Expected tests/data/sample.fasta fasta.seq.0.name matches '^chr[0-9]+$', got chr1
+PASS. Expected tests/data/sample.fasta fasta.seq.2.name matches '^NC_[0-9]+\.[0-9]+$', got NC_000001.11
+PASS. Expected tests/data/sample.fasta fasta.seq.0.description == 'Homo sapiens chromosome 1', got Homo sapiens chromosome 1
+PASS. Expected tests/data/sample.fasta fasta.seq.0.description starts_with Homo, got Homo sapiens chromosome 1
+PASS. Expected tests/data/sample.fasta fasta.seq.0.description contains sapiens, got Homo sapiens chromosome 1
+PASS. Expected tests/data/sample.fasta fasta.seq.2.description == 'alternate assembly', got alternate assembly
+PASS. Expected tests/data/sample.fasta fasta.seq.0.length == 28, got 28
+PASS. Expected tests/data/sample.fasta fasta.seq.0.length != 0, got 28
+PASS. Expected tests/data/sample.fasta fasta.seq.0.length > 27, got 28
+PASS. Expected tests/data/sample.fasta fasta.seq.0.length >= 20, got 28
+PASS. Expected tests/data/sample.fasta fasta.seq.0.length < 29, got 28
+PASS. Expected tests/data/sample.fasta fasta.seq.0.length <= 28, got 28
+PASS. Expected tests/data/sample.fasta fasta.seq.1.length == 10, got 10
+PASS. Expected tests/data/sample.fasta fasta.seq.2.length == 4, got 4
+PASS. Expected tests/data/sample.fasta fasta.seq.0.present == true, got true
+PASS. Expected tests/data/sample.fasta fasta.seq.2.present == true, got true
+PASS. Expected tests/data/sample.fasta fasta.seq.3.present == false, got false
+PASS. Expected tests/data/sample.fasta fasta.seq.0.description.present == true, got true
+PASS. Expected tests/data/sample.fasta fasta.seq.1.description.present == false, got false
+PASS. Expected tests/data/empty.fasta fasta.seq.count == 0, got 0
+PASS. Expected tests/data/empty.fasta fasta.seq.count < 1, got 0
+PASS. Expected tests/data/empty.fasta fasta.seq.count <= 0, got 0
+PASS. Expected tests/data/empty.fasta fasta.length == 0, got 0
