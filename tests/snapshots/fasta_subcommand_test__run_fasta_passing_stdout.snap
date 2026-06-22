@@ -1,0 +1,27 @@
+---
+source: tests/fasta_subcommand_test.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+PASS. Expected tests/data/sample.fasta fasta.seq.count == 3, got 3
+PASS. Expected tests/data/sample.fasta fasta.seq.count >= 1, got 3
+PASS. Expected tests/data/sample.fasta fasta.seq.count < 10, got 3
+PASS. Expected tests/data/sample.fasta fasta.length == 42, got 42
+PASS. Expected tests/data/sample.fasta fasta.length >= 40, got 42
+PASS. Expected tests/data/sample.fasta fasta.seq.0.name == chr1, got chr1
+PASS. Expected tests/data/sample.fasta fasta.seq.1.name == chr2, got chr2
+PASS. Expected tests/data/sample.fasta fasta.seq.2.name == 'NC_000001.11', got NC_000001.11
+PASS. Expected tests/data/sample.fasta fasta.seq.0.description == 'Homo sapiens chromosome 1', got Homo sapiens chromosome 1
+PASS. Expected tests/data/sample.fasta fasta.seq.2.description == 'alternate assembly', got alternate assembly
+PASS. Expected tests/data/sample.fasta fasta.seq.0.name contains chr, got chr1
+PASS. Expected tests/data/sample.fasta fasta.seq.0.name starts_with ch, got chr1
+PASS. Expected tests/data/sample.fasta fasta.seq.2.name matches '^NC_[0-9]+\.[0-9]+$', got NC_000001.11
+PASS. Expected tests/data/sample.fasta fasta.seq.0.name != chr2, got chr1
+PASS. Expected tests/data/sample.fasta fasta.seq.0.length == 28, got 28
+PASS. Expected tests/data/sample.fasta fasta.seq.1.length == 10, got 10
+PASS. Expected tests/data/sample.fasta fasta.seq.2.length == 4, got 4
+PASS. Expected tests/data/sample.fasta fasta.seq.0.length >= 20, got 28
+PASS. Expected tests/data/sample.fasta fasta.seq.0.present == true, got true
+PASS. Expected tests/data/sample.fasta fasta.seq.2.present == true, got true
+PASS. Expected tests/data/sample.fasta fasta.seq.3.present == false, got false
+PASS. Expected tests/data/sample.fasta fasta.seq.0.description.present == true, got true
+PASS. Expected tests/data/sample.fasta fasta.seq.1.description.present == false, got false

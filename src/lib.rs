@@ -8,4 +8,5 @@ pub mod bam;
 pub mod core;
 pub mod delimited;
 pub mod engine;
+pub mod fasta;
 pub mod file;

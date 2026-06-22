@@ -3,6 +3,7 @@ use crate::engine::report::{AssertionReport, AssertionResult, Outcome};
 use crate::bam::{BamCountExecutor, BamHeaderFieldExecutor, BamReadGroupPresentExecutor, BamReadGroupTagExecutor};
 use crate::core::{AssertionExecutor, AssertionRequest, BioAssertError};
 use crate::delimited::{DelimitedCellExecutor, DelimitedColumnCountExecutor, DelimitedLineCountExecutor};
+use crate::fasta::{FastaCountExecutor, FastaSequenceFieldExecutor, FastaSequencePresentExecutor};
 use crate::file::{FileEmptyExecutor, FileExistsExecutor, FileLinesExecutor, FileSizeExecutor};
 use std::path::PathBuf;
 
@@ -53,6 +54,9 @@ fn evaluate(assertion: &Assertion) -> Result<(bool, String), BioAssertError> {
     if let Some(e) = BamHeaderFieldExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
     if let Some(e) = BamReadGroupPresentExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
     if let Some(e) = BamReadGroupTagExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
+    if let Some(e) = FastaCountExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
+    if let Some(e) = FastaSequenceFieldExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
+    if let Some(e) = FastaSequencePresentExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
     Err(BioAssertError::Metric(assertion.metric.clone()))
 }
 

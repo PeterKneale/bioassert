@@ -1,0 +1,32 @@
+# FASTA sequence assertions against tests/data/sample.fasta (all passing).
+
+# Counts and total length
+tests/data/sample.fasta fasta.seq.count eq 3
+tests/data/sample.fasta fasta.seq.count gte 1
+tests/data/sample.fasta fasta.seq.count lt 10
+tests/data/sample.fasta fasta.length eq 42
+tests/data/sample.fasta fasta.length gte 40
+
+# Names and descriptions (dots, dashes, colons, and spaces must be quoted)
+tests/data/sample.fasta fasta.seq.0.name eq chr1
+tests/data/sample.fasta fasta.seq.1.name eq chr2
+tests/data/sample.fasta fasta.seq.2.name eq 'NC_000001.11'
+tests/data/sample.fasta fasta.seq.0.description eq 'Homo sapiens chromosome 1'
+tests/data/sample.fasta fasta.seq.2.description eq 'alternate assembly'
+tests/data/sample.fasta fasta.seq.0.name contains chr
+tests/data/sample.fasta fasta.seq.0.name starts ch
+tests/data/sample.fasta fasta.seq.2.name matches '^NC_[0-9]+\.[0-9]+$'
+tests/data/sample.fasta fasta.seq.0.name ne chr2
+
+# Per-record length
+tests/data/sample.fasta fasta.seq.0.length eq 28
+tests/data/sample.fasta fasta.seq.1.length eq 10
+tests/data/sample.fasta fasta.seq.2.length eq 4
+tests/data/sample.fasta fasta.seq.0.length gte 20
+
+# Presence (never errors on absence)
+tests/data/sample.fasta fasta.seq.0.present eq true
+tests/data/sample.fasta fasta.seq.2.present eq true
+tests/data/sample.fasta fasta.seq.3.present eq false
+tests/data/sample.fasta fasta.seq.0.description.present eq true
+tests/data/sample.fasta fasta.seq.1.description.present eq false
