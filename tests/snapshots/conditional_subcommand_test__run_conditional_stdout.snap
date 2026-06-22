@@ -1,0 +1,10 @@
+---
+source: tests/conditional_subcommand_test.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+PASS. Expected tests/data/example.tsv tsv.columns.count == 3, got 3
+SKIP. Skipped (condition not met): tests/data/missing.tsv file.exists == true, got false
+PASS. Expected tests/data/size_5B.txt file.empty == false, got false
+SKIP. Skipped (condition met): tests/data/empty_file.txt file.empty == true, got true
+PASS. Expected tests/data/example.tsv tsv.lines.count == 3, got 3
+SKIP. Skipped (condition not met): tests/data/missing.tsv file.exists == true, got false

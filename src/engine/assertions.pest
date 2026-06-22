@@ -25,8 +25,13 @@ unquoted_string = @{ ASCII_ALPHANUMERIC+ }
 string_value = _{ single_quoted | double_quoted | unquoted_string }
 value = { size_value | count_value | boolean_unit | string_value }
 
+guard_keyword = { ^"if" | ^"unless" }
+metric_condition = { metric }
+full_condition = { file ~ metric ~ comparator ~ value }
+condition = { full_condition | metric_condition }
+
 assertion = {
-    file ~ metric ~ comparator ~ value ~ EOI
+    file ~ metric ~ comparator ~ value ~ (guard_keyword ~ condition)? ~ EOI
 }
 
 assertions = {

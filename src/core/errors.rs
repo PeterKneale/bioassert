@@ -11,6 +11,9 @@ pub enum BioAssertError {
     Comparator(ComparatorError),
     Value(ValueParseError),
     Regex(regex::Error),
+    /// A guard condition could not be evaluated. Wraps the underlying error so the
+    /// report makes clear the failure was in the guard, not the main assertion.
+    Guard(Box<BioAssertError>),
 }
 
 impl Error for BioAssertError {}
@@ -23,6 +26,7 @@ impl Display for BioAssertError {
             Self::Comparator(err) => write!(f, "{err}"),
             Self::Value(err) => write!(f, "{err}"),
             Self::Regex(err) => write!(f, "invalid regex: {err}"),
+            Self::Guard(err) => write!(f, "guard could not be evaluated: {err}"),
         }
     }
 }

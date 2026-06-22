@@ -7,6 +7,9 @@ pub enum Outcome {
     Pass,
     Fail,
     Error,
+    /// The assertion was not evaluated because its guard was not satisfied. A skip is
+    /// neither a pass nor a failure and does not affect the exit code.
+    Skip,
 }
 
 impl Outcome {
@@ -16,6 +19,7 @@ impl Outcome {
             Outcome::Pass => "PASS",
             Outcome::Fail => "FAIL",
             Outcome::Error => "ERROR",
+            Outcome::Skip => "SKIP",
         }
     }
 }
@@ -105,6 +109,7 @@ mod tests {
                 metric: "m".into(),
                 comparator: "eq".into(),
                 expected: "x".into(),
+                guard: None,
             },
             message: message.into(),
             outcome,
@@ -137,5 +142,21 @@ mod tests {
         assert_eq!(report.count(Outcome::Error), 1);
         assert!(report.has_failures());
         assert!(report.has_errors());
+    }
+
+    #[test]
+    fn skip_label_is_skip() {
+        assert_eq!(Outcome::Skip.label(), "SKIP");
+        assert_eq!(result(Outcome::Skip, "guarded out").line(), "SKIP. guarded out");
+    }
+
+    #[test]
+    fn skip_is_neither_a_failure_nor_an_error() {
+        let mut report = AssertionReport::new();
+        report.push(result(Outcome::Pass, "a"));
+        report.push(result(Outcome::Skip, "b"));
+        assert_eq!(report.count(Outcome::Skip), 1);
+        assert!(!report.has_failures());
+        assert!(!report.has_errors());
     }
 }

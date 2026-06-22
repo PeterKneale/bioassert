@@ -80,13 +80,38 @@ previously separate workspace crates and were merged back into one; their bounda
    `core::AssertionExecutor` (`executor.rs` for parsing/dispatch, `functions.rs` for the work).
 2. Re-export the new `*Executor` from that module's `mod.rs`.
 3. Add a `try_parse` dispatch line in `src/engine/executor.rs`.
-4. Extend `src/engine/cli.pest` if new metric or value syntax is needed. The `metric` rule already accepts any
+4. Extend `src/engine/assertions.pest` if new metric or value syntax is needed. The `metric` rule already accepts any
    dot-separated chain of identifiers/numbers (e.g. `bam.header.rg.0.sm`), so most new metrics need no grammar change.
 
 Expected values are matched by the grammar as a bare alphanumeric string, a quoted string, a number (with optional
 size/count unit), or a boolean. Values containing dots, dashes, colons, or spaces (e.g. `'H0164.2'`, `'1.6'`,
 `'Solexa-272222'`, `'NC_000001.11'`, `'Homo sapiens chromosome 1'`) must be single- or double-quoted; executors
 call `core::strip_quotes` to unwrap them.
+
+## Conditional assertions (guards)
+
+An assertion may carry an optional guard so it is evaluated only when a condition holds:
+
+```
+<file> <metric> <comparator> <value> if <condition>
+<file> <metric> <comparator> <value> unless <condition>
+```
+
+- `if` runs the assertion when the condition is satisfied. `unless` runs it when the condition is not satisfied.
+- The condition has two forms. The shorthand is a bare metric on the assertion's own file with an implicit `eq true`
+  (`if file.exists`), intended for boolean metrics (`file.exists`, `file.empty`, the `*.present` metrics). The full
+  form is a complete `<file> <metric> <comparator> <value>` and may target a different file
+  (`if other.bam bam.header.rg.count gt 0`).
+- A guard has three outcomes. Satisfied: the assertion runs and reports PASS or FAIL. Not satisfied: the assertion is
+  reported as SKIP, a neutral outcome that does not affect the exit code. Cannot be evaluated (for example a full-form
+  guard whose file is missing): reported as ERROR. `file.exists` is the safe guard because it returns `false` rather
+  than erroring on an absent file.
+- The grammar (`src/engine/assertions.pest`) adds an optional `(guard_keyword ~ condition)?` suffix to the `assertion`
+  rule. The parser fills the shorthand defaults, and `src/engine/executor.rs` evaluates the guard (through the same
+  metric dispatch as a normal assertion) before the assertion itself. SKIP is an `Outcome` variant in
+  `src/engine/report.rs`.
+- Boolean composition (`and`, `or`, `not`) is not yet supported. To use `if` or `unless` as a literal expected value,
+  quote it. The full design is recorded in `specs/conditional-assertions.md`.
 
 ## BAM test fixture
 
