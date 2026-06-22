@@ -3,7 +3,7 @@ use pest::Parser;
 use pest_derive::Parser;
 
 #[derive(Parser)]
-#[grammar = "engine/cli.pest"]
+#[grammar = "engine/assertions.pest"]
 struct AssertionParser;
 
 pub fn parse_assertion(input: &str) -> Result<Assertion, Box<dyn std::error::Error>> {
