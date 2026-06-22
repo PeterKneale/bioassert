@@ -2,7 +2,7 @@ use crate::engine::assertion::Assertion;
 use crate::engine::report::{AssertionReport, AssertionResult, Outcome};
 use crate::bam::{BamCountExecutor, BamHeaderFieldExecutor, BamReadGroupPresentExecutor, BamReadGroupTagExecutor};
 use crate::core::{AssertionExecutor, AssertionRequest, BioAssertError};
-use crate::delimited::{DelimitedCellExecutor, DelimitedColumnCountExecutor, DelimitedLineCountExecutor};
+use crate::delimited::{DelimitedCellExecutor, DelimitedColumnAllExecutor, DelimitedColumnCountExecutor, DelimitedLineCountExecutor};
 use crate::fasta::{FastaCountExecutor, FastaSequenceFieldExecutor, FastaSequencePresentExecutor};
 use crate::file::{FileEmptyExecutor, FileExistsExecutor, FileLinesExecutor, FileSizeExecutor};
 use std::path::PathBuf;
@@ -50,6 +50,7 @@ fn evaluate(assertion: &Assertion) -> Result<(bool, String), BioAssertError> {
     if let Some(e) = DelimitedColumnCountExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
     if let Some(e) = DelimitedLineCountExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
     if let Some(e) = DelimitedCellExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
+    if let Some(e) = DelimitedColumnAllExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
     if let Some(e) = BamCountExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
     if let Some(e) = BamHeaderFieldExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
     if let Some(e) = BamReadGroupPresentExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }

@@ -30,7 +30,9 @@ previously separate workspace crates and were merged back into one; their bounda
 
 1. **`src/core/`** — shared types and traits with no dependency on the other modules:
     - `assertion_request.rs` — `AssertionRequest` (resolved file path, parsed `Comparator`, raw expected string)
-    - `comparisons/` — `Comparator` enum and its parsing; `compare` is generic over `PartialOrd`
+    - `comparisons/` — `Comparator` enum and its parsing; `compare` is generic over `PartialOrd`. String
+      comparison goes through `Comparator::string_matcher`, which returns a reusable `StringMatcher` (compiling any
+      `matches` regex once); `compare_string` is a one-shot convenience wrapper over it
     - `values/` — `Value` enum (and `BytesValue`); size units are normalised to bytes
     - `executor.rs` — the `AssertionExecutor` trait (`try_parse` + `execute`) and `AssertionExecutionResult`
     - `errors.rs` / `file_error.rs` — `BioAssertError` and `FileError`
@@ -40,8 +42,11 @@ previously separate workspace crates and were merged back into one; their bounda
    `File*Executor` that implements `core::AssertionExecutor`, split into `executor.rs` (parsing + dispatch) and
    `functions.rs` (the actual filesystem work).
 
-3. **`src/delimited/`** — CSV/TSV/PSV metric executors (`column_count`, `line_count`, `cell`), same `*Executor` +
-   `functions.rs` shape, with shared helpers in `functions.rs`.
+3. **`src/delimited/`** — CSV/TSV/PSV metric executors (`column_count`, `line_count`, `cell`, `column_all`), same
+   `*Executor` + `functions.rs` shape, with shared helpers in `functions.rs`. `column_all` handles the
+   `<prefix>.column.<n>.all` (every line) and `<prefix>.column.<n>.data.all` (skip header) whole-column metrics; it
+   streams the file and short-circuits on the first failing row, using `core::comparisons::StringMatcher` so a
+   `matches` regex is compiled once rather than per cell.
 
 4. **`src/bam/`** — BAM SAM-header metric executors built on the `noodles` crate, all under the `bam.header.*`
    namespace: `count` (`bam.header.rg.count`, `bam.header.sq.count`, `bam.header.pg.count`), `read_group`

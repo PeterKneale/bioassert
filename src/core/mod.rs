@@ -8,6 +8,7 @@ pub mod values;
 
 pub use assertion_request::AssertionRequest;
 pub use comparisons::Comparator;
+pub use comparisons::StringMatcher;
 pub use errors::BioAssertError;
 pub use executor::{AssertionExecutionResult, AssertionExecutor};
 pub use file_error::FileError;
