@@ -35,21 +35,55 @@ impl Comparator {
     }
 
     pub fn compare_string(self, actual: &str, expected: &str) -> Result<bool, BioAssertError> {
-        match self {
-            Self::Eq => Ok(actual == expected),
-            Self::Ne => Ok(actual != expected),
-            Self::Starts => Ok(actual.starts_with(expected)),
-            Self::Ends => Ok(actual.ends_with(expected)),
-            Self::Contains => Ok(actual.contains(expected)),
-            Self::Matches => {
-                let re = regex::Regex::new(expected)?;
-                Ok(re.is_match(actual))
+        Ok(self.string_matcher(expected)?.is_match(actual))
+    }
+
+    /// Builds a reusable [`StringMatcher`] for `expected`, compiling any regex exactly
+    /// once. Use this instead of [`Self::compare_string`] when the same comparison is
+    /// applied to many values (e.g. every cell of a delimited column) so a `matches`
+    /// pattern is not recompiled per value. Errors if the comparator is not valid for
+    /// string comparison (the numeric comparators) or the regex is invalid.
+    pub fn string_matcher(self, expected: &str) -> Result<StringMatcher, BioAssertError> {
+        Ok(match self {
+            Self::Eq => StringMatcher::Eq(expected.to_string()),
+            Self::Ne => StringMatcher::Ne(expected.to_string()),
+            Self::Starts => StringMatcher::Starts(expected.to_string()),
+            Self::Ends => StringMatcher::Ends(expected.to_string()),
+            Self::Contains => StringMatcher::Contains(expected.to_string()),
+            Self::Matches => StringMatcher::Matches(regex::Regex::new(expected)?),
+            _ => {
+                return Err(ComparatorError::UnsupportedComparator(format!(
+                    "unsupported comparator for string comparison: {}",
+                    self
+                ))
+                .into())
             }
-            _ => Err(ComparatorError::UnsupportedComparator(format!(
-                "unsupported comparator for string comparison: {}",
-                self
-            ))
-            .into()),
+        })
+    }
+}
+
+/// A reusable string predicate produced by [`Comparator::string_matcher`]. It owns its
+/// expected value (and a compiled regex for `matches`) so [`Self::is_match`] can be
+/// applied across many values without recompiling. This is the single source of truth
+/// for string comparison semantics; [`Comparator::compare_string`] delegates to it.
+pub enum StringMatcher {
+    Eq(String),
+    Ne(String),
+    Starts(String),
+    Ends(String),
+    Contains(String),
+    Matches(regex::Regex),
+}
+
+impl StringMatcher {
+    pub fn is_match(&self, actual: &str) -> bool {
+        match self {
+            Self::Eq(expected) => actual == expected,
+            Self::Ne(expected) => actual != expected,
+            Self::Starts(expected) => actual.starts_with(expected.as_str()),
+            Self::Ends(expected) => actual.ends_with(expected.as_str()),
+            Self::Contains(expected) => actual.contains(expected.as_str()),
+            Self::Matches(re) => re.is_match(actual),
         }
     }
 }

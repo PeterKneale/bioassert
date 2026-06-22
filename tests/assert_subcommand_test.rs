@@ -80,3 +80,29 @@ fn exits_2_for_regex_error() {
     assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
     assert!(stderr.contains("invalid regex"), "expected 'invalid regex' in stderr: {stderr}");
 }
+
+#[test]
+fn column_data_all_passes_when_every_data_row_matches() {
+    let output = exec(&["assert", r#"tests/data/junctions.tsv tsv.column.6.data.all matches "^[+-]$""#]);
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
+}
+
+#[test]
+fn column_all_includes_header_and_fails_on_it() {
+    // Without `.data`, line 1 ("strand") is checked and does not match the regex.
+    let output = exec(&["assert", r#"tests/data/junctions.tsv tsv.column.6.all matches "^[+-]$""#]);
+    assert_eq!(output.status.code(), Some(1));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("FAIL."), "expected FAIL. in stdout: {stdout}");
+    assert!(stdout.contains(r#"line 1 = "strand""#), "expected offending row in stdout: {stdout}");
+}
+
+#[test]
+fn column_data_all_reports_first_offending_row() {
+    let output = exec(&["assert", r#"tests/data/junctions.tsv tsv.column.11.data.all matches "^(DA|D|A|N)$""#]);
+    // Row 2's anchor value "NDA" is the first that fails this (NDA-less) pattern.
+    assert_eq!(output.status.code(), Some(1));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains(r#"line 3 = "NDA""#), "expected offending row in stdout: {stdout}");
+}

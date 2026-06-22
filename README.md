@@ -195,12 +195,19 @@ results.tsv   file.lines    gte  1        # at least one line
 Replace `csv` with `tsv` (tab-separated) or `psv` (pipe-separated) for those formats. Lines and columns are 1-indexed.
 
 ```text
-samples.csv   csv.columns.count    eq   3                  # 3 columns
-counts.tsv    tsv.lines.count      gt   10                 # more than 10 lines
-report.psv    psv.line.2.column.1  eq   Alice              # cell value
-samples.csv   csv.line.2.column.3  starts  New             # cell prefix
-results.tsv   tsv.line.2.column.2  matches '^[0-9]+$'      # cell regex
+samples.csv   csv.columns.count       eq   3                  # 3 columns
+counts.tsv    tsv.lines.count         gt   10                 # more than 10 lines
+report.psv    psv.line.2.column.1     eq   Alice              # cell value
+samples.csv   csv.line.2.column.3     starts  New             # cell prefix
+results.tsv   tsv.line.2.column.2     matches '^[0-9]+$'      # cell regex
+junctions.tsv tsv.column.6.data.all   matches '^[+-]$'        # every data row in column 6
+junctions.tsv tsv.column.4.all        matches '^JUNC[0-9]+$'  # every row, header included
 ```
+
+`column.N.all` applies the comparison to every cell in column N (1-indexed) and passes only when they all hold;
+`column.N.data.all` does the same but skips the header (line 1), which is what you usually want for a file with a
+header row. A header-only or empty file passes vacuously. On failure the report names the first offending row and its
+value (e.g. `got line 3 = "NDA"`). Any string comparator works, not just `matches`.
 
 ### BAM header checks
 
@@ -326,11 +333,15 @@ Notes:
 
 | Metric                | Description                                     |
 |-----------------------|-------------------------------------------------|
-| `csv.columns.count`   | Number of columns in the first (header) row     |
-| `csv.lines.count`     | Number of lines in the file                     |
-| `csv.line.N.column.M` | Content of cell at line N, column M (1-indexed) |
+| `csv.columns.count`     | Number of columns in the first (header) row                          |
+| `csv.lines.count`       | Number of lines in the file                                          |
+| `csv.line.N.column.M`   | Content of cell at line N, column M (1-indexed)                      |
+| `csv.column.N.all`      | Holds for every cell in column N, header included (1-indexed)        |
+| `csv.column.N.data.all` | Holds for every cell in column N, skipping the header row            |
 
-Replace `csv` with `tsv` (tab-separated) or `psv` (pipe-separated) for those formats.
+Replace `csv` with `tsv` (tab-separated) or `psv` (pipe-separated) for those formats. The `column.N.all` /
+`column.N.data.all` metrics accept any string comparator (`eq`, `ne`, `starts`, `ends`, `contains`, `matches`) and
+pass only when it holds for every checked cell; a header-only or empty file passes vacuously.
 
 ### BAM header metrics
 
