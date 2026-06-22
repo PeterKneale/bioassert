@@ -53,6 +53,8 @@ pub fn format_outcome(outcome: Outcome, message: &str, color: bool, icons: bool)
         Outcome::Pass => ("🟢", "\x1b[32m"),
         Outcome::Fail => ("🔴", "\x1b[31m"),
         Outcome::Error => ("🔥", "\x1b[31m"),
+        // SKIP is de-emphasised: a neutral icon and dim text, so it reads as "not run".
+        Outcome::Skip => ("⚪", "\x1b[2m"),
     };
     // Two spaces keep the emoji from crowding the keyword in most terminals.
     let prefix = if icons { format!("{icon}  ") } else { String::new() };
@@ -87,6 +89,12 @@ mod tests {
     #[test]
     fn color_and_icons_are_independent() {
         assert_eq!(format_outcome(Outcome::Pass, "ok", true, true), "🟢  \x1b[32mPASS\x1b[0m. ok");
+    }
+
+    #[test]
+    fn skip_renders_a_neutral_icon_and_label() {
+        assert_eq!(format_outcome(Outcome::Skip, "guarded out", false, false), "SKIP. guarded out");
+        assert_eq!(format_outcome(Outcome::Skip, "guarded out", false, true), "⚪  SKIP. guarded out");
     }
 
     #[test]
