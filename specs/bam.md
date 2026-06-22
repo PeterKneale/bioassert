@@ -16,8 +16,10 @@ and have them pass/fail like any other metric.
 
 ## Constraints and key facts
 
-- **No pest grammar change is needed.** `src/engine/cli.pest` defines `metric = @{ identifier ~ ("." ~ metric_segment)+ }`,
-  which already accepts any dot-separated chain of identifiers/numbers (e.g. `bam.header.rg.0.sm`). Executors do all real
+- **No pest grammar change is needed.** `src/engine/cli.pest` defines
+  `metric = @{ identifier ~ ("." ~ metric_segment)+ }`,
+  which already accepts any dot-separated chain of identifiers/numbers (e.g. `bam.header.rg.0.sm`). Executors do all
+  real
   parsing in `try_parse` via `metric.split('.')` + slice matching — exactly the pattern `DelimitedCellExecutor`
   uses for `csv.line.2.column.3` (`src/delimited/cell/executor.rs`).
 - **Values with special characters must be quoted.** The grammar's bare string is `ASCII_ALPHANUMERIC+` only, so
@@ -50,16 +52,16 @@ and have them pass/fail like any other metric.
 
 ## Metric format
 
-| Metric | Value type | Meaning |
-|---|---|---|
-| `bam.header.rg.count` | integer | number of `@RG` lines |
-| `bam.header.sq.count` | integer | number of `@SQ` reference sequences |
-| `bam.header.pg.count` | integer | number of `@PG` program records |
-| `bam.header.rg.<n>.<tag>` | string | tag value of the nth read group (`id`, `sm`, `lb`, `pl`, `pu`, `pi`, `dt`, `cn`, `ds`, `pm`, ...) |
-| `bam.header.rg.<n>.present` | bool | whether a read group exists at index n |
-| `bam.header.rg.<n>.<tag>.present` | bool | whether that tag is set on read group n |
-| `bam.header.hd.vn` | string | `@HD` version (VN) |
-| `bam.header.hd.so` | string | `@HD` sort order (SO) |
+| Metric                            | Value type | Meaning                                                                                           |
+|-----------------------------------|------------|---------------------------------------------------------------------------------------------------|
+| `bam.header.rg.count`             | integer    | number of `@RG` lines                                                                             |
+| `bam.header.sq.count`             | integer    | number of `@SQ` reference sequences                                                               |
+| `bam.header.pg.count`             | integer    | number of `@PG` program records                                                                   |
+| `bam.header.rg.<n>.<tag>`         | string     | tag value of the nth read group (`id`, `sm`, `lb`, `pl`, `pu`, `pi`, `dt`, `cn`, `ds`, `pm`, ...) |
+| `bam.header.rg.<n>.present`       | bool       | whether a read group exists at index n                                                            |
+| `bam.header.rg.<n>.<tag>.present` | bool       | whether that tag is set on read group n                                                           |
+| `bam.header.hd.vn`                | string     | `@HD` version (VN)                                                                                |
+| `bam.header.hd.so`                | string     | `@HD` sort order (SO)                                                                             |
 
 `<n>` is a 0-based index. `<tag>` is the lowercased 2-letter SAM tag; `id` resolves to the read-group key,
 all others to `other_fields`.
@@ -79,6 +81,7 @@ all others to `other_fields`.
 All examples below are evaluated against the sample header above. The trailing comment is the expected outcome.
 
 #### Counts
+
 ```
 sample.bam bam.header.rg.count        eq  2            # PASS
 sample.bam bam.header.rg.count        gte 1            # PASS
@@ -89,7 +92,9 @@ sample.bam bam.header.rg.count        eq  3            # FAIL (actual 2)
 ```
 
 #### Read-group tag values
+
 Values containing a dot, dash, or colon must be quoted; bare values must be alphanumeric.
+
 ```
 sample.bam bam.header.rg.0.id         eq  'H0164.1'           # PASS (ID is the @RG key)
 sample.bam bam.header.rg.1.id         eq  'H0164.2'           # PASS
@@ -108,6 +113,7 @@ sample.bam bam.header.rg.0.sm         eq  WRONG               # FAIL (actual NA1
 ```
 
 #### Presence (never errors on absence)
+
 ```
 sample.bam bam.header.rg.0.present    eq  true     # PASS (RG 0 exists)
 sample.bam bam.header.rg.1.present    eq  true     # PASS (RG 1 exists)
@@ -120,6 +126,7 @@ sample.bam bam.header.rg.0.pi.present eq  false    # PASS (no PI tag in sample)
 ```
 
 #### Header line (@HD)
+
 ```
 sample.bam bam.header.hd.vn           eq  '1.6'        # PASS (quote: dot)
 sample.bam bam.header.hd.so           eq  coordinate   # PASS
@@ -127,6 +134,7 @@ sample.bam bam.header.hd.so           ne  queryname    # PASS
 ```
 
 #### Errors (exit code 2)
+
 ```
 sample.bam bam.header.rg.2.sm         eq  NA12878   # ERROR (read-group index out of range)
 sample.bam bam.header.rg.0.dt         eq  X         # ERROR (tag not present — use .present to test softly)
@@ -136,7 +144,8 @@ notabam.txt  bam.header.rg.count      eq  2         # ERROR (not a valid BAM)
 
 ### Semantics
 
-Value metrics (`bam.header.rg.<n>.<tag>`, `bam.header.hd.*`) **error** if the RG index / tag / `@HD` is absent (consistent
+Value metrics (`bam.header.rg.<n>.<tag>`, `bam.header.hd.*`) **error** if the RG index / tag / `@HD` is absent (
+consistent
 with `DelimitedCellExecutor` erroring on a missing cell). The `.present` metrics **never error** on absence —
 they return `false`. This is how a user safely tests "is this set" versus "what is its value".
 
@@ -156,20 +165,22 @@ noodles = { version = "<latest>", features = ["bam", "sam"] }
 
 - `src/bam/mod.rs` — declares submodules and re-exports the executors.
 - `src/bam/functions.rs` — shared noodles work, the single place that touches the crate:
-  - `read_header(file: &Path) -> Result<Rc<sam::Header>, FileError>` — **cached** (see "Header caching" below);
-    on a miss it opens the file, parses the header, and stores it. Maps `io::Error` via `FileError::new`.
-  - helpers take `&sam::Header` (so they work straight off the cached `Rc`): `read_group_count`,
-    `reference_count`, `program_count`, `read_group_tag(header, n, tag) -> Option<String>`,
-    `read_group_present(header, n) -> bool`, `hd_field(header, field) -> Option<String>`.
-  - tag lookup: `id` → nth key of `read_groups()`; otherwise build `Tag` from the uppercased 2 bytes and read `other_fields()`.
-  - every `bam.header.*` executor's `execute` calls `read_header` and then a helper; none open the file directly.
+    - `read_header(file: &Path) -> Result<Rc<sam::Header>, FileError>` — **cached** (see "Header caching" below);
+      on a miss it opens the file, parses the header, and stores it. Maps `io::Error` via `FileError::new`.
+    - helpers take `&sam::Header` (so they work straight off the cached `Rc`): `read_group_count`,
+      `reference_count`, `program_count`, `read_group_tag(header, n, tag) -> Option<String>`,
+      `read_group_present(header, n) -> bool`, `hd_field(header, field) -> Option<String>`.
+    - tag lookup: `id` → nth key of `read_groups()`; otherwise build `Tag` from the uppercased 2 bytes and read
+      `other_fields()`.
+    - every `bam.header.*` executor's `execute` calls `read_header` and then a helper; none open the file directly.
 - `src/bam/count/executor.rs` — `BamCountExecutor`: `try_parse` matches `[ "bam", kind, "count" ]` for
   `kind ∈ {rg, sq, pg}`; `execute` returns `Value::from_integer(expected)` numeric-compared against the count.
 - `src/bam/read_group/executor.rs` — two executors (exact-shape `try_parse`, so dispatch order is irrelevant):
-  - `BamReadGroupTagExecutor`: `[ "bam", "rg", n, tag ]` → `StringValue`, `compare_string`, errors if absent.
-  - `BamReadGroupPresentExecutor`: `[ "bam", "rg", n, "present" ]` and `[ "bam", "rg", n, tag, "present" ]`
-    → `Value::from_boolean(expected)` compared against the boolean.
-- `src/bam/header/executor.rs` — `BamHeaderFieldExecutor`: `[ "bam", "hd", field ]` for `field ∈ {vn, so}` → `StringValue`.
+    - `BamReadGroupTagExecutor`: `[ "bam", "rg", n, tag ]` → `StringValue`, `compare_string`, errors if absent.
+    - `BamReadGroupPresentExecutor`: `[ "bam", "rg", n, "present" ]` and `[ "bam", "rg", n, tag, "present" ]`
+      → `Value::from_boolean(expected)` compared against the boolean.
+- `src/bam/header/executor.rs` — `BamHeaderFieldExecutor`: `[ "bam", "hd", field ]` for `field ∈ {vn, so}` →
+  `StringValue`.
 
 Each `executor.rs` carries a `#[cfg(test)] mod tests` of `try_parse` cases (accept valid shapes, reject bad
 prefix/tag/index), matching `src/delimited/cell/executor.rs` tests.
@@ -200,6 +211,7 @@ pub fn read_header(file: &Path) -> Result<Rc<sam::Header>, FileError> {
 ```
 
 Rationale and choices:
+
 - **`thread_local!` over a struct threaded through `execute`** — the `AssertionExecutor::execute` signature
   (`self, &AssertionRequest`) is shared by every executor; adding a cache parameter would ripple through all of
   them. The execution loop is single-threaded and sequential, so a thread-local map is sufficient and keeps the
@@ -227,10 +239,10 @@ one delimited call site. Avoids duplicating quote-stripping logic.
 Add `try_parse` lines after the delimited executors (before the final `Err`):
 
 ```rust
-if let Some(e) = BamCountExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
-if let Some(e) = BamHeaderFieldExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
-if let Some(e) = BamReadGroupPresentExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
-if let Some(e) = BamReadGroupTagExecutor::try_parse(&assertion.metric) { return dispatch(e, assertion, request); }
+if let Some(e) = BamCountExecutor::try_parse( & assertion.metric) { return dispatch(e, assertion, request); }
+if let Some(e) = BamHeaderFieldExecutor::try_parse( & assertion.metric) { return dispatch(e, assertion, request); }
+if let Some(e) = BamReadGroupPresentExecutor::try_parse( & assertion.metric) { return dispatch(e, assertion, request); }
+if let Some(e) = BamReadGroupTagExecutor::try_parse( & assertion.metric) { return dispatch(e, assertion, request); }
 ```
 
 Add the `mod bam;` declaration and re-exports alongside the existing modules in `src/lib.rs`.
@@ -251,7 +263,8 @@ and an `@HD` with `VN:1.6 SO:coordinate` — so the assertions and snapshot belo
 
 - **Unit tests** (`src/bam/functions.rs`): a helper builds this exact header with noodles' `sam::Header` builder +
   `bam::io::Writer` into a `NamedTempFile`, then asserts each function against the known values — e.g.
-  `read_group_count == 2`, `reference_count == 1`, `program_count == 1`, `read_group_tag(h, 0, "id") == Some("H0164.1")`,
+  `read_group_count == 2`, `reference_count == 1`, `program_count == 1`,
+  `read_group_tag(h, 0, "id") == Some("H0164.1")`,
   `read_group_tag(h, 0, "sm") == Some("NA12878")`, `read_group_tag(h, 1, "pu") == Some("H0164ALXX140820.2")`,
   `read_group_tag(h, 0, "dt") == None`, `read_group_present(h, 2) == false`, `hd_field(h, "vn") == Some("1.6")`,
   `hd_field(h, "so") == Some("coordinate")`. Each executor's `#[cfg(test)] mod tests` covers `try_parse` shapes.
