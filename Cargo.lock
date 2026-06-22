@@ -442,6 +442,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78906b00d2b2d144c920567724ab0dc68ef8da7fc258ef18da86bbbec572000e"
 dependencies = [
  "noodles-bam",
+ "noodles-fasta",
  "noodles-sam",
 ]
 
@@ -489,6 +490,18 @@ dependencies = [
  "bit-vec",
  "bstr",
  "indexmap",
+ "noodles-bgzf",
+ "noodles-core",
+]
+
+[[package]]
+name = "noodles-fasta"
+version = "0.62.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c36aecf3899ba8ca698bddee3c7264d6e70afca6620524ece230d2c34b93021b"
+dependencies = [
+ "bstr",
+ "memchr",
  "noodles-bgzf",
  "noodles-core",
 ]

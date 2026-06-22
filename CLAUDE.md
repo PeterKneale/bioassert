@@ -50,20 +50,28 @@ previously separate workspace crates and were merged back into one; their bounda
    path in a thread-local so a `run` over many `bam.header.*` assertions parses each file once. The `bam.header.*`
    prefix leaves room for future record/body metrics under a sibling namespace (e.g. `bam.records.*`).
 
-5. **`src/engine/`** — ties it together:
+5. **`src/fasta/`** — FASTA sequence metric executors built on the `noodles` crate, under the `fasta.seq.*`
+   namespace for per-record metrics plus the `fasta.length` whole-file aggregate: `count` (`fasta.seq.count`,
+   `fasta.length`) and `sequence` (`fasta.seq.<n>.name`, `.description`, `.length`, and the `.present` variants).
+   `functions.rs` is the only place that touches `noodles`; its `read_records` scans each file once and caches a
+   per-record digest `{ name, description, length }` (never the sequence bytes, so memory stays bounded for
+   multi-gigabyte genomes) keyed by path in a thread-local, so a `run` over many `fasta.*` assertions reads each
+   file once. The `fasta.seq.*` prefix leaves room for future index metrics (e.g. `fasta.index.*`).
+
+6. **`src/engine/`** — ties it together:
     - `cli.pest` — PEG grammar defining the assertion syntax (referenced as `#[grammar = "engine/cli.pest"]`)
     - `parser.rs` — wraps the PEG parser into `Assertion` structs; `parse_assertion` handles a single assertion,
       `parse_file` skips blank lines and `#` comments
     - `executor.rs` — `execute_all` / `execute`, which try each `*Executor` in turn and build an `AssertionReport`
     - `report.rs` — `AssertionReport`, `AssertionResult`, `Outcome`
 
-6. **Binary** (`src/main.rs`, `src/cli.rs`, `src/report.rs`) — `clap` derive API with two subcommands, `assert` (single
+7. **Binary** (`src/main.rs`, `src/cli.rs`, `src/report.rs`) — `clap` derive API with two subcommands, `assert` (single
    string) and `run` (path to assertions file). `src/report.rs` is the console/file presentation layer; the binary
    reaches the library modules via the `bioassert::` crate path.
 
 ## Adding a new metric
 
-1. Add a submodule under `src/file/`, `src/delimited/`, or `src/bam/` with a `*Executor` implementing
+1. Add a submodule under `src/file/`, `src/delimited/`, `src/bam/`, or `src/fasta/` with a `*Executor` implementing
    `core::AssertionExecutor` (`executor.rs` for parsing/dispatch, `functions.rs` for the work).
 2. Re-export the new `*Executor` from that module's `mod.rs`.
 3. Add a `try_parse` dispatch line in `src/engine/executor.rs`.
@@ -71,8 +79,9 @@ previously separate workspace crates and were merged back into one; their bounda
    dot-separated chain of identifiers/numbers (e.g. `bam.header.rg.0.sm`), so most new metrics need no grammar change.
 
 Expected values are matched by the grammar as a bare alphanumeric string, a quoted string, a number (with optional
-size/count unit), or a boolean. Values containing dots, dashes, or colons (e.g. `'H0164.2'`, `'1.6'`,
-`'Solexa-272222'`) must be single- or double-quoted; executors call `core::strip_quotes` to unwrap them.
+size/count unit), or a boolean. Values containing dots, dashes, colons, or spaces (e.g. `'H0164.2'`, `'1.6'`,
+`'Solexa-272222'`, `'NC_000001.11'`, `'Homo sapiens chromosome 1'`) must be single- or double-quoted; executors
+call `core::strip_quotes` to unwrap them.
 
 ## BAM test fixture
 
