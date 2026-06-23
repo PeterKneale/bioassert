@@ -9,7 +9,7 @@ impl AssertionExecutor for FileEmptyExecutor {
 
     fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_boolean(&request.expected)?;
-        let actual = super::functions::empty(&request.file)?;
+        let actual = super::functions::empty(request.path())?;
         let success = request.comparator.compare(&actual, &expected);
         Ok(AssertionExecutionResult { success, actual })
     }

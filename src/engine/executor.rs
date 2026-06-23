@@ -5,7 +5,7 @@ use crate::core::{AssertionExecutor, AssertionRequest, BioAssertError, Comparato
 use crate::delimited::{DelimitedCellExecutor, DelimitedColumnAllExecutor, DelimitedColumnCountExecutor, DelimitedLineCountExecutor};
 use crate::fasta::{FastaCountExecutor, FastaSequenceFieldExecutor, FastaSequencePresentExecutor};
 use crate::file::{FileEmptyExecutor, FileExistsExecutor, FileLinesExecutor, FileSizeExecutor};
-use std::path::PathBuf;
+use crate::text::{TextLengthExecutor, TextValueExecutor};
 
 /// Evaluates every assertion and collects the outcomes into an [`AssertionReport`].
 /// This is the structure callers turn into the assertion report (assertions.log).
@@ -81,13 +81,16 @@ fn evaluate(assertion: &Assertion) -> Result<Evaluation, BioAssertError> {
     })
 }
 
-/// Runs a single metric against a file: builds the request, finds the matching executor
-/// and returns whether the comparison held, the actual value and the parsed comparator
-/// (the comparator is returned so the caller can render it in its symbolic form). Shared
-/// by the main assertion and by guard conditions, so any metric can guard any other.
-fn run_metric(file: &str, metric: &str, comparator: &str, expected: &str) -> Result<(bool, Value, Comparator), BioAssertError> {
+/// Runs a single metric against a resource: builds the request, finds the matching
+/// executor and returns whether the comparison held, the actual value and the parsed
+/// comparator (the comparator is returned so the caller can render it in its symbolic
+/// form). Shared by the main assertion and by guard conditions, so any metric can guard
+/// any other.
+fn run_metric(resource: &str, metric: &str, comparator: &str, expected: &str) -> Result<(bool, Value, Comparator), BioAssertError> {
     let request = AssertionRequest {
-        file: PathBuf::from(file),
+        // Strip the locator's quotes once here, so every executor receives a clean locator
+        // and a quoted path/literal containing spaces (e.g. 'my output.tsv') resolves too.
+        locator: crate::core::strip_quotes(resource).to_string(),
         comparator: comparator.parse()?,
         expected: expected.to_string(),
     };
@@ -113,6 +116,8 @@ fn dispatch(metric: &str, request: &AssertionRequest) -> Result<(bool, Value), B
     if let Some(e) = FastaCountExecutor::try_parse(metric) { return run(e, request); }
     if let Some(e) = FastaSequenceFieldExecutor::try_parse(metric) { return run(e, request); }
     if let Some(e) = FastaSequencePresentExecutor::try_parse(metric) { return run(e, request); }
+    if let Some(e) = TextValueExecutor::try_parse(metric) { return run(e, request); }
+    if let Some(e) = TextLengthExecutor::try_parse(metric) { return run(e, request); }
     Err(BioAssertError::Metric(metric.to_string()))
 }
 

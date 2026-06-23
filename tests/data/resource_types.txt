@@ -1,0 +1,23 @@
+# Resource types: inline text resources, quoted locators, and a text-guarded assertion.
+# Every line either PASSES or is SKIPPED, so a `run` over this file exits 0.
+
+# Inline text resources compared as strings (text.value)
+'abc' text.value eq abc
+'abc' text.value starts a
+'abc' text.value ends c
+'abc' text.value contains b
+'NC_000001.11' text.value matches '^NC_'
+'Homo sapiens chromosome 1' text.value contains sapiens
+
+# Inline text resources compared by character length (text.length)
+'abc' text.length eq 3
+'abc' text.length gt 2
+'café' text.length eq 4
+'' text.length eq 0
+
+# A quoted locator: quotes are stripped centrally, and a path containing a space resolves
+'tests/data/with space.txt' file.size gt 0B
+
+# A text resource used as a guard input
+tests/data/example.tsv tsv.columns.count eq 3 if 'tumor' text.value eq tumor
+tests/data/example.tsv tsv.columns.count eq 3 if 'normal' text.value eq tumor

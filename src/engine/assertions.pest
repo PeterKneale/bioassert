@@ -5,7 +5,12 @@ number = @{ ASCII_DIGIT+ }
 single_quoted = @{"'" ~ (!"'" ~ ANY)* ~ "'"}
 double_quoted = @{"\"" ~ (!"\"" ~ ANY)* ~ "\""}
 unquoted = @{ (!WHITESPACE ~ ANY)+ }
-file = { unquoted | single_quoted | double_quoted }
+// The first token of an assertion is a resource locator, not necessarily a file path.
+// Its meaning is decided by the metric namespace (`file.*` treats it as a path, `text.*`
+// as a literal). Quoted alternatives come first so a quoted locator containing spaces
+// (e.g. 'my output.tsv') is matched whole rather than truncated at the first space by
+// `unquoted`.
+resource = { single_quoted | double_quoted | unquoted }
 
 identifier = @{
     ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")*
@@ -27,11 +32,11 @@ value = { size_value | count_value | boolean_unit | string_value }
 
 guard_keyword = { ^"if" | ^"unless" }
 metric_condition = { metric }
-full_condition = { file ~ metric ~ comparator ~ value }
+full_condition = { resource ~ metric ~ comparator ~ value }
 condition = { full_condition | metric_condition }
 
 assertion = {
-    file ~ metric ~ comparator ~ value ~ (guard_keyword ~ condition)? ~ EOI
+    resource ~ metric ~ comparator ~ value ~ (guard_keyword ~ condition)? ~ EOI
 }
 
 assertions = {

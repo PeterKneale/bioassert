@@ -11,7 +11,7 @@ impl AssertionExecutor for DelimitedLineCountExecutor {
 
     fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_integer(&request.expected)?;
-        let actual = super::functions::line_count(&request.file)?;
+        let actual = super::functions::line_count(request.path())?;
         let success = request.comparator.compare(&actual, &expected);
         Ok(AssertionExecutionResult { success, actual })
     }

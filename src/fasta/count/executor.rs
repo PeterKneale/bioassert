@@ -26,7 +26,7 @@ impl AssertionExecutor for FastaCountExecutor {
 
     fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_integer(&request.expected)?;
-        let records = functions::read_records(&request.file)?;
+        let records = functions::read_records(request.path())?;
         let value = match self.kind {
             Kind::Count => functions::record_count(&records),
             Kind::Length => functions::total_length(&records),
