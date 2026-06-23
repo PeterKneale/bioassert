@@ -30,7 +30,7 @@ impl AssertionExecutor for DelimitedColumnAllExecutor {
         let expected = crate::core::strip_quotes(&request.expected);
         // Compile the comparison once, then apply it to every cell in the column.
         let matcher = request.comparator.string_matcher(expected)?;
-        let check = super::functions::check_column(&request.file, self.delimiter, self.col, self.skip_header, &matcher)?;
+        let check = super::functions::check_column(request.path(), self.delimiter, self.col, self.skip_header, &matcher)?;
         let (success, actual) = match check {
             ColumnCheck::AllMatch { checked: 0 } => (true, "no rows checked".to_string()),
             ColumnCheck::AllMatch { checked } => (true, format!("{checked} rows checked")),

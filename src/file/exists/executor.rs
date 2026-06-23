@@ -9,7 +9,7 @@ impl AssertionExecutor for FileExistsExecutor {
 
     fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_boolean(&request.expected)?;
-        let actual = super::functions::exists(&request.file);
+        let actual = super::functions::exists(request.path());
         let success = request.comparator.compare(&actual, &expected);
         Ok(AssertionExecutionResult { success, actual })
     }

@@ -1,0 +1,17 @@
+---
+source: tests/resource_subcommand_test.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+PASS. Expected 'abc' text.value == abc, got abc
+PASS. Expected 'abc' text.value starts_with a, got abc
+PASS. Expected 'abc' text.value ends_with c, got abc
+PASS. Expected 'abc' text.value contains b, got abc
+PASS. Expected 'NC_000001.11' text.value matches '^NC_', got NC_000001.11
+PASS. Expected 'Homo sapiens chromosome 1' text.value contains sapiens, got Homo sapiens chromosome 1
+PASS. Expected 'abc' text.length == 3, got 3
+PASS. Expected 'abc' text.length > 2, got 3
+PASS. Expected 'café' text.length == 4, got 4
+PASS. Expected '' text.length == 0, got 0
+PASS. Expected 'tests/data/with space.txt' file.size > 0B, got 5B
+PASS. Expected tests/data/example.tsv tsv.columns.count == 3, got 3
+SKIP. Skipped (condition not met): 'normal' text.value == tumor, got normal

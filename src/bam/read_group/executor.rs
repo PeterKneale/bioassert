@@ -24,10 +24,10 @@ impl AssertionExecutor for BamReadGroupTagExecutor {
 
     fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = crate::core::strip_quotes(&request.expected).to_string();
-        let header = functions::read_header(&request.file)?;
+        let header = functions::read_header(request.path())?;
         let actual = functions::read_group_tag(&header, self.index, &self.tag).ok_or_else(|| {
             FileError::new(
-                &request.file,
+                request.path(),
                 io::Error::new(
                     io::ErrorKind::InvalidInput,
                     format!("read group {} tag {} not found", self.index, self.tag),
@@ -64,7 +64,7 @@ impl AssertionExecutor for BamReadGroupPresentExecutor {
 
     fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_boolean(&request.expected)?;
-        let header = functions::read_header(&request.file)?;
+        let header = functions::read_header(request.path())?;
         let present = match &self.tag {
             None => functions::read_group_present(&header, self.index),
             Some(tag) => functions::read_group_tag(&header, self.index, tag).is_some(),

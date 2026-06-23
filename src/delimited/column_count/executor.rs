@@ -13,7 +13,7 @@ impl AssertionExecutor for DelimitedColumnCountExecutor {
 
     fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_integer(&request.expected)?;
-        let actual = super::functions::column_count(&request.file, self.delimiter)?;
+        let actual = super::functions::column_count(request.path(), self.delimiter)?;
         let success = request.comparator.compare(&actual, &expected);
         Ok(AssertionExecutionResult { success, actual })
     }

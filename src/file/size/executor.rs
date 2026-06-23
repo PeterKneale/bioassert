@@ -10,7 +10,7 @@ impl AssertionExecutor for FileSizeExecutor {
 
     fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_bytes(&request.expected)?;
-        let actual = get_file_size(&request.file)?;
+        let actual = get_file_size(request.path())?;
         let success = request.comparator.compare(&actual, &expected);
         Ok(AssertionExecutionResult { success, actual })
     }

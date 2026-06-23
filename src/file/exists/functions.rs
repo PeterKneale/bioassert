@@ -1,7 +1,7 @@
 use crate::core::Value;
-use std::path::PathBuf;
+use std::path::Path;
 
-pub fn exists(file: &PathBuf) -> Value {
+pub fn exists(file: &Path) -> Value {
     Value::BooleanValue(file.exists() && file.is_file())
 }
 

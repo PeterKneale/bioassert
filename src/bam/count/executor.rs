@@ -28,7 +28,7 @@ impl AssertionExecutor for BamCountExecutor {
 
     fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_integer(&request.expected)?;
-        let header = functions::read_header(&request.file)?;
+        let header = functions::read_header(request.path())?;
         let count = match self.kind {
             Kind::ReadGroup => functions::read_group_count(&header),
             Kind::Reference => functions::reference_count(&header),

@@ -19,10 +19,10 @@ impl AssertionExecutor for BamHeaderFieldExecutor {
 
     fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = crate::core::strip_quotes(&request.expected).to_string();
-        let header = functions::read_header(&request.file)?;
+        let header = functions::read_header(request.path())?;
         let actual = functions::hd_field(&header, &self.field).ok_or_else(|| {
             FileError::new(
-                &request.file,
+                request.path(),
                 io::Error::new(
                     io::ErrorKind::InvalidInput,
                     format!("@HD field {} not found", self.field),

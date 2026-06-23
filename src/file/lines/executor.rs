@@ -10,7 +10,7 @@ impl AssertionExecutor for FileLinesExecutor {
 
     fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_integer(&request.expected)?;
-        let actual = functions::count_lines(&request.file)?;
+        let actual = functions::count_lines(request.path())?;
         let success = request.comparator.compare(&actual, &expected);
         Ok(AssertionExecutionResult { success, actual })
     }
