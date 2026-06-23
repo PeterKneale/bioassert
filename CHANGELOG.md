@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0](https://github.com/PeterKneale/bioassert/compare/v1.4.0...v2.0.0) - 2026-06-23
+
+### Added
+
+- add conditional assertions (if/unless guards)
+- add whole-column delimited assertions (column.N.all, column.N.data.all)
+- add FASTA sequence assertions (fasta.seq.*, fasta.length) ([#26](https://github.com/PeterKneale/bioassert/pull/26))
+
+### Other
+
+- make assertions.txt exhaustive across all metrics
+- rename file
+- improve formatting and clarity in BAM and FASTA documentation
+- add FASTA spec test plan (test files and tests)
+- lead README with quick start and assertions.txt examples ([#28](https://github.com/PeterKneale/bioassert/pull/28))
+
 ## [1.4.0](https://github.com/PeterKneale/bioassert/compare/v1.3.2...v1.4.0) - 2026-06-21
 
 ### Added
