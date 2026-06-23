@@ -141,6 +141,11 @@ match on `Rule::file` by name, so the rule rename needs no parser change.
 - **`text` metrics never error on the resource.** Unlike `file.*`, a `text` resource is always present (it is the
   literal), so `text.*` produces PASS or FAIL but not the "could not open" ERROR. This makes `text` a safe guard
   input, in the same way `file.exists` is, though as noted its guard value is limited to generation-time decisions.
+- **A shorthand guard cannot be used on a `text.*` assertion.** The shorthand (`if file.exists`) reuses the
+  assertion's own first token as the guard's resource, but for `text.*` that token is an inline literal, not a path.
+  So `'hello' text.value eq hello if file.exists` stats a file named `hello`, finds nothing and SKIPs the
+  always-true assertion at exit 0: a silently disabled check. Pair a `text.*` assertion only with a full-form guard
+  against a real file (`... if manifest.txt file.exists eq true`). See `specs/conditional-assertions.md`.
 - **Mismatched metric and resource error rather than misbehave.** `http://example.com file.size gt 0` selects the
   `file.size` executor, which tries to stat a path literally named `http://example.com`, fails to open it and
   reports ERROR. This is the existing behaviour for a missing file and needs no special handling.
@@ -164,6 +169,9 @@ field may now be a literal or URL rather than a path. No format code changes.
 # text as a guard input (generation-time decision; see Design decisions for the caveat)
 report.tsv   tsv.line.count gt 0  if 'tumor' text.value eq tumor    # runs the check
 report.tsv   tsv.line.count gt 0  if 'normal' text.value eq tumor   # SKIP (guard not satisfied)
+
+# Do NOT use a shorthand guard on a text resource: the literal is read as a path, so the check silently SKIPs
+# 'hello'      text.value eq hello  if file.exists                  # SKIP at exit 0 (no file named 'hello')
 
 # Files are unchanged (file.size needs a byte unit, e.g. 0B)
 tests/data/example.tsv   file.size gt 0B      # PASS

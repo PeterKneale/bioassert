@@ -110,6 +110,15 @@ keyword. To use those words as a literal expected value, quote them. This is wor
   the implicit expected `true` with `Value::from_integer("true")`, which errors, so the assertion is reported as
   ERROR rather than silently skipped. That is a safe, visible failure mode, not a foot-gun to guard against in
   code.
+- **Shorthand guards treat the first token as a path, so they must not be paired with `text.*` resources.** The
+  shorthand reuses the assertion's own first token as the guard's resource. That token is a filesystem path for the
+  file-backed families (`file.*`, `tsv.*`, `bam.*`, `fasta.*`) but an inline literal for `text.*`. A shorthand
+  `file.exists` guard on a `text.*` assertion therefore stats a path named after the literal, finds nothing and
+  reports the assertion as SKIP at exit 0. Unlike the numeric-metric case above this is a *silent* foot-gun: the run
+  passes while the intended check never ran. The engine cannot know the resource type at parse time, so this is not
+  guarded against in code. Pair a `text.*` assertion with a full-form guard against a real file
+  (`... if manifest.txt file.exists eq true`) instead. A `text` resource is always present, so it rarely needs a
+  guard at all.
 - **`if` vs `unless`.** With `if`, the main assertion runs when the condition is satisfied. With `unless`, it runs
   when the condition is *not* satisfied. In code this is one XOR against a `negate` flag.
 - **Guard errors are ERROR, not SKIP** (see the table in Design decisions). The reported message should make

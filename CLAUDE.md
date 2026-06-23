@@ -132,6 +132,10 @@ An assertion may carry an optional guard so it is evaluated only when a conditio
   (`if file.exists`), intended for boolean metrics (`file.exists`, `file.empty`, the `*.present` metrics). The full
   form is a complete `<file> <metric> <comparator> <value>` and may target a different file
   (`if other.bam bam.header.rg.count gt 0`).
+- Shorthand guards reuse the assertion's own first token as a filesystem path, so they must not be paired with
+  `text.*` resources (whose first token is an inline literal). `'x' text.value eq x if file.exists` stats a file
+  named `x`, finds nothing and SKIPs at exit 0, a silently disabled check. Use a full-form guard against a real file
+  instead (`... if manifest.txt file.exists eq true`).
 - A guard has three outcomes. Satisfied: the assertion runs and reports PASS or FAIL. Not satisfied: the assertion is
   reported as SKIP, a neutral outcome that does not affect the exit code. Cannot be evaluated (for example a full-form
   guard whose file is missing): reported as ERROR. `file.exists` is the safe guard because it returns `false` rather
