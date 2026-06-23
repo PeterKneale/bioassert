@@ -87,6 +87,24 @@ impl Value {
 
     pub fn from_integer(value: &str) -> Result<Self, ValueParseError> {
         let value = value.trim();
+        // Count units are decimal multipliers (K = 1_000, M = 1_000_000, G = 1_000_000_000),
+        // distinct from the binary (1024-based) size units handled by `from_bytes`. They are
+        // matched case-insensitively to mirror the grammar's `count_unit` rule. A bare number
+        // (no suffix) falls through to the plain parse below.
+        let upper = value.to_uppercase();
+        let units = [("G", 1_000_000_000_u64), ("M", 1_000_000_u64), ("K", 1_000_u64)];
+        for (suffix, multiplier) in units {
+            if let Some(number) = upper.strip_suffix(suffix) {
+                let integer = number
+                    .trim()
+                    .parse::<u64>()
+                    .map_err(|_| ValueParseError::InvalidInteger(value.to_string()))?;
+                let scaled = integer
+                    .checked_mul(multiplier)
+                    .ok_or_else(|| ValueParseError::InvalidInteger(value.to_string()))?;
+                return Ok(Self::IntegerValue(scaled));
+            }
+        }
         value
             .parse::<u64>()
             .map(Self::IntegerValue)
@@ -159,6 +177,31 @@ mod tests {
     #[test]
     fn from_integer_trims_whitespace() {
         assert_eq!(Value::from_integer(" 42 ").unwrap(), Value::IntegerValue(42));
+    }
+
+    #[test]
+    fn from_integer_parses_count_units() {
+        assert_eq!(Value::from_integer("5K").unwrap(), Value::IntegerValue(5_000));
+        assert_eq!(Value::from_integer("5M").unwrap(), Value::IntegerValue(5_000_000));
+        assert_eq!(Value::from_integer("5G").unwrap(), Value::IntegerValue(5_000_000_000));
+    }
+
+    #[test]
+    fn from_integer_count_units_are_case_insensitive() {
+        assert_eq!(Value::from_integer("5k").unwrap(), Value::IntegerValue(5_000));
+        assert_eq!(Value::from_integer("5m").unwrap(), Value::IntegerValue(5_000_000));
+        assert_eq!(Value::from_integer("5g").unwrap(), Value::IntegerValue(5_000_000_000));
+    }
+
+    #[test]
+    fn from_integer_count_unit_without_number_is_rejected() {
+        assert!(matches!(Value::from_integer("K"), Err(ValueParseError::InvalidInteger(_))));
+    }
+
+    #[test]
+    fn from_integer_rejects_size_unit() {
+        // KB/MB/GB are binary size units, not count units, so they do not parse as integers
+        assert!(matches!(Value::from_integer("5KB"), Err(ValueParseError::InvalidInteger(_))));
     }
 
     #[test]

@@ -24,11 +24,16 @@ comparator = { ^"gte" | ^"gt" | ^"lte" | ^"lt" | ^"eq" | ^"ne" | ^"starts" | ^"e
 size_unit = { ^"B" | ^"KB" | ^"MB" | ^"GB" | ^"TB" }
 count_unit = { ^"K" | ^"M" | ^"G" }
 boolean_unit = { "true" | "false" }
-size_value = @{ number ~ size_unit? }
-count_value = @{ number ~ count_unit? }
+// The unit is required here so a bare number (e.g. `5`) falls through to the `number`
+// alternative rather than matching `size_value` as just `5` — which would leave a
+// trailing `K`/`M`/`G` unconsumed and never reach `count_value`. size_value is tried
+// before count_value so the two-character size units (`KB`, `GB`, ...) win over the
+// one-character count units (`K`, `G`, ...) on a shared prefix.
+size_value = @{ number ~ size_unit }
+count_value = @{ number ~ count_unit }
 unquoted_string = @{ ASCII_ALPHANUMERIC+ }
 string_value = _{ single_quoted | double_quoted | unquoted_string }
-value = { size_value | count_value | boolean_unit | string_value }
+value = { size_value | count_value | number | boolean_unit | string_value }
 
 guard_keyword = { ^"if" | ^"unless" }
 metric_condition = { metric }

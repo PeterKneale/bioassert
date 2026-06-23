@@ -76,6 +76,25 @@ mod tests {
         assert!(a.guard.is_none());
     }
 
+    #[test]
+    fn parses_count_unit_values() {
+        for (input, expected) in [
+            ("data.tsv tsv.lines.count eq 5K", "5K"),
+            ("data.tsv tsv.lines.count eq 5M", "5M"),
+            ("data.tsv tsv.lines.count eq 5G", "5G"),
+        ] {
+            let a = parse_assertion(input).unwrap();
+            assert_eq!(a.expected, expected, "for {input}");
+        }
+    }
+
+    #[test]
+    fn parses_a_bare_number_value() {
+        // a bare number must still parse now that size_value/count_value require a unit
+        let a = parse_assertion("data.tsv tsv.lines.count eq 1000").unwrap();
+        assert_eq!(a.expected, "1000");
+    }
+
     // The grammar must consume the whole line; a value that merely starts with a
     // valid token ("true" in "truexx") must not be silently truncated to "true".
     #[test]

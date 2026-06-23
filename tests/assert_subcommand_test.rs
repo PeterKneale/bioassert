@@ -24,6 +24,16 @@ fn exits_1_on_assertion_failure() {
 }
 
 #[test]
+fn count_unit_value_is_parsed_and_scaled() {
+    // size_5B.txt is a single line, so `< 1K` (1000) passes end to end. If the K
+    // multiplier were dropped (1K parsed as 1), this would be `1 < 1` and fail, so the
+    // test also guards the decimal scaling, not just that the grammar accepts `1K`.
+    let output = exec(&["assert", "tests/data/size_5B.txt file.lines lt 1K"]);
+    assert!(output.status.success(), "expected exit 0, got {:?}", output.status.code());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
+}
+
+#[test]
 fn exits_1_for_missing_file() {
     let output = exec(&["assert", "tests/data/nonexistent_file.txt file.exists eq true"]);
     assert_eq!(output.status.code(), Some(1));
