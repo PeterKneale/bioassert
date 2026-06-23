@@ -404,5 +404,9 @@ and descriptions that contain dots, dashes, colons or spaces (`'NC_000001.11'`, 
 |---------|----------------------------------|
 | boolean | `true`, `false`                  |
 | size    | `5B`, `1KB`, `2MB`, `1GB`        |
-| count   | `0`, `10`, `1000`                |
+| count   | `0`, `10`, `1000`, `5K`, `5M`, `5G` |
 | string  | `Alice`, `"New York"`, `'hello'` |
+
+Count values accept optional decimal multiplier suffixes: `K` = 1,000, `M` = 1,000,000,
+`G` = 1,000,000,000 (so `5K` is `5000`). These are case-insensitive and distinct from the
+binary, 1024-based size suffixes (`KB`, `MB`, `GB`) used by `file.size`.
