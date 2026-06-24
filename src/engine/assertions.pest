@@ -36,9 +36,10 @@ string_value = _{ single_quoted | double_quoted | unquoted_string }
 value = { size_value | count_value | number | boolean_unit | string_value }
 
 guard_keyword = { ^"if" | ^"unless" }
-metric_condition = { metric }
-full_condition = { resource ~ metric ~ comparator ~ value }
-condition = { full_condition | metric_condition }
+// A guard condition is syntactically identical to a main assertion: a full
+// `resource metric comparator value`. There is no bare-metric shorthand, so a guard
+// reads exactly like the assertion it guards and never implies a resource or `eq true`.
+condition = { resource ~ metric ~ comparator ~ value }
 
 assertion = {
     resource ~ metric ~ comparator ~ value ~ (guard_keyword ~ condition)? ~ EOI

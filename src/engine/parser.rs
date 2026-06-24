@@ -19,7 +19,7 @@ pub fn parse_assertion(input: &str) -> Result<Assertion, Box<dyn std::error::Err
     let guard = match inner.next() {
         Some(keyword) if keyword.as_rule() == Rule::guard_keyword => {
             let negate = keyword.as_str().eq_ignore_ascii_case("unless");
-            let condition = parse_condition(inner.next().unwrap(), &file);
+            let condition = parse_condition(inner.next().unwrap());
             Some(Guard { negate, condition })
         }
         _ => None,
@@ -28,28 +28,16 @@ pub fn parse_assertion(input: &str) -> Result<Assertion, Box<dyn std::error::Err
     Ok(Assertion { file, metric, comparator, expected, guard })
 }
 
-/// Builds a [`Condition`] from a `condition` pair. The full form carries its own file,
-/// metric, comparator and value; the shorthand form is a bare metric and is expanded to
-/// a condition on the assertion's own `file` with `eq true`.
-fn parse_condition(condition: pest::iterators::Pair<Rule>, assertion_file: &str) -> Condition {
-    let inner = condition.into_inner().next().unwrap();
-    match inner.as_rule() {
-        Rule::full_condition => {
-            let mut parts = inner.into_inner();
-            Condition {
-                file: parts.next().unwrap().as_str().to_string(),
-                metric: parts.next().unwrap().as_str().to_string(),
-                comparator: parts.next().unwrap().as_str().to_string(),
-                expected: parts.next().unwrap().as_str().to_string(),
-            }
-        }
-        Rule::metric_condition => Condition {
-            file: assertion_file.to_string(),
-            metric: inner.as_str().to_string(),
-            comparator: "eq".to_string(),
-            expected: "true".to_string(),
-        },
-        rule => unreachable!("condition is full_condition or metric_condition, got {rule:?}"),
+/// Builds a [`Condition`] from a `condition` pair. A guard condition is a full assertion
+/// in its own right (resource, metric, comparator and value), read positionally — there
+/// is no shorthand form.
+fn parse_condition(condition: pest::iterators::Pair<Rule>) -> Condition {
+    let mut parts = condition.into_inner();
+    Condition {
+        file: parts.next().unwrap().as_str().to_string(),
+        metric: parts.next().unwrap().as_str().to_string(),
+        comparator: parts.next().unwrap().as_str().to_string(),
+        expected: parts.next().unwrap().as_str().to_string(),
     }
 }
 
@@ -108,12 +96,12 @@ mod tests {
     }
 
     #[test]
-    fn parses_shorthand_guard_against_the_assertion_file() {
-        let a = parse_assertion("data.tsv tsv.columns.count eq 18 if file.exists").unwrap();
+    fn parses_a_guard_against_the_assertion_file() {
+        let a = parse_assertion("data.tsv tsv.columns.count eq 18 if data.tsv file.exists eq true").unwrap();
         assert_eq!(a.metric, "tsv.columns.count");
         let guard = a.guard.expect("expected a guard");
         assert!(!guard.negate);
-        // shorthand expands to the assertion's own file with `eq true`
+        // a guard is a full assertion in its own right; nothing is implied
         assert_eq!(guard.condition.file, "data.tsv");
         assert_eq!(guard.condition.metric, "file.exists");
         assert_eq!(guard.condition.comparator, "eq");
@@ -122,14 +110,14 @@ mod tests {
 
     #[test]
     fn parses_unless_as_a_negated_guard() {
-        let a = parse_assertion("data.tsv tsv.columns.count eq 18 unless file.empty").unwrap();
+        let a = parse_assertion("data.tsv tsv.columns.count eq 18 unless data.tsv file.empty eq true").unwrap();
         let guard = a.guard.expect("expected a guard");
         assert!(guard.negate);
         assert_eq!(guard.condition.metric, "file.empty");
     }
 
     #[test]
-    fn parses_full_form_guard_against_another_file() {
+    fn parses_a_guard_against_another_file() {
         let a = parse_assertion("out.tsv tsv.line.count gt 0 if other.bam bam.header.rg.count gt 0").unwrap();
         let guard = a.guard.expect("expected a guard");
         assert!(!guard.negate);
@@ -141,12 +129,19 @@ mod tests {
 
     #[test]
     fn guard_keyword_is_case_insensitive() {
-        assert!(parse_assertion("data.tsv tsv.columns.count eq 18 IF file.exists").is_ok());
-        assert!(parse_assertion("data.tsv tsv.columns.count eq 18 UNLESS file.empty").is_ok());
+        assert!(parse_assertion("data.tsv tsv.columns.count eq 18 IF data.tsv file.exists eq true").is_ok());
+        assert!(parse_assertion("data.tsv tsv.columns.count eq 18 UNLESS data.tsv file.empty eq true").is_ok());
     }
 
     #[test]
     fn rejects_guard_keyword_without_a_condition() {
         assert!(parse_assertion("data.tsv tsv.columns.count eq 18 if").is_err());
+    }
+
+    // A guard must be the full `resource metric comparator value` form; the old
+    // bare-metric shorthand (`if file.exists`) is no longer accepted.
+    #[test]
+    fn rejects_a_bare_metric_guard() {
+        assert!(parse_assertion("data.tsv tsv.columns.count eq 18 if file.exists").is_err());
     }
 }

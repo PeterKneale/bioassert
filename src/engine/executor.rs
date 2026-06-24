@@ -141,7 +141,7 @@ mod tests {
         }
     }
 
-    fn shorthand_guard(negate: bool, file: &str, metric: &str) -> Guard {
+    fn bool_guard(negate: bool, file: &str, metric: &str) -> Guard {
         Guard {
             negate,
             condition: Condition {
@@ -155,14 +155,14 @@ mod tests {
 
     #[test]
     fn guard_satisfied_runs_the_assertion() {
-        let guard = shorthand_guard(false, "tests/data/example.tsv", "file.exists");
+        let guard = bool_guard(false, "tests/data/example.tsv", "file.exists");
         let result = execute(assertion("tests/data/example.tsv", "tsv.columns.count", "eq", "3", Some(guard)));
         assert_eq!(result.outcome, Outcome::Pass);
     }
 
     #[test]
     fn guard_satisfied_can_still_fail() {
-        let guard = shorthand_guard(false, "tests/data/example.tsv", "file.exists");
+        let guard = bool_guard(false, "tests/data/example.tsv", "file.exists");
         let result = execute(assertion("tests/data/example.tsv", "tsv.columns.count", "eq", "99", Some(guard)));
         assert_eq!(result.outcome, Outcome::Fail);
     }
@@ -170,7 +170,7 @@ mod tests {
     #[test]
     fn guard_not_satisfied_skips() {
         // file.exists on a missing file is false, so the guard is not satisfied
-        let guard = shorthand_guard(false, "tests/data/missing.tsv", "file.exists");
+        let guard = bool_guard(false, "tests/data/missing.tsv", "file.exists");
         let result = execute(assertion("tests/data/missing.tsv", "tsv.columns.count", "eq", "3", Some(guard)));
         assert_eq!(result.outcome, Outcome::Skip);
     }
@@ -178,7 +178,7 @@ mod tests {
     #[test]
     fn unless_skips_when_the_condition_holds() {
         // empty_file.txt is empty, so file.empty holds and `unless` skips
-        let guard = shorthand_guard(true, "tests/data/empty_file.txt", "file.empty");
+        let guard = bool_guard(true, "tests/data/empty_file.txt", "file.empty");
         let result = execute(assertion("tests/data/empty_file.txt", "file.lines", "gt", "0", Some(guard)));
         assert_eq!(result.outcome, Outcome::Skip);
     }
@@ -200,9 +200,9 @@ mod tests {
     }
 
     #[test]
-    fn shorthand_guard_on_a_numeric_metric_errors() {
-        // a numeric metric cannot be compared against the implicit `eq true`
-        let guard = shorthand_guard(false, "tests/data/example.tsv", "tsv.columns.count");
+    fn guard_with_a_non_boolean_value_errors() {
+        // a numeric metric cannot be compared against `eq true`
+        let guard = bool_guard(false, "tests/data/example.tsv", "tsv.columns.count");
         let result = execute(assertion("tests/data/example.tsv", "tsv.lines.count", "gt", "0", Some(guard)));
         assert_eq!(result.outcome, Outcome::Error);
     }

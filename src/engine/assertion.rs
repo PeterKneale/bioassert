@@ -18,9 +18,9 @@ pub struct Guard {
 }
 
 /// The condition a guard tests. It is a full assertion in its own right (file, metric,
-/// comparator and expected value) and is evaluated by the same executor chain. The
-/// shorthand form (`if file.exists`) is expanded by the parser into a condition on the
-/// assertion's own file with `eq true`.
+/// comparator and expected value), written in the same `resource metric comparator value`
+/// form as the assertion it guards, and is evaluated by the same executor chain. There is
+/// no shorthand form: the resource and comparator are always stated explicitly.
 #[derive(Debug, Clone)]
 pub struct Condition {
     pub file: String,
