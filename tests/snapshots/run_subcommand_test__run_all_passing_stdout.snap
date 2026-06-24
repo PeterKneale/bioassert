@@ -210,3 +210,20 @@ PASS. Expected tests/data/empty.fasta fasta.seq.count == 0, got 0
 PASS. Expected tests/data/empty.fasta fasta.seq.count < 1, got 0
 PASS. Expected tests/data/empty.fasta fasta.seq.count <= 0, got 0
 PASS. Expected tests/data/empty.fasta fasta.length == 0, got 0
+PASS. Expected 'abc' text.value == abc, got abc
+PASS. Expected 'abc' text.value != xyz, got abc
+PASS. Expected 'abc' text.value starts_with a, got abc
+PASS. Expected 'abc' text.value ends_with c, got abc
+PASS. Expected 'abc' text.value contains b, got abc
+PASS. Expected 'abc' text.value matches '^a.*c$', got abc
+PASS. Expected 'NC_000001.11' text.value == 'NC_000001.11', got NC_000001.11
+PASS. Expected 'NC_000001.11' text.value matches '^NC_[0-9]+\.[0-9]+$', got NC_000001.11
+PASS. Expected 'Homo sapiens chromosome 1' text.value contains sapiens, got Homo sapiens chromosome 1
+PASS. Expected 'abc' text.length == 3, got 3
+PASS. Expected 'abc' text.length != 2, got 3
+PASS. Expected 'abc' text.length < 4, got 3
+PASS. Expected 'abc' text.length <= 3, got 3
+PASS. Expected 'abc' text.length > 2, got 3
+PASS. Expected 'abc' text.length >= 3, got 3
+PASS. Expected 'café' text.length == 4, got 4
+PASS. Expected '' text.length == 0, got 0
