@@ -1,17 +1,17 @@
 # Conditional assertions (guards). Every line here either passes or is skipped,
 # so the run exits 0. Drives the conditional_subcommand_test run snapshot.
 
-# Shorthand guard satisfied: file present, the assertion runs and passes
-tests/data/example.tsv tsv.columns.count eq 3 if file.exists
+# Guard satisfied: file present, the assertion runs and passes
+tests/data/example.tsv tsv.columns.count eq 3 if tests/data/example.tsv file.exists eq true
 
-# Shorthand guard not satisfied: file absent, the assertion is skipped
-tests/data/missing.tsv tsv.columns.count eq 3 if file.exists
+# Guard not satisfied: file absent, the assertion is skipped
+tests/data/missing.tsv tsv.columns.count eq 3 if tests/data/missing.tsv file.exists eq true
 
 # unless: runs because the file is not empty, then passes
-tests/data/size_5B.txt file.empty eq false unless file.empty
+tests/data/size_5B.txt file.empty eq false unless tests/data/size_5B.txt file.empty eq true
 
 # unless: skipped because the file is empty
-tests/data/empty_file.txt file.lines gt 0 unless file.empty
+tests/data/empty_file.txt file.lines gt 0 unless tests/data/empty_file.txt file.empty eq true
 
 # Full-form guard on another file, satisfied: runs and passes
 tests/data/example.tsv tsv.lines.count eq 3 if tests/data/size_5B.txt file.size gt 0B

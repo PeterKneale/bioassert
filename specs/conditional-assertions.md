@@ -12,7 +12,7 @@ the file is absent, or drop the assertion entirely and lose the check when the f
 This feature adds a guard clause so an assertion runs only when a condition holds:
 
 ```
-data.tsv tsv.columns.count eq 18 if file.exists
+data.tsv tsv.columns.count eq 18 if data.tsv file.exists eq true
 ```
 
 The intended outcome: the author writes the check once, and it is evaluated only when its guard is satisfied. When
@@ -46,13 +46,17 @@ column count, but only when the file is there" becomes a single line that is hon
 
 - **A single guard per assertion, with `if` and `unless`.** One condition covers the motivating cases. Boolean
   composition (`and`, `or`, `not`, parentheses) needs an expression grammar with precedence and is explicitly
-  deferred. `unless` is the negation of `if` and reads naturally (`... unless file.empty`), so it is included now
+  deferred. `unless` is the negation of `if` and reads naturally (`... unless data.tsv file.empty eq true`), so it is included now
   because it is one boolean flag in the AST, not a grammar of its own.
-- **Two condition forms: shorthand and full.** The shorthand is a bare metric on the same file with an implicit
-  `eq true` (`if file.exists`). The full form is any complete comparison, possibly against a different file
-  (`if other.bam bam.header.rg.count gt 0`). PEG ordered choice disambiguates them for free (see Syntax), so both
-  ship together. The full form subsumes the shorthand, and the shorthand is the ergonomic win the motivating
-  example asks for.
+- **One condition form, identical to a main assertion.** A guard condition is a full
+  `<resource> <metric> <comparator> <value>`, possibly against a different resource
+  (`if other.bam bam.header.rg.count gt 0`). There is no shorthand: the resource and comparator are always stated,
+  so a guard reads exactly like the assertion it guards and never implies a resource or an `eq true`. An earlier
+  revision shipped a bare-metric shorthand (`if file.exists`, expanded to `<main-resource> file.exists eq true`),
+  but it was removed to consolidate on a single consistent syntax. The shorthand bought brevity at the cost of two
+  divergent forms and a foot-gun: a bare numeric metric (`if tsv.columns.count`) expanded to `eq true` and then
+  ERRORed at execution. Requiring the full form makes that line a clean parse error and leaves the grammar with one
+  rule. To guard a resource on its own existence, name it explicitly (`if data.tsv file.exists eq true`).
 - **A guard reuses the same dispatch as a normal assertion.** The condition is evaluated by the exact same
   executor chain, so any metric can guard any other, including across files. There is no separate "condition
   language".
@@ -76,27 +80,23 @@ column count, but only when the file is there" becomes a single line that is hon
 ### Grammar additions (`src/engine/assertions.pest`)
 
 ```pest
-guard_keyword    = { ^"if" | ^"unless" }
-metric_condition = { metric }
-full_condition   = { file ~ metric ~ comparator ~ value }
-condition        = { full_condition | metric_condition }
+guard_keyword = { ^"if" | ^"unless" }
+condition     = { resource ~ metric ~ comparator ~ value }
 
 assertion = {
-    file ~ metric ~ comparator ~ value ~ (guard_keyword ~ condition)? ~ EOI
+    resource ~ metric ~ comparator ~ value ~ (guard_keyword ~ condition)? ~ EOI
 }
 ```
 
-Two properties make this safe against the existing grammar:
+One property makes this safe against the existing grammar:
 
 - **The keyword position is unambiguous.** `if` / `unless` can only appear after `value`, so they never collide
-  with `file` (first token) or `metric` (a dotted chain). `EOI` is retained, so a trailing token that is not a
+  with `resource` (first token) or `metric` (a dotted chain). `EOI` is retained, so a trailing token that is not a
   valid guard still fails, preserving the existing `rejects_an_extra_trailing_token` test. Because `value` always
   matches exactly one token (a quoted run or an `ASCII_ALPHANUMERIC+` run) and tokens are whitespace-separated, a
-  following `if` is seen as the keyword rather than swallowed into the value.
-- **Ordered choice picks the condition form.** For `if file.exists`, `full_condition` first lets `file` (the
-  `unquoted` rule) eat `file.exists`, then needs a `metric` and finds nothing, so it backtracks and
-  `metric_condition` matches the single metric. For `if other.bam bam.header.rg.count gt 0`, `full_condition`
-  matches all four slots. No lookahead is required.
+  following `if` is seen as the keyword rather than swallowed into the value. A guard that is not a complete
+  `resource metric comparator value` (e.g. the bare `if file.exists`) leaves the optional group unmatched and then
+  fails `EOI`, so it is a parse error.
 
 The keyword match is case-insensitive (`^"if"`) to match the existing `comparator` rule. The one residual
 ambiguity is a bare unquoted value that is literally the word `if` or `unless`: it is parsed as the value, not a
@@ -104,12 +104,10 @@ keyword. To use those words as a literal expected value, quote them. This is wor
 
 ## Semantics
 
-- **Shorthand defaults.** `if <metric>` expands to `if <main-file> <metric> eq true`. `unless <metric>` expands
-  the same way and then negates. The shorthand is only meaningful for boolean-producing metrics
-  (`file.exists`, `file.empty`, the various `*.present` metrics). Used on a numeric metric, the executor parses
-  the implicit expected `true` with `Value::from_integer("true")`, which errors, so the assertion is reported as
-  ERROR rather than silently skipped. That is a safe, visible failure mode, not a foot-gun to guard against in
-  code.
+- **No implicit defaults.** A guard states its resource, metric, comparator and value in full, so nothing is
+  inferred. Boolean-producing metrics (`file.exists`, `file.empty`, the various `*.present` metrics) are the
+  natural fit for an `eq true` / `eq false` guard. A non-boolean value mismatch (e.g. a numeric metric compared
+  against `eq true`) still errors at execution as a safe, visible failure mode.
 - **`if` vs `unless`.** With `if`, the main assertion runs when the condition is satisfied. With `unless`, it runs
   when the condition is *not* satisfied. In code this is one XOR against a `negate` flag.
 - **Guard errors are ERROR, not SKIP** (see the table in Design decisions). The reported message should make
@@ -130,17 +128,17 @@ Evaluated against a directory where `present.tsv` exists with 18 columns and `ab
 trailing comment is the expected outcome.
 
 ```
-# Shorthand: same-file guard, implicit eq true
-present.tsv tsv.columns.count eq 18 if file.exists        # PASS (file present, 18 columns)
-absent.tsv  tsv.columns.count eq 18 if file.exists        # SKIP (file absent, guard false)
-present.tsv tsv.columns.count eq 99 if file.exists        # FAIL (file present, but not 99 columns)
+# Same-resource guard, stated in full
+present.tsv tsv.columns.count eq 18 if present.tsv file.exists eq true   # PASS (file present, 18 columns)
+absent.tsv  tsv.columns.count eq 18 if absent.tsv  file.exists eq true   # SKIP (file absent, guard false)
+present.tsv tsv.columns.count eq 99 if present.tsv file.exists eq true   # FAIL (file present, but not 99 columns)
 
 # unless: run only when the condition does NOT hold
-present.tsv tsv.columns.count eq 18 unless file.empty     # PASS (file is not empty, so it runs)
+present.tsv tsv.columns.count eq 18 unless present.tsv file.empty eq true  # PASS (file is not empty, so it runs)
 
-# Full form: guard on a different file / different metric
+# Guard on a different file / different metric
 report.tsv  tsv.line.count    gt 0  if present.tsv file.size gt 0    # PASS
-report.tsv  tsv.line.count    gt 0  if absent.tsv  file.exists       # SKIP
+report.tsv  tsv.line.count    gt 0  if absent.tsv  file.exists eq true  # SKIP
 
 # Guard that errors is ERROR, not SKIP (exit code 2)
 present.tsv tsv.columns.count eq 18 if absent.tsv file.size gt 0     # ERROR (guard file missing)
@@ -150,8 +148,8 @@ present.tsv tsv.columns.count eq 18 if absent.tsv file.size gt 0     # ERROR (gu
 
 ### 1. Grammar (`src/engine/assertions.pest`)
 
-Add `guard_keyword`, `metric_condition`, `full_condition` and `condition` as shown in Syntax, and append
-`~ (guard_keyword ~ condition)?` before `EOI` in the `assertion` rule.
+Add `guard_keyword` and `condition` as shown in Syntax, and append `~ (guard_keyword ~ condition)?` before `EOI`
+in the `assertion` rule. `condition` is the same `resource ~ metric ~ comparator ~ value` shape as the assertion.
 
 ### 2. AST (`src/engine/assertion.rs`)
 
@@ -190,13 +188,12 @@ After reading the four mandatory inner pairs (`file`, `metric`, `comparator`, `v
 `guard_keyword` pair. If present:
 
 - `negate = guard_keyword.as_str().eq_ignore_ascii_case("unless")`.
-- The next pair is `condition`; its single inner pair is either `full_condition` (four inner pairs, read
-  positionally) or `metric_condition` (one inner pair, the metric). For `metric_condition`, fill the shorthand
-  defaults: `file` from the main assertion, `comparator = "eq"`, `expected = "true"`.
+- The next pair is `condition`; read its four inner pairs (`resource`, `metric`, `comparator`, `value`)
+  positionally into the `Condition`.
 
-Set `guard: None` when no keyword is present. Add parser tests: shorthand parses to a guard with the main file and
-`eq true`; full form parses all four condition slots; `unless` sets `negate = true`; a line with no guard parses to
-`guard: None`; a trailing keyword with no condition is a parse error.
+Set `guard: None` when no keyword is present. Add parser tests: a full-form guard parses all four condition slots;
+`unless` sets `negate = true`; a line with no guard parses to `guard: None`; a trailing keyword with no condition
+is a parse error; a bare-metric guard (`if file.exists`) is a parse error.
 
 ### 4. New `Outcome::Skip` and report changes
 
@@ -271,10 +268,10 @@ that errors still produces exit 2 via the normal ERROR path.
 
 ### 7. Docs (`CLAUDE.md`)
 
-Document the guard syntax (`if` / `unless`, shorthand vs full form), the three guard outcomes including the new
-SKIP, the rule that `file.exists` is the safe guard because it returns `false` rather than erroring, and the note
-that a literal `if` / `unless` value must be quoted. Note that boolean composition is intentionally not yet
-supported.
+Document the guard syntax (`if` / `unless`, the full `resource metric comparator value` form), the three guard
+outcomes including the new SKIP, the rule that `file.exists` is the safe guard because it returns `false` rather
+than erroring, and the note that a literal `if` / `unless` value must be quoted. Note that boolean composition is
+intentionally not yet supported.
 
 ## Test plan
 
@@ -284,13 +281,15 @@ per-feature run snapshot is driven by an all-passing-or-skipped assertions file 
 
 ### Unit tests
 
-- **`src/engine/parser.rs`**: shorthand `if file.exists` parses to a guard whose condition is `<main-file>
-  file.exists eq true` with `negate = false`; `unless file.empty` sets `negate = true`; the full form
-  `if other.tsv tsv.line.count gt 0` parses all four condition slots; a line with no guard parses to
-  `guard: None`; `... eq 18 if` (keyword, no condition) is a parse error; case-insensitive `IF` / `UNLESS` parse.
+- **`src/engine/parser.rs`**: a full-form guard `if data.tsv file.exists eq true` parses to a guard with
+  `negate = false` and all four condition slots; `unless ... file.empty eq true` sets `negate = true`; the
+  cross-file form `if other.tsv tsv.line.count gt 0` parses all four slots; a line with no guard parses to
+  `guard: None`; `... eq 18 if` (keyword, no condition) is a parse error; a bare-metric guard (`if file.exists`)
+  is a parse error; case-insensitive `IF` / `UNLESS` parse.
 - **`src/engine/executor.rs`**: guard satisfied runs the main assertion (PASS or FAIL as appropriate); guard not
   satisfied yields `Outcome::Skip`; `unless` inverts both; a guard whose file is missing yields `Outcome::Error`
-  with a guard-error message; shorthand on a numeric metric (`if tsv.columns.count`) yields `Outcome::Error`.
+  with a guard-error message; a guard with a non-boolean value (`tsv.columns.count eq true`) yields
+  `Outcome::Error`.
 - **`src/engine/report.rs`**: `Outcome::Skip.label() == "SKIP"`; SKIP does not set `has_failures` or `has_errors`.
 - **`src/report.rs`**: `format_outcome(Outcome::Skip, ..)` renders the chosen icon/label with no color.
 
@@ -310,7 +309,7 @@ exercise the SKIP path deterministically. Focused `assert`-subcommand cases:
 - guard not satisfied: exit 0, stdout contains `SKIP.`
 - `unless` form skips when its condition holds: exit 0, `SKIP.`
 - guard file missing (full form against a missing file): exit 2, stderr contains `ERROR.` and the guard-error message
-- shorthand on a numeric metric: exit 2, `ERROR.`
+- bare-metric guard (`if file.exists`): exit 2, `ERROR.` (now a parse error)
 
 Existing snapshots are unaffected because no current fixture contains a guard.
 
@@ -318,7 +317,7 @@ Existing snapshots are unaffected because no current fixture contains a guard.
 
 - `src/engine/assertions.pest` — guard rules and the optional suffix on `assertion`.
 - `src/engine/assertion.rs` — `guard` field, `Guard` and `Condition` types.
-- `src/engine/parser.rs` — parse the optional guard, fill shorthand defaults.
+- `src/engine/parser.rs` — parse the optional guard's full condition positionally.
 - `src/engine/executor.rs` — `run_metric` helper, `Evaluation` enum, guard handling, SKIP mapping.
 - `src/engine/report.rs` — `Outcome::Skip` and `label()`.
 - `src/report.rs` — `format_outcome` SKIP arm.
@@ -333,9 +332,9 @@ Existing snapshots are unaffected because no current fixture contains a guard.
 3. `cargo insta review` (or `INSTA_UPDATE=always cargo test`) — accept the new conditional snapshot.
 4. Manual end-to-end:
    ```bash
-   cargo run -- assert "tests/data/present.tsv tsv.columns.count eq 18 if file.exists"   # PASS, exit 0
-   cargo run -- assert "tests/data/missing.tsv tsv.columns.count eq 18 if file.exists"   # SKIP, exit 0
-   cargo run -- assert "tests/data/present.tsv tsv.columns.count eq 99 if file.exists"   # FAIL, exit 1
+   cargo run -- assert "tests/data/present.tsv tsv.columns.count eq 18 if tests/data/present.tsv file.exists eq true"   # PASS, exit 0
+   cargo run -- assert "tests/data/missing.tsv tsv.columns.count eq 18 if tests/data/missing.tsv file.exists eq true"   # SKIP, exit 0
+   cargo run -- assert "tests/data/present.tsv tsv.columns.count eq 99 if tests/data/present.tsv file.exists eq true"   # FAIL, exit 1
    cargo run -- assert "tests/data/x.tsv tsv.line.count gt 0 if tests/data/missing.tsv file.size gt 0" # ERROR, exit 2
    cargo run -- run tests/data/conditional_assertions.txt                                # batch report
    ```

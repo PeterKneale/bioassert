@@ -123,22 +123,25 @@ resources (`json.*`) and a variables layer are designed but not implemented; see
 An assertion may carry an optional guard so it is evaluated only when a condition holds:
 
 ```
-<file> <metric> <comparator> <value> if <condition>
-<file> <metric> <comparator> <value> unless <condition>
+<resource> <metric> <comparator> <value> if <resource> <metric> <comparator> <value>
+<resource> <metric> <comparator> <value> unless <resource> <metric> <comparator> <value>
 ```
 
 - `if` runs the assertion when the condition is satisfied. `unless` runs it when the condition is not satisfied.
-- The condition has two forms. The shorthand is a bare metric on the assertion's own file with an implicit `eq true`
-  (`if file.exists`), intended for boolean metrics (`file.exists`, `file.empty`, the `*.present` metrics). The full
-  form is a complete `<file> <metric> <comparator> <value>` and may target a different file
-  (`if other.bam bam.header.rg.count gt 0`).
+- The condition is syntactically identical to a main assertion: a full
+  `<resource> <metric> <comparator> <value>`, with no shorthand. The resource and comparator are always stated, so a
+  guard never implies the assertion's own resource or an `eq true`. It may target a different resource
+  (`if other.bam bam.header.rg.count gt 0`); to guard a resource on its own existence, name it explicitly
+  (`if data.tsv file.exists eq true`). Boolean metrics (`file.exists`, `file.empty`, the `*.present` metrics) are
+  the natural fit for `eq true`/`eq false` guards.
 - A guard has three outcomes. Satisfied: the assertion runs and reports PASS or FAIL. Not satisfied: the assertion is
-  reported as SKIP, a neutral outcome that does not affect the exit code. Cannot be evaluated (for example a full-form
+  reported as SKIP, a neutral outcome that does not affect the exit code. Cannot be evaluated (for example a
   guard whose file is missing): reported as ERROR. `file.exists` is the safe guard because it returns `false` rather
   than erroring on an absent file.
 - The grammar (`src/engine/assertions.pest`) adds an optional `(guard_keyword ~ condition)?` suffix to the `assertion`
-  rule. The parser fills the shorthand defaults, and `src/engine/executor.rs` evaluates the guard (through the same
-  metric dispatch as a normal assertion) before the assertion itself. SKIP is an `Outcome` variant in
+  rule, where `condition` is the same `resource ~ metric ~ comparator ~ value` shape as the assertion itself. The
+  parser reads the condition positionally, and `src/engine/executor.rs` evaluates the guard (through the same metric
+  dispatch as a normal assertion) before the assertion itself. SKIP is an `Outcome` variant in
   `src/engine/report.rs`.
 - Boolean composition (`and`, `or`, `not`) is not yet supported. To use `if` or `unless` as a literal expected value,
   quote it. The full design is recorded in `specs/conditional-assertions.md`.
