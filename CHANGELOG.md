@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0](https://github.com/PeterKneale/bioassert/compare/v3.0.1...v3.1.0) - 2026-06-24
+
+### Added
+
+- add bioassert metrics reference and Nextflow patterns documentation
+
+### Other
+
+- friendly platform names and version in release binary filenames ([#50](https://github.com/PeterKneale/bioassert/pull/50))
+- add lint and security-audit jobs ([#47](https://github.com/PeterKneale/bioassert/pull/47))
+
 ## [3.0.1](https://github.com/PeterKneale/bioassert/compare/v3.0.0...v3.0.1) - 2026-06-24
 
 ### Other
