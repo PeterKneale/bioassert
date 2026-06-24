@@ -1,5 +1,7 @@
 use super::functions::length;
-use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
+use crate::core::{
+    AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value,
+};
 
 /// `text.length` — the character length of the literal resource, compared numerically.
 pub struct TextLengthExecutor;
@@ -9,7 +11,10 @@ impl AssertionExecutor for TextLengthExecutor {
         (metric == "text.length").then_some(Self)
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_integer(&request.expected)?;
         let actual = Value::IntegerValue(length(&request.locator));
         let success = request.comparator.compare(&actual, &expected);

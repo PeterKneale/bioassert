@@ -20,7 +20,10 @@ fn run_all_passing_bam_assertions() {
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr),
     );
-    assert_snapshot!("run_bam_passing_stdout", String::from_utf8_lossy(&output.stdout));
+    assert_snapshot!(
+        "run_bam_passing_stdout",
+        String::from_utf8_lossy(&output.stdout)
+    );
 }
 
 #[test]
@@ -32,7 +35,10 @@ fn assert_count_passes() {
 
 #[test]
 fn assert_value_fails() {
-    let output = exec(&["assert", "tests/data/sample.bam bam.header.rg.0.sm eq WRONG"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/sample.bam bam.header.rg.0.sm eq WRONG",
+    ]);
     assert_eq!(output.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&output.stdout).contains("FAIL."));
 }
@@ -42,8 +48,14 @@ fn assert_errors_on_out_of_range_index() {
     let output = exec(&["assert", "tests/data/sample.bam bam.header.rg.2.sm eq X"]);
     assert_eq!(output.status.code(), Some(2));
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
-    assert!(stderr.contains("read group 2 tag sm not found"), "stderr: {stderr}");
+    assert!(
+        stderr.contains("ERROR."),
+        "expected ERROR. in stderr: {stderr}"
+    );
+    assert!(
+        stderr.contains("read group 2 tag sm not found"),
+        "stderr: {stderr}"
+    );
 }
 
 #[test]
@@ -55,7 +67,10 @@ fn assert_errors_on_missing_tag() {
 
 #[test]
 fn assert_errors_on_non_bam_file() {
-    let output = exec(&["assert", "tests/data/empty_file.txt bam.header.rg.count eq 1"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/empty_file.txt bam.header.rg.count eq 1",
+    ]);
     assert_eq!(output.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&output.stderr).contains("ERROR."));
 }
@@ -63,7 +78,10 @@ fn assert_errors_on_non_bam_file() {
 #[test]
 fn present_is_false_for_missing_tag_without_error() {
     // The .present check never errors on absence: a missing DT tag is reported as false.
-    let output = exec(&["assert", "tests/data/sample.bam bam.header.rg.0.dt.present eq false"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/sample.bam bam.header.rg.0.dt.present eq false",
+    ]);
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
 }

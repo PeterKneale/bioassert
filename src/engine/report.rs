@@ -147,7 +147,10 @@ mod tests {
     #[test]
     fn skip_label_is_skip() {
         assert_eq!(Outcome::Skip.label(), "SKIP");
-        assert_eq!(result(Outcome::Skip, "guarded out").line(), "SKIP. guarded out");
+        assert_eq!(
+            result(Outcome::Skip, "guarded out").line(),
+            "SKIP. guarded out"
+        );
     }
 
     #[test]

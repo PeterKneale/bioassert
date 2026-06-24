@@ -1,5 +1,7 @@
 use super::functions::{compressed, compression};
-use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
+use crate::core::{
+    AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value,
+};
 
 /// `file.compression` — classifies the file's compression or archive format from its
 /// leading magic bytes (`none`, `gzip`, `bgzf`, `bzip2`, `xz`, `zstd`, `zip`) and compares
@@ -12,11 +14,16 @@ impl AssertionExecutor for FileCompressionExecutor {
         (metric == "file.compression").then_some(Self)
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         // strip quotes from the expected label/regex, as the other string executors do
         let expected = crate::core::strip_quotes(&request.expected);
         let actual = compression(request.path())?;
-        let success = request.comparator.compare_string(&actual.to_string(), expected)?;
+        let success = request
+            .comparator
+            .compare_string(&actual.to_string(), expected)?;
         Ok(AssertionExecutionResult { success, actual })
     }
 }
@@ -30,7 +37,10 @@ impl AssertionExecutor for FileCompressedExecutor {
         (metric == "file.compressed").then_some(Self)
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_boolean(&request.expected)?;
         let actual = compressed(request.path())?;
         let success = request.comparator.compare(&actual, &expected);

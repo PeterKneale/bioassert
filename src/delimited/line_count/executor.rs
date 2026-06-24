@@ -1,4 +1,6 @@
-use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
+use crate::core::{
+    AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value,
+};
 
 pub struct DelimitedLineCountExecutor;
 
@@ -9,7 +11,10 @@ impl AssertionExecutor for DelimitedLineCountExecutor {
         (rest == "lines.count").then_some(Self)
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_integer(&request.expected)?;
         let actual = super::functions::line_count(request.path())?;
         let success = request.comparator.compare(&actual, &expected);

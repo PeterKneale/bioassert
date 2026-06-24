@@ -1,4 +1,6 @@
-use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
+use crate::core::{
+    AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value,
+};
 
 pub struct DelimitedColumnCountExecutor {
     pub delimiter: char,
@@ -11,7 +13,10 @@ impl AssertionExecutor for DelimitedColumnCountExecutor {
         (rest == "columns.count").then_some(Self { delimiter })
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_integer(&request.expected)?;
         let actual = super::functions::column_count(request.path(), self.delimiter)?;
         let success = request.comparator.compare(&actual, &expected);

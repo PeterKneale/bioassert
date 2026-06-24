@@ -82,7 +82,10 @@ impl Value {
                 return Ok(Self::BytesValue(bytes));
             }
         }
-        Err(ValueParseError::InvalidBytes(format!("Unknown format: {}", value)))
+        Err(ValueParseError::InvalidBytes(format!(
+            "Unknown format: {}",
+            value
+        )))
     }
 
     pub fn from_integer(value: &str) -> Result<Self, ValueParseError> {
@@ -92,7 +95,11 @@ impl Value {
         // matched case-insensitively to mirror the grammar's `count_unit` rule. A bare number
         // (no suffix) falls through to the plain parse below.
         let upper = value.to_uppercase();
-        let units = [("G", 1_000_000_000_u64), ("M", 1_000_000_u64), ("K", 1_000_u64)];
+        let units = [
+            ("G", 1_000_000_000_u64),
+            ("M", 1_000_000_u64),
+            ("K", 1_000_u64),
+        ];
         for (suffix, multiplier) in units {
             if let Some(number) = upper.strip_suffix(suffix) {
                 let integer = number
@@ -136,12 +143,18 @@ mod tests {
 
     #[test]
     fn from_bytes_parses_megabytes() {
-        assert_eq!(Value::from_bytes("1MB").unwrap(), Value::BytesValue(1024 * 1024));
+        assert_eq!(
+            Value::from_bytes("1MB").unwrap(),
+            Value::BytesValue(1024 * 1024)
+        );
     }
 
     #[test]
     fn from_bytes_parses_gigabytes() {
-        assert_eq!(Value::from_bytes("1GB").unwrap(), Value::BytesValue(1024 * 1024 * 1024));
+        assert_eq!(
+            Value::from_bytes("1GB").unwrap(),
+            Value::BytesValue(1024 * 1024 * 1024)
+        );
     }
 
     #[test]
@@ -156,12 +169,18 @@ mod tests {
 
     #[test]
     fn from_bytes_rejects_bare_number() {
-        assert!(matches!(Value::from_bytes("1024"), Err(ValueParseError::InvalidBytes(_))));
+        assert!(matches!(
+            Value::from_bytes("1024"),
+            Err(ValueParseError::InvalidBytes(_))
+        ));
     }
 
     #[test]
     fn from_bytes_rejects_non_numeric_prefix() {
-        assert!(matches!(Value::from_bytes("abcKB"), Err(ValueParseError::InvalidBytes(_))));
+        assert!(matches!(
+            Value::from_bytes("abcKB"),
+            Err(ValueParseError::InvalidBytes(_))
+        ));
     }
 
     #[test]
@@ -176,62 +195,107 @@ mod tests {
 
     #[test]
     fn from_integer_trims_whitespace() {
-        assert_eq!(Value::from_integer(" 42 ").unwrap(), Value::IntegerValue(42));
+        assert_eq!(
+            Value::from_integer(" 42 ").unwrap(),
+            Value::IntegerValue(42)
+        );
     }
 
     #[test]
     fn from_integer_parses_count_units() {
-        assert_eq!(Value::from_integer("5K").unwrap(), Value::IntegerValue(5_000));
-        assert_eq!(Value::from_integer("5M").unwrap(), Value::IntegerValue(5_000_000));
-        assert_eq!(Value::from_integer("5G").unwrap(), Value::IntegerValue(5_000_000_000));
+        assert_eq!(
+            Value::from_integer("5K").unwrap(),
+            Value::IntegerValue(5_000)
+        );
+        assert_eq!(
+            Value::from_integer("5M").unwrap(),
+            Value::IntegerValue(5_000_000)
+        );
+        assert_eq!(
+            Value::from_integer("5G").unwrap(),
+            Value::IntegerValue(5_000_000_000)
+        );
     }
 
     #[test]
     fn from_integer_count_units_are_case_insensitive() {
-        assert_eq!(Value::from_integer("5k").unwrap(), Value::IntegerValue(5_000));
-        assert_eq!(Value::from_integer("5m").unwrap(), Value::IntegerValue(5_000_000));
-        assert_eq!(Value::from_integer("5g").unwrap(), Value::IntegerValue(5_000_000_000));
+        assert_eq!(
+            Value::from_integer("5k").unwrap(),
+            Value::IntegerValue(5_000)
+        );
+        assert_eq!(
+            Value::from_integer("5m").unwrap(),
+            Value::IntegerValue(5_000_000)
+        );
+        assert_eq!(
+            Value::from_integer("5g").unwrap(),
+            Value::IntegerValue(5_000_000_000)
+        );
     }
 
     #[test]
     fn from_integer_count_unit_without_number_is_rejected() {
-        assert!(matches!(Value::from_integer("K"), Err(ValueParseError::InvalidInteger(_))));
+        assert!(matches!(
+            Value::from_integer("K"),
+            Err(ValueParseError::InvalidInteger(_))
+        ));
     }
 
     #[test]
     fn from_integer_rejects_size_unit() {
         // KB/MB/GB are binary size units, not count units, so they do not parse as integers
-        assert!(matches!(Value::from_integer("5KB"), Err(ValueParseError::InvalidInteger(_))));
+        assert!(matches!(
+            Value::from_integer("5KB"),
+            Err(ValueParseError::InvalidInteger(_))
+        ));
     }
 
     #[test]
     fn from_integer_rejects_text() {
-        assert!(matches!(Value::from_integer("abc"), Err(ValueParseError::InvalidInteger(_))));
+        assert!(matches!(
+            Value::from_integer("abc"),
+            Err(ValueParseError::InvalidInteger(_))
+        ));
     }
 
     #[test]
     fn from_integer_rejects_float() {
-        assert!(matches!(Value::from_integer("1.5"), Err(ValueParseError::InvalidInteger(_))));
+        assert!(matches!(
+            Value::from_integer("1.5"),
+            Err(ValueParseError::InvalidInteger(_))
+        ));
     }
 
     #[test]
     fn from_boolean_parses_true() {
-        assert_eq!(Value::from_boolean("true").unwrap(), Value::BooleanValue(true));
+        assert_eq!(
+            Value::from_boolean("true").unwrap(),
+            Value::BooleanValue(true)
+        );
     }
 
     #[test]
     fn from_boolean_parses_false() {
-        assert_eq!(Value::from_boolean("false").unwrap(), Value::BooleanValue(false));
+        assert_eq!(
+            Value::from_boolean("false").unwrap(),
+            Value::BooleanValue(false)
+        );
     }
 
     #[test]
     fn from_boolean_trims_whitespace() {
-        assert_eq!(Value::from_boolean(" true ").unwrap(), Value::BooleanValue(true));
+        assert_eq!(
+            Value::from_boolean(" true ").unwrap(),
+            Value::BooleanValue(true)
+        );
     }
 
     #[test]
     fn from_boolean_rejects_yes() {
-        assert!(matches!(Value::from_boolean("yes"), Err(ValueParseError::InvalidBoolean(_))));
+        assert!(matches!(
+            Value::from_boolean("yes"),
+            Err(ValueParseError::InvalidBoolean(_))
+        ));
     }
 
     #[test]
@@ -271,11 +335,17 @@ mod tests {
 
     #[test]
     fn ord_boolean_returns_none() {
-        assert_eq!(Value::BooleanValue(true).partial_cmp(&Value::BooleanValue(false)), None);
+        assert_eq!(
+            Value::BooleanValue(true).partial_cmp(&Value::BooleanValue(false)),
+            None
+        );
     }
 
     #[test]
     fn ord_cross_variant_returns_none() {
-        assert_eq!(Value::BytesValue(1).partial_cmp(&Value::IntegerValue(1)), None);
+        assert_eq!(
+            Value::BytesValue(1).partial_cmp(&Value::IntegerValue(1)),
+            None
+        );
     }
 }

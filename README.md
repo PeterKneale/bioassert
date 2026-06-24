@@ -312,6 +312,18 @@ Notes:
   `${annotation}` into the real filename, and the grammar accepts dotted names like `genome.gff.gz` unquoted.
 - Global flags such as `--report-file` go before the `run` subcommand; the assertions file is its positional argument.
 
+### Claude Code skill
+
+A [Claude Code](https://claude.com/claude-code) skill that helps developers and bioinformaticians write bioassert
+assertions and wire them into Nextflow processes ships in this repo under [`skills/bioassert/`](skills/bioassert/). It
+covers the assertion syntax, the full metric reference, and copy-paste Nextflow process templates (hard gate, advisory,
+nf-core module). Claude Code discovers skills under `.claude/skills/`, so to use it copy the directory into your
+pipeline repo (or into `~/.claude/skills/` for all your projects):
+
+```bash
+cp -r skills/bioassert /path/to/your-pipeline/.claude/skills/
+```
+
 ## Syntax
 
 ```

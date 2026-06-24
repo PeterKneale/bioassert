@@ -20,7 +20,10 @@ fn run_all_passing_fasta_assertions() {
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr),
     );
-    assert_snapshot!("run_fasta_passing_stdout", String::from_utf8_lossy(&output.stdout));
+    assert_snapshot!(
+        "run_fasta_passing_stdout",
+        String::from_utf8_lossy(&output.stdout)
+    );
 }
 
 #[test]
@@ -39,7 +42,10 @@ fn assert_total_length_passes() {
 
 #[test]
 fn assert_quoted_name_passes() {
-    let output = exec(&["assert", "tests/data/sample.fasta fasta.seq.2.name eq 'NC_000001.11'"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/sample.fasta fasta.seq.2.name eq 'NC_000001.11'",
+    ]);
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
 }
@@ -53,7 +59,10 @@ fn assert_count_zero_on_empty_fasta() {
 
 #[test]
 fn assert_value_fails() {
-    let output = exec(&["assert", "tests/data/sample.fasta fasta.seq.0.name eq scaffold1"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/sample.fasta fasta.seq.0.name eq scaffold1",
+    ]);
     assert_eq!(output.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&output.stdout).contains("FAIL."));
 }
@@ -63,14 +72,20 @@ fn assert_errors_on_out_of_range_index() {
     let output = exec(&["assert", "tests/data/sample.fasta fasta.seq.3.name eq X"]);
     assert_eq!(output.status.code(), Some(2));
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
+    assert!(
+        stderr.contains("ERROR."),
+        "expected ERROR. in stderr: {stderr}"
+    );
     assert!(stderr.contains("record 3 not found"), "stderr: {stderr}");
 }
 
 #[test]
 fn assert_errors_on_missing_description() {
     // chr2 (record 1) has no description, so a value check errors rather than failing.
-    let output = exec(&["assert", "tests/data/sample.fasta fasta.seq.1.description eq X"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/sample.fasta fasta.seq.1.description eq X",
+    ]);
     assert_eq!(output.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&output.stderr).contains("ERROR."));
 }
@@ -86,14 +101,20 @@ fn assert_errors_on_non_fasta_file() {
 #[test]
 fn present_is_false_for_missing_description_without_error() {
     // The .present check never errors on absence: chr2's missing description is reported false.
-    let output = exec(&["assert", "tests/data/sample.fasta fasta.seq.1.description.present eq false"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/sample.fasta fasta.seq.1.description.present eq false",
+    ]);
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
 }
 
 #[test]
 fn present_is_false_for_out_of_range_record() {
-    let output = exec(&["assert", "tests/data/sample.fasta fasta.seq.3.present eq false"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/sample.fasta fasta.seq.3.present eq false",
+    ]);
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
 }

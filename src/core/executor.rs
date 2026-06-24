@@ -11,5 +11,8 @@ pub trait AssertionExecutor {
     fn try_parse(metric: &str) -> Option<Self>
     where
         Self: Sized;
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError>;
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError>;
 }

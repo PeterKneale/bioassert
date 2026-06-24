@@ -7,7 +7,12 @@ pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
 
-    #[arg(long, global = true, value_name = "FILE", help = "Write the assertion report to FILE instead of the default location")]
+    #[arg(
+        long,
+        global = true,
+        value_name = "FILE",
+        help = "Write the assertion report to FILE instead of the default location"
+    )]
     pub report_file: Option<PathBuf>,
 
     #[arg(
@@ -67,7 +72,10 @@ pub enum Commands {
         assertion: String,
     },
     Run {
-        #[arg(default_value = "assertions.txt", help = "Path to the assertions file to evaluate")]
+        #[arg(
+            default_value = "assertions.txt",
+            help = "Path to the assertions file to evaluate"
+        )]
         file: PathBuf,
     },
 }

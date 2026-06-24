@@ -1,4 +1,6 @@
-use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
+use crate::core::{
+    AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value,
+};
 
 pub struct FileExistsExecutor;
 
@@ -7,7 +9,10 @@ impl AssertionExecutor for FileExistsExecutor {
         (metric == "file.exists").then_some(Self)
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_boolean(&request.expected)?;
         let actual = super::functions::exists(request.path());
         let success = request.comparator.compare(&actual, &expected);

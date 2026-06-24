@@ -13,5 +13,5 @@ pub use errors::BioAssertError;
 pub use executor::{AssertionExecutionResult, AssertionExecutor};
 pub use file_error::FileError;
 pub use strings::strip_quotes;
-pub use values::Value;
 pub use values::BytesValue;
+pub use values::Value;

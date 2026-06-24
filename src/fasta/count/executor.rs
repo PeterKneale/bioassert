@@ -1,4 +1,6 @@
-use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
+use crate::core::{
+    AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value,
+};
 use crate::fasta::functions;
 
 /// Counts sequence records (`fasta.seq.count`) or sums bases across every record
@@ -24,7 +26,10 @@ impl AssertionExecutor for FastaCountExecutor {
         Some(Self { kind })
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_integer(&request.expected)?;
         let records = functions::read_records(request.path())?;
         let value = match self.kind {

@@ -1,4 +1,6 @@
-use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, FileError, Value};
+use crate::core::{
+    AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, FileError, Value,
+};
 use crate::fasta::functions;
 use std::io;
 use std::path::Path;
@@ -28,10 +30,16 @@ impl AssertionExecutor for FastaSequenceFieldExecutor {
             ["fasta", "seq", n, "length"] => (n, Field::Length),
             _ => return None,
         };
-        Some(Self { index: n.parse().ok()?, field })
+        Some(Self {
+            index: n.parse().ok()?,
+            field,
+        })
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let records = functions::read_records(request.path())?;
         match self.field {
             Field::Length => {
@@ -47,7 +55,10 @@ impl AssertionExecutor for FastaSequenceFieldExecutor {
                 let actual = functions::record_name(&records, self.index)
                     .ok_or_else(|| out_of_range(request.path(), self.index))?;
                 let success = request.comparator.compare_string(&actual, &expected)?;
-                Ok(AssertionExecutionResult { success, actual: Value::StringValue(actual) })
+                Ok(AssertionExecutionResult {
+                    success,
+                    actual: Value::StringValue(actual),
+                })
             }
             Field::Description => {
                 // Distinguish an out-of-range record from a present-but-undescribed one so the
@@ -59,10 +70,16 @@ impl AssertionExecutor for FastaSequenceFieldExecutor {
                 let actual = functions::record_description(&records, self.index)
                     .filter(|d| !d.is_empty())
                     .ok_or_else(|| {
-                        field_error(request.path(), format!("record {} has no description", self.index))
+                        field_error(
+                            request.path(),
+                            format!("record {} has no description", self.index),
+                        )
                     })?;
                 let success = request.comparator.compare_string(&actual, &expected)?;
-                Ok(AssertionExecutionResult { success, actual: Value::StringValue(actual) })
+                Ok(AssertionExecutionResult {
+                    success,
+                    actual: Value::StringValue(actual),
+                })
             }
         }
     }
@@ -83,10 +100,16 @@ impl AssertionExecutor for FastaSequencePresentExecutor {
             ["fasta", "seq", n, "description", "present"] => (n, true),
             _ => return None,
         };
-        Some(Self { index: n.parse().ok()?, description })
+        Some(Self {
+            index: n.parse().ok()?,
+            description,
+        })
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_boolean(&request.expected)?;
         let records = functions::read_records(request.path())?;
         let present = if self.description {
@@ -134,7 +157,9 @@ mod tests {
     #[test]
     fn try_parse_present_accepts() {
         assert!(FastaSequencePresentExecutor::try_parse("fasta.seq.0.present").is_some());
-        assert!(FastaSequencePresentExecutor::try_parse("fasta.seq.0.description.present").is_some());
+        assert!(
+            FastaSequencePresentExecutor::try_parse("fasta.seq.0.description.present").is_some()
+        );
     }
 
     #[test]

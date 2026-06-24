@@ -38,15 +38,29 @@ fn write_assertions(dir: &TempDir) -> PathBuf {
 fn explicit_report_file_is_created() {
     let dir = TempDir::new().unwrap();
     let log = dir.path().join("custom.log");
-    exec(&["--report-file", log.to_str().unwrap(), "assert", assertion()]);
-    assert!(log.exists(), "expected report file to be created at {}", log.display());
+    exec(&[
+        "--report-file",
+        log.to_str().unwrap(),
+        "assert",
+        assertion(),
+    ]);
+    assert!(
+        log.exists(),
+        "expected report file to be created at {}",
+        log.display()
+    );
 }
 
 #[test]
 fn explicit_report_file_snapshot() {
     let dir = TempDir::new().unwrap();
     let log = dir.path().join("custom.log");
-    exec(&["--report-file", log.to_str().unwrap(), "assert", assertion()]);
+    exec(&[
+        "--report-file",
+        log.to_str().unwrap(),
+        "assert",
+        assertion(),
+    ]);
     let contents = std::fs::read_to_string(&log).unwrap();
     assert_snapshot!("explicit_report_file", contents);
 }
@@ -112,18 +126,35 @@ fn exec_with_env(args: &[&str], envs: &[(&str, &str)]) -> Output {
 fn report_file_is_uncolored_by_default() {
     let dir = TempDir::new().unwrap();
     let log = dir.path().join("out.log");
-    exec(&["--report-file", log.to_str().unwrap(), "assert", assertion()]);
+    exec(&[
+        "--report-file",
+        log.to_str().unwrap(),
+        "assert",
+        assertion(),
+    ]);
     let contents = std::fs::read_to_string(&log).unwrap();
-    assert!(!has_ansi(&contents), "expected no ANSI codes in report file by default");
+    assert!(
+        !has_ansi(&contents),
+        "expected no ANSI codes in report file by default"
+    );
 }
 
 #[test]
 fn report_file_is_uncolored_even_when_console_color_is_always() {
     let dir = TempDir::new().unwrap();
     let log = dir.path().join("out.log");
-    exec(&["--report-file", log.to_str().unwrap(), "--color=always", "assert", assertion()]);
+    exec(&[
+        "--report-file",
+        log.to_str().unwrap(),
+        "--color=always",
+        "assert",
+        assertion(),
+    ]);
     let contents = std::fs::read_to_string(&log).unwrap();
-    assert!(!has_ansi(&contents), "console color must never reach the report file: {contents:?}");
+    assert!(
+        !has_ansi(&contents),
+        "console color must never reach the report file: {contents:?}"
+    );
 }
 
 // --color <auto|always|never> colors the PASS / FAIL / ERROR result keywords on the
@@ -148,8 +179,14 @@ fn color_is_off_by_default_when_not_a_terminal() {
     let dir = TempDir::new().unwrap();
     let output = exec_in(&dir, &["assert", passing_assertion()]);
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("PASS"), "expected PASS text on stdout: {stdout:?}");
-    assert!(!has_ansi(&stdout), "expected no ANSI on piped stdout under auto: {stdout:?}");
+    assert!(
+        stdout.contains("PASS"),
+        "expected PASS text on stdout: {stdout:?}"
+    );
+    assert!(
+        !has_ansi(&stdout),
+        "expected no ANSI on piped stdout under auto: {stdout:?}"
+    );
 }
 
 #[test]
@@ -157,7 +194,10 @@ fn pass_message_is_green_when_color_always() {
     let dir = TempDir::new().unwrap();
     let output = exec_in(&dir, &["--color=always", "assert", passing_assertion()]);
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains(&format!("{GREEN}PASS")), "expected green PASS on stdout: {stdout:?}");
+    assert!(
+        stdout.contains(&format!("{GREEN}PASS")),
+        "expected green PASS on stdout: {stdout:?}"
+    );
 }
 
 #[test]
@@ -165,15 +205,24 @@ fn fail_message_is_red_when_color_always() {
     let dir = TempDir::new().unwrap();
     let output = exec_in(&dir, &["--color=always", "assert", failing_assertion()]);
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains(&format!("{RED}FAIL")), "expected red FAIL on stdout: {stdout:?}");
+    assert!(
+        stdout.contains(&format!("{RED}FAIL")),
+        "expected red FAIL on stdout: {stdout:?}"
+    );
 }
 
 #[test]
 fn error_message_is_red_when_color_always() {
     let dir = TempDir::new().unwrap();
-    let output = exec_in(&dir, &["--color=always", "assert", "this is not valid syntax"]);
+    let output = exec_in(
+        &dir,
+        &["--color=always", "assert", "this is not valid syntax"],
+    );
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains(&format!("{RED}ERROR")), "expected red ERROR on stderr: {stderr:?}");
+    assert!(
+        stderr.contains(&format!("{RED}ERROR")),
+        "expected red ERROR on stderr: {stderr:?}"
+    );
 }
 
 #[test]
@@ -181,8 +230,14 @@ fn pass_message_is_uncolored_when_color_never() {
     let dir = TempDir::new().unwrap();
     let output = exec_in(&dir, &["--color=never", "assert", passing_assertion()]);
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("PASS"), "expected PASS text on stdout: {stdout:?}");
-    assert!(!has_ansi(&stdout), "expected no ANSI codes on stdout with --color=never: {stdout:?}");
+    assert!(
+        stdout.contains("PASS"),
+        "expected PASS text on stdout: {stdout:?}"
+    );
+    assert!(
+        !has_ansi(&stdout),
+        "expected no ANSI codes on stdout with --color=never: {stdout:?}"
+    );
 }
 
 #[test]
@@ -190,17 +245,32 @@ fn fail_message_is_uncolored_when_color_never() {
     let dir = TempDir::new().unwrap();
     let output = exec_in(&dir, &["--color=never", "assert", failing_assertion()]);
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("FAIL"), "expected FAIL text on stdout: {stdout:?}");
-    assert!(!has_ansi(&stdout), "expected no ANSI codes on stdout with --color=never: {stdout:?}");
+    assert!(
+        stdout.contains("FAIL"),
+        "expected FAIL text on stdout: {stdout:?}"
+    );
+    assert!(
+        !has_ansi(&stdout),
+        "expected no ANSI codes on stdout with --color=never: {stdout:?}"
+    );
 }
 
 #[test]
 fn error_message_is_uncolored_when_color_never() {
     let dir = TempDir::new().unwrap();
-    let output = exec_in(&dir, &["--color=never", "assert", "this is not valid syntax"]);
+    let output = exec_in(
+        &dir,
+        &["--color=never", "assert", "this is not valid syntax"],
+    );
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("ERROR"), "expected ERROR text on stderr: {stderr:?}");
-    assert!(!has_ansi(&stderr), "expected no ANSI codes on stderr with --color=never: {stderr:?}");
+    assert!(
+        stderr.contains("ERROR"),
+        "expected ERROR text on stderr: {stderr:?}"
+    );
+    assert!(
+        !has_ansi(&stderr),
+        "expected no ANSI codes on stderr with --color=never: {stderr:?}"
+    );
 }
 
 // --icons <auto|always|never> mirrors --color: it prefixes PASS / FAIL / ERROR
@@ -212,7 +282,10 @@ fn pass_line_has_icon_when_icons_always() {
     let dir = TempDir::new().unwrap();
     let output = exec_in(&dir, &["--icons=always", "assert", passing_assertion()]);
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("🟢  PASS"), "expected pass icon on stdout: {stdout:?}");
+    assert!(
+        stdout.contains("🟢  PASS"),
+        "expected pass icon on stdout: {stdout:?}"
+    );
 }
 
 #[test]
@@ -220,15 +293,24 @@ fn fail_line_has_icon_when_icons_always() {
     let dir = TempDir::new().unwrap();
     let output = exec_in(&dir, &["--icons=always", "assert", failing_assertion()]);
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("🔴  FAIL"), "expected fail icon on stdout: {stdout:?}");
+    assert!(
+        stdout.contains("🔴  FAIL"),
+        "expected fail icon on stdout: {stdout:?}"
+    );
 }
 
 #[test]
 fn error_line_has_flame_when_icons_always() {
     let dir = TempDir::new().unwrap();
-    let output = exec_in(&dir, &["--icons=always", "assert", "this is not valid syntax"]);
+    let output = exec_in(
+        &dir,
+        &["--icons=always", "assert", "this is not valid syntax"],
+    );
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("🔥  ERROR"), "expected flame icon on stderr: {stderr:?}");
+    assert!(
+        stderr.contains("🔥  ERROR"),
+        "expected flame icon on stderr: {stderr:?}"
+    );
 }
 
 #[test]
@@ -236,8 +318,14 @@ fn icons_are_off_by_default_when_not_a_terminal() {
     let dir = TempDir::new().unwrap();
     let output = exec_in(&dir, &["assert", passing_assertion()]);
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("PASS"), "expected PASS text on stdout: {stdout:?}");
-    assert!(!stdout.contains("🟢"), "expected no icon under auto when piped: {stdout:?}");
+    assert!(
+        stdout.contains("PASS"),
+        "expected PASS text on stdout: {stdout:?}"
+    );
+    assert!(
+        !stdout.contains("🟢"),
+        "expected no icon under auto when piped: {stdout:?}"
+    );
 }
 
 #[test]
@@ -245,7 +333,10 @@ fn icons_never_disables_even_on_a_terminal() {
     let dir = TempDir::new().unwrap();
     let output = exec_in(&dir, &["--icons=never", "assert", passing_assertion()]);
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(!stdout.contains("🟢"), "expected no icon with --icons=never: {stdout:?}");
+    assert!(
+        !stdout.contains("🟢"),
+        "expected no icon with --icons=never: {stdout:?}"
+    );
 }
 
 // icons and color are resolved independently: each can be on while the other is off.
@@ -253,29 +344,65 @@ fn icons_never_disables_even_on_a_terminal() {
 #[test]
 fn icons_without_color() {
     let dir = TempDir::new().unwrap();
-    let output = exec_in(&dir, &["--icons=always", "--color=never", "assert", passing_assertion()]);
+    let output = exec_in(
+        &dir,
+        &[
+            "--icons=always",
+            "--color=never",
+            "assert",
+            passing_assertion(),
+        ],
+    );
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("🟢  PASS"), "expected icon without color: {stdout:?}");
-    assert!(!has_ansi(&stdout), "expected no ANSI with --color=never: {stdout:?}");
+    assert!(
+        stdout.contains("🟢  PASS"),
+        "expected icon without color: {stdout:?}"
+    );
+    assert!(
+        !has_ansi(&stdout),
+        "expected no ANSI with --color=never: {stdout:?}"
+    );
 }
 
 #[test]
 fn color_without_icons() {
     let dir = TempDir::new().unwrap();
-    let output = exec_in(&dir, &["--icons=never", "--color=always", "assert", passing_assertion()]);
+    let output = exec_in(
+        &dir,
+        &[
+            "--icons=never",
+            "--color=always",
+            "assert",
+            passing_assertion(),
+        ],
+    );
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains(&format!("{GREEN}PASS")), "expected green PASS: {stdout:?}");
-    assert!(!stdout.contains("🟢"), "expected no icon with --icons=never: {stdout:?}");
+    assert!(
+        stdout.contains(&format!("{GREEN}PASS")),
+        "expected green PASS: {stdout:?}"
+    );
+    assert!(
+        !stdout.contains("🟢"),
+        "expected no icon with --icons=never: {stdout:?}"
+    );
 }
 
 #[test]
 fn report_file_has_no_icons_even_when_icons_always() {
     let dir = TempDir::new().unwrap();
     let log = dir.path().join("out.log");
-    exec(&["--report-file", log.to_str().unwrap(), "--icons=always", "assert", assertion()]);
+    exec(&[
+        "--report-file",
+        log.to_str().unwrap(),
+        "--icons=always",
+        "assert",
+        assertion(),
+    ]);
     let contents = std::fs::read_to_string(&log).unwrap();
-    assert!(!contents.contains("🟢") && !contents.contains("🔴") && !contents.contains("🔥"),
-        "expected no icons in report file: {contents:?}");
+    assert!(
+        !contents.contains("🟢") && !contents.contains("🔴") && !contents.contains("🔥"),
+        "expected no icons in report file: {contents:?}"
+    );
 }
 
 // `--colour` is accepted as a spelling alias for `--color`.
@@ -285,16 +412,25 @@ fn colour_alias_is_accepted() {
     let dir = TempDir::new().unwrap();
     let output = exec_in(&dir, &["--colour=always", "assert", passing_assertion()]);
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains(&format!("{GREEN}PASS")), "expected --colour to color output: {stdout:?}");
+    assert!(
+        stdout.contains(&format!("{GREEN}PASS")),
+        "expected --colour to color output: {stdout:?}"
+    );
 }
 
 // NO_COLOR precedence: an explicit --color=always overrides the environment
 
 #[test]
 fn color_always_overrides_no_color_env() {
-    let output = exec_with_env(&["--color=always", "assert", passing_assertion()], &[("NO_COLOR", "1")]);
+    let output = exec_with_env(
+        &["--color=always", "assert", passing_assertion()],
+        &[("NO_COLOR", "1")],
+    );
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(has_ansi(&stdout), "explicit --color=always must override NO_COLOR: {stdout:?}");
+    assert!(
+        has_ansi(&stdout),
+        "explicit --color=always must override NO_COLOR: {stdout:?}"
+    );
 }
 
 // --report-file takes priority over the derived path
@@ -305,11 +441,19 @@ fn explicit_report_file_overrides_derived_path() {
     let file = write_assertions(&dir);
     let explicit = dir.path().join("override.log");
 
-    exec(&["--report-file", explicit.to_str().unwrap(), "run", file.to_str().unwrap()]);
+    exec(&[
+        "--report-file",
+        explicit.to_str().unwrap(),
+        "run",
+        file.to_str().unwrap(),
+    ]);
 
     let derived = dir.path().join("assertions.txt.log");
     assert!(explicit.exists(), "expected explicit report file");
-    assert!(!derived.exists(), "expected derived report file NOT to be created");
+    assert!(
+        !derived.exists(),
+        "expected derived report file NOT to be created"
+    );
 }
 
 // The global options are accepted after the subcommand and its arguments, not only
@@ -318,10 +462,24 @@ fn explicit_report_file_overrides_derived_path() {
 #[test]
 fn global_flags_are_accepted_after_the_subcommand() {
     let dir = TempDir::new().unwrap();
-    let output = exec_in(&dir, &["assert", passing_assertion(), "--color=always", "--icons=always"]);
+    let output = exec_in(
+        &dir,
+        &[
+            "assert",
+            passing_assertion(),
+            "--color=always",
+            "--icons=always",
+        ],
+    );
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("🟢"), "expected icon from trailing --icons: {stdout:?}");
-    assert!(stdout.contains(&format!("{GREEN}PASS")), "expected color from trailing --color: {stdout:?}");
+    assert!(
+        stdout.contains("🟢"),
+        "expected icon from trailing --icons: {stdout:?}"
+    );
+    assert!(
+        stdout.contains(&format!("{GREEN}PASS")),
+        "expected color from trailing --color: {stdout:?}"
+    );
 }
 
 #[test]
@@ -329,6 +487,14 @@ fn report_file_flag_is_accepted_after_the_subcommand() {
     let dir = TempDir::new().unwrap();
     let file = write_assertions(&dir);
     let explicit = dir.path().join("trailing.log");
-    exec(&["run", file.to_str().unwrap(), "--report-file", explicit.to_str().unwrap()]);
-    assert!(explicit.exists(), "expected trailing --report-file to be honored");
+    exec(&[
+        "run",
+        file.to_str().unwrap(),
+        "--report-file",
+        explicit.to_str().unwrap(),
+    ]);
+    assert!(
+        explicit.exists(),
+        "expected trailing --report-file to be honored"
+    );
 }

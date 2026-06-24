@@ -1,5 +1,5 @@
+use bioassert::engine::{Assertion, AssertionReport, Outcome, executor};
 use clap::Parser;
-use bioassert::engine::{executor, Assertion, AssertionReport, Outcome};
 
 mod cli;
 mod report;
@@ -33,7 +33,15 @@ fn main() {
     let report = executor::execute_all(assertions);
     report::print_report(&report, color, icons);
     if let Err(e) = report::write_report(&report_file, &report) {
-        fatal(&format!("could not write assertion report {}: {}", report_file.display(), e), color, icons);
+        fatal(
+            &format!(
+                "could not write assertion report {}: {}",
+                report_file.display(),
+                e
+            ),
+            color,
+            icons,
+        );
     }
 
     std::process::exit(exit_code(&report));
@@ -48,7 +56,8 @@ fn gather_assertions(command: &Commands) -> Result<Vec<Assertion>, String> {
             .map(|a| vec![a])
             .map_err(|e| e.to_string()),
         Commands::Run { file } => {
-            let contents = std::fs::read_to_string(file).map_err(|e| format!("{}: {}", file.display(), e))?;
+            let contents =
+                std::fs::read_to_string(file).map_err(|e| format!("{}: {}", file.display(), e))?;
             bioassert::engine::parser::parse_file(&contents).map_err(|e| e.to_string())
         }
     }
@@ -68,6 +77,9 @@ fn exit_code(report: &AssertionReport) -> i32 {
 
 /// Reports a fatal application error to stderr (as an ERROR line) and exits 2.
 fn fatal(message: &str, color: bool, icons: bool) -> ! {
-    eprintln!("{}", report::format_outcome(Outcome::Error, message, color, icons));
+    eprintln!(
+        "{}",
+        report::format_outcome(Outcome::Error, message, color, icons)
+    );
     std::process::exit(2);
 }
