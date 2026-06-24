@@ -45,7 +45,10 @@ pub fn check_column(
             })?;
         checked += 1;
         if !matcher.is_match(&value) {
-            return Ok(ColumnCheck::Mismatch { line: line_no, value });
+            return Ok(ColumnCheck::Mismatch {
+                line: line_no,
+                value,
+            });
         }
     }
     Ok(ColumnCheck::AllMatch { checked })

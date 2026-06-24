@@ -1,5 +1,7 @@
 use crate::bam::functions;
-use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
+use crate::core::{
+    AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value,
+};
 
 /// Counts header records of a given type: `bam.header.rg.count`, `bam.header.sq.count`,
 /// `bam.header.pg.count`.
@@ -26,7 +28,10 @@ impl AssertionExecutor for BamCountExecutor {
         Some(Self { kind })
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_integer(&request.expected)?;
         let header = functions::read_header(request.path())?;
         let count = match self.kind {

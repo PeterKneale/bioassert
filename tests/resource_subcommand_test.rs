@@ -20,7 +20,10 @@ fn run_all_passing_or_skipped_exits_0() {
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr),
     );
-    assert_snapshot!("run_resource_stdout", String::from_utf8_lossy(&output.stdout));
+    assert_snapshot!(
+        "run_resource_stdout",
+        String::from_utf8_lossy(&output.stdout)
+    );
 }
 
 #[test]

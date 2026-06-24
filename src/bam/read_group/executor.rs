@@ -1,5 +1,7 @@
 use crate::bam::functions;
-use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, FileError, Value};
+use crate::core::{
+    AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, FileError, Value,
+};
 use std::io;
 
 /// Reads a read-group tag value by index: `bam.header.rg.<n>.<tag>` (e.g.
@@ -22,20 +24,27 @@ impl AssertionExecutor for BamReadGroupTagExecutor {
         }
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = crate::core::strip_quotes(&request.expected).to_string();
         let header = functions::read_header(request.path())?;
-        let actual = functions::read_group_tag(&header, self.index, &self.tag).ok_or_else(|| {
-            FileError::new(
-                request.path(),
-                io::Error::new(
-                    io::ErrorKind::InvalidInput,
-                    format!("read group {} tag {} not found", self.index, self.tag),
-                ),
-            )
-        })?;
+        let actual =
+            functions::read_group_tag(&header, self.index, &self.tag).ok_or_else(|| {
+                FileError::new(
+                    request.path(),
+                    io::Error::new(
+                        io::ErrorKind::InvalidInput,
+                        format!("read group {} tag {} not found", self.index, self.tag),
+                    ),
+                )
+            })?;
         let success = request.comparator.compare_string(&actual, &expected)?;
-        Ok(AssertionExecutionResult { success, actual: Value::StringValue(actual) })
+        Ok(AssertionExecutionResult {
+            success,
+            actual: Value::StringValue(actual),
+        })
     }
 }
 
@@ -62,7 +71,10 @@ impl AssertionExecutor for BamReadGroupPresentExecutor {
         }
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = Value::from_boolean(&request.expected)?;
         let header = functions::read_header(request.path())?;
         let present = match &self.tag {

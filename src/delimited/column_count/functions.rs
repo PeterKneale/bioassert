@@ -6,12 +6,12 @@ use std::path::Path;
 pub fn column_count(file: &Path, delimiter: char) -> Result<Value, FileError> {
     let mut reader = io::BufReader::new(File::open(file).map_err(|e| FileError::new(file, e))?);
     let mut first_line = String::new();
-    reader.read_line(&mut first_line).map_err(|e| FileError::new(file, e))?;
-    let count = super::super::functions::parse_fields(
-        first_line.trim_end_matches(['\n', '\r']),
-        delimiter,
-    )
-    .len();
+    reader
+        .read_line(&mut first_line)
+        .map_err(|e| FileError::new(file, e))?;
+    let count =
+        super::super::functions::parse_fields(first_line.trim_end_matches(['\n', '\r']), delimiter)
+            .len();
     Ok(Value::IntegerValue(count as u64))
 }
 
@@ -36,7 +36,10 @@ mod tests {
     #[test]
     fn counts_tsv_header_fields() {
         let f = temp_file("name\tage\tcity\nAlice\t30\tNew York\n");
-        assert_eq!(column_count(f.path(), '\t').unwrap(), Value::IntegerValue(3));
+        assert_eq!(
+            column_count(f.path(), '\t').unwrap(),
+            Value::IntegerValue(3)
+        );
     }
 
     #[test]

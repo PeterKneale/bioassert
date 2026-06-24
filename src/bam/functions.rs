@@ -26,7 +26,11 @@ pub fn read_header(file: &Path) -> Result<Rc<sam::Header>, FileError> {
         .map(bam::io::Reader::new)
         .map_err(|e| FileError::new(file, e))?;
     let header = Rc::new(reader.read_header().map_err(|e| FileError::new(file, e))?);
-    HEADER_CACHE.with(|cache| cache.borrow_mut().insert(file.to_path_buf(), Rc::clone(&header)));
+    HEADER_CACHE.with(|cache| {
+        cache
+            .borrow_mut()
+            .insert(file.to_path_buf(), Rc::clone(&header))
+    });
     Ok(header)
 }
 
@@ -144,10 +148,22 @@ mod tests {
         assert_eq!(read_group_tag(&header, 0, "id").as_deref(), Some("H0164.1"));
         assert_eq!(read_group_tag(&header, 1, "id").as_deref(), Some("H0164.2"));
         assert_eq!(read_group_tag(&header, 0, "sm").as_deref(), Some("NA12878"));
-        assert_eq!(read_group_tag(&header, 0, "lb").as_deref(), Some("Solexa-272222"));
-        assert_eq!(read_group_tag(&header, 0, "pl").as_deref(), Some("ILLUMINA"));
-        assert_eq!(read_group_tag(&header, 0, "pu").as_deref(), Some("H0164ALXX140820.1"));
-        assert_eq!(read_group_tag(&header, 1, "pu").as_deref(), Some("H0164ALXX140820.2"));
+        assert_eq!(
+            read_group_tag(&header, 0, "lb").as_deref(),
+            Some("Solexa-272222")
+        );
+        assert_eq!(
+            read_group_tag(&header, 0, "pl").as_deref(),
+            Some("ILLUMINA")
+        );
+        assert_eq!(
+            read_group_tag(&header, 0, "pu").as_deref(),
+            Some("H0164ALXX140820.1")
+        );
+        assert_eq!(
+            read_group_tag(&header, 1, "pu").as_deref(),
+            Some("H0164ALXX140820.2")
+        );
     }
 
     #[test]

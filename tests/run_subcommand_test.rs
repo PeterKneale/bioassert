@@ -15,8 +15,11 @@ fn run_defaults_to_assertions_txt_in_cwd() {
     // `run` with no path should pick up ./assertions.txt. Use a temp dir as the working
     // directory so the default file and its derived report file land there, not in the repo.
     let dir = tempfile::tempdir().expect("create temp dir");
-    std::fs::write(dir.path().join("assertions.txt"), "missing.txt file.exists eq false\n")
-        .expect("write assertions.txt");
+    std::fs::write(
+        dir.path().join("assertions.txt"),
+        "missing.txt file.exists eq false\n",
+    )
+    .expect("write assertions.txt");
 
     let output = Command::new(env!("CARGO_BIN_EXE_bioassert"))
         .arg("--color=never")
@@ -43,7 +46,10 @@ fn exits_0_for_all_passing_assertions() {
         output.status,
         String::from_utf8_lossy(&output.stdout)
     );
-    assert_snapshot!("run_all_passing_stdout", String::from_utf8_lossy(&output.stdout));
+    assert_snapshot!(
+        "run_all_passing_stdout",
+        String::from_utf8_lossy(&output.stdout)
+    );
 }
 
 #[test]

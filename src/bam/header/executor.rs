@@ -1,5 +1,7 @@
 use crate::bam::functions;
-use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, FileError, Value};
+use crate::core::{
+    AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, FileError, Value,
+};
 use std::io;
 
 /// Reads an `@HD` header field: `bam.header.hd.vn` (version) or `bam.header.hd.so` (sort
@@ -12,12 +14,17 @@ impl AssertionExecutor for BamHeaderFieldExecutor {
     fn try_parse(metric: &str) -> Option<Self> {
         let parts: Vec<&str> = metric.split('.').collect();
         match parts.as_slice() {
-            ["bam", "header", "hd", field @ ("vn" | "so")] => Some(Self { field: field.to_string() }),
+            ["bam", "header", "hd", field @ ("vn" | "so")] => Some(Self {
+                field: field.to_string(),
+            }),
             _ => None,
         }
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = crate::core::strip_quotes(&request.expected).to_string();
         let header = functions::read_header(request.path())?;
         let actual = functions::hd_field(&header, &self.field).ok_or_else(|| {
@@ -30,7 +37,10 @@ impl AssertionExecutor for BamHeaderFieldExecutor {
             )
         })?;
         let success = request.comparator.compare_string(&actual, &expected)?;
-        Ok(AssertionExecutionResult { success, actual: Value::StringValue(actual) })
+        Ok(AssertionExecutionResult {
+            success,
+            actual: Value::StringValue(actual),
+        })
     }
 }
 

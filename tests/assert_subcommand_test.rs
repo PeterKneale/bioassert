@@ -29,13 +29,20 @@ fn count_unit_value_is_parsed_and_scaled() {
     // multiplier were dropped (1K parsed as 1), this would be `1 < 1` and fail, so the
     // test also guards the decimal scaling, not just that the grammar accepts `1K`.
     let output = exec(&["assert", "tests/data/size_5B.txt file.lines lt 1K"]);
-    assert!(output.status.success(), "expected exit 0, got {:?}", output.status.code());
+    assert!(
+        output.status.success(),
+        "expected exit 0, got {:?}",
+        output.status.code()
+    );
     assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
 }
 
 #[test]
 fn exits_1_for_missing_file() {
-    let output = exec(&["assert", "tests/data/nonexistent_file.txt file.exists eq true"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/nonexistent_file.txt file.exists eq true",
+    ]);
     assert_eq!(output.status.code(), Some(1));
 }
 
@@ -51,26 +58,50 @@ fn exits_2_for_metric_error() {
     let output = exec(&["assert", "tests/data/empty_file.txt file.explode eq 0"]);
     assert_eq!(output.status.code(), Some(2));
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
-    assert!(stderr.contains("unknown metric"), "expected 'unknown metric' in stderr: {stderr}");
+    assert!(
+        stderr.contains("ERROR."),
+        "expected ERROR. in stderr: {stderr}"
+    );
+    assert!(
+        stderr.contains("unknown metric"),
+        "expected 'unknown metric' in stderr: {stderr}"
+    );
 }
 
 #[test]
 fn exits_2_for_comparator_error() {
-    let output = exec(&["assert", "tests/data/example.csv csv.line.1.column.1 lt Alice"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/example.csv csv.line.1.column.1 lt Alice",
+    ]);
     assert_eq!(output.status.code(), Some(2));
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
-    assert!(stderr.contains("unsupported comparator"), "expected 'unsupported comparator' in stderr: {stderr}");
+    assert!(
+        stderr.contains("ERROR."),
+        "expected ERROR. in stderr: {stderr}"
+    );
+    assert!(
+        stderr.contains("unsupported comparator"),
+        "expected 'unsupported comparator' in stderr: {stderr}"
+    );
 }
 
 #[test]
 fn exits_2_for_value_error() {
-    let output = exec(&["assert", "tests/data/empty_file.txt file.lines eq notanumber"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/empty_file.txt file.lines eq notanumber",
+    ]);
     assert_eq!(output.status.code(), Some(2));
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
-    assert!(stderr.contains("Invalid integer"), "expected 'Invalid integer' in stderr: {stderr}");
+    assert!(
+        stderr.contains("ERROR."),
+        "expected ERROR. in stderr: {stderr}"
+    );
+    assert!(
+        stderr.contains("Invalid integer"),
+        "expected 'Invalid integer' in stderr: {stderr}"
+    );
 }
 
 #[test]
@@ -78,22 +109,40 @@ fn exits_2_for_file_error() {
     let output = exec(&["assert", "tests/data/nonexistent_file.txt file.size eq 0B"]);
     assert_eq!(output.status.code(), Some(2));
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
-    assert!(stderr.contains("nonexistent_file.txt"), "expected path in stderr: {stderr}");
+    assert!(
+        stderr.contains("ERROR."),
+        "expected ERROR. in stderr: {stderr}"
+    );
+    assert!(
+        stderr.contains("nonexistent_file.txt"),
+        "expected path in stderr: {stderr}"
+    );
 }
 
 #[test]
 fn exits_2_for_regex_error() {
-    let output = exec(&["assert", "tests/data/example.csv csv.line.1.column.1 matches '[invalid'"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/example.csv csv.line.1.column.1 matches '[invalid'",
+    ]);
     assert_eq!(output.status.code(), Some(2));
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
-    assert!(stderr.contains("invalid regex"), "expected 'invalid regex' in stderr: {stderr}");
+    assert!(
+        stderr.contains("ERROR."),
+        "expected ERROR. in stderr: {stderr}"
+    );
+    assert!(
+        stderr.contains("invalid regex"),
+        "expected 'invalid regex' in stderr: {stderr}"
+    );
 }
 
 #[test]
 fn column_data_all_passes_when_every_data_row_matches() {
-    let output = exec(&["assert", r#"tests/data/junctions.tsv tsv.column.6.data.all matches "^[+-]$""#]);
+    let output = exec(&[
+        "assert",
+        r#"tests/data/junctions.tsv tsv.column.6.data.all matches "^[+-]$""#,
+    ]);
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
 }
@@ -101,18 +150,33 @@ fn column_data_all_passes_when_every_data_row_matches() {
 #[test]
 fn column_all_includes_header_and_fails_on_it() {
     // Without `.data`, line 1 ("strand") is checked and does not match the regex.
-    let output = exec(&["assert", r#"tests/data/junctions.tsv tsv.column.6.all matches "^[+-]$""#]);
+    let output = exec(&[
+        "assert",
+        r#"tests/data/junctions.tsv tsv.column.6.all matches "^[+-]$""#,
+    ]);
     assert_eq!(output.status.code(), Some(1));
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("FAIL."), "expected FAIL. in stdout: {stdout}");
-    assert!(stdout.contains(r#"line 1 = "strand""#), "expected offending row in stdout: {stdout}");
+    assert!(
+        stdout.contains("FAIL."),
+        "expected FAIL. in stdout: {stdout}"
+    );
+    assert!(
+        stdout.contains(r#"line 1 = "strand""#),
+        "expected offending row in stdout: {stdout}"
+    );
 }
 
 #[test]
 fn column_data_all_reports_first_offending_row() {
-    let output = exec(&["assert", r#"tests/data/junctions.tsv tsv.column.11.data.all matches "^(DA|D|A|N)$""#]);
+    let output = exec(&[
+        "assert",
+        r#"tests/data/junctions.tsv tsv.column.11.data.all matches "^(DA|D|A|N)$""#,
+    ]);
     // Row 2's anchor value "NDA" is the first that fails this (NDA-less) pattern.
     assert_eq!(output.status.code(), Some(1));
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains(r#"line 3 = "NDA""#), "expected offending row in stdout: {stdout}");
+    assert!(
+        stdout.contains(r#"line 3 = "NDA""#),
+        "expected offending row in stdout: {stdout}"
+    );
 }

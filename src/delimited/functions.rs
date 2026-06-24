@@ -54,12 +54,18 @@ mod tests {
 
     #[test]
     fn parse_fields_strips_double_quotes() {
-        assert_eq!(parse_fields("\"hello world\",b", ','), vec!["hello world", "b"]);
+        assert_eq!(
+            parse_fields("\"hello world\",b", ','),
+            vec!["hello world", "b"]
+        );
     }
 
     #[test]
     fn parse_fields_strips_single_quotes() {
-        assert_eq!(parse_fields("'hello world',b", ','), vec!["hello world", "b"]);
+        assert_eq!(
+            parse_fields("'hello world',b", ','),
+            vec!["hello world", "b"]
+        );
     }
 
     #[test]

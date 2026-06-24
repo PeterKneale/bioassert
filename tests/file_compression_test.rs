@@ -16,8 +16,14 @@ fn bgzf_file_is_detected_as_bgzf_not_gzip() {
     let output = exec(&["assert", "tests/data/sample.bam file.compression eq bgzf"]);
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("PASS."), "expected PASS. in stdout: {stdout}");
-    assert!(stdout.contains("got bgzf"), "expected 'got bgzf' in stdout: {stdout}");
+    assert!(
+        stdout.contains("PASS."),
+        "expected PASS. in stdout: {stdout}"
+    );
+    assert!(
+        stdout.contains("got bgzf"),
+        "expected 'got bgzf' in stdout: {stdout}"
+    );
 }
 
 #[test]
@@ -39,8 +45,14 @@ fn plain_gzip_file_is_not_bgzf() {
     let output = exec(&["assert", "tests/data/plain.txt.gz file.compression eq bgzf"]);
     assert_eq!(output.status.code(), Some(1));
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("FAIL."), "expected FAIL. in stdout: {stdout}");
-    assert!(stdout.contains("got gzip"), "expected 'got gzip' in stdout: {stdout}");
+    assert!(
+        stdout.contains("FAIL."),
+        "expected FAIL. in stdout: {stdout}"
+    );
+    assert!(
+        stdout.contains("got gzip"),
+        "expected 'got gzip' in stdout: {stdout}"
+    );
 }
 
 #[test]
@@ -52,7 +64,10 @@ fn uncompressed_file_is_none() {
 
 #[test]
 fn compression_label_matches_regex() {
-    let output = exec(&["assert", "tests/data/sample.bam file.compression matches '^b'"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/sample.bam file.compression matches '^b'",
+    ]);
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
 }
@@ -84,7 +99,10 @@ fn compression_guards_a_downstream_check() {
 
 #[test]
 fn missing_file_errors() {
-    let output = exec(&["assert", "tests/data/nonexistent.gz file.compression eq gzip"]);
+    let output = exec(&[
+        "assert",
+        "tests/data/nonexistent.gz file.compression eq gzip",
+    ]);
     assert_eq!(output.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&output.stderr).contains("ERROR."));
 }
@@ -94,6 +112,12 @@ fn numeric_comparator_on_label_errors() {
     let output = exec(&["assert", "tests/data/plain.txt.gz file.compression gt gzip"]);
     assert_eq!(output.status.code(), Some(2));
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("ERROR."), "expected ERROR. in stderr: {stderr}");
-    assert!(stderr.contains("unsupported comparator"), "expected 'unsupported comparator' in stderr: {stderr}");
+    assert!(
+        stderr.contains("ERROR."),
+        "expected ERROR. in stderr: {stderr}"
+    );
+    assert!(
+        stderr.contains("unsupported comparator"),
+        "expected 'unsupported comparator' in stderr: {stderr}"
+    );
 }

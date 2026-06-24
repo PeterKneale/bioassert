@@ -4,7 +4,11 @@ use crate::core::{BioAssertError, Comparator};
 /// expected value with the string comparators (`eq`, `ne`, `starts`, `ends`, `contains`,
 /// `matches`). Errors only if the comparator is a numeric one (not valid for strings) or
 /// the `matches` regex is invalid; it never errors on the resource, which is always present.
-pub fn value_matches(value: &str, comparator: Comparator, expected: &str) -> Result<bool, BioAssertError> {
+pub fn value_matches(
+    value: &str,
+    comparator: Comparator,
+    expected: &str,
+) -> Result<bool, BioAssertError> {
     comparator.compare_string(value, expected)
 }
 
