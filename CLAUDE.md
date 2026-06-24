@@ -46,9 +46,15 @@ string that the matched executor interprets.
     - `strings.rs` — `strip_quotes`, applied centrally to the locator in `engine::executor::run_metric` (so a quoted
       path or literal containing spaces resolves) and reused by executors whose expected value may be quoted
 
-2. **`src/file/`** — file-level metric executors, one submodule each (`exists`, `size`, `empty`, `lines`). Each exposes a
-   `File*Executor` that implements `core::AssertionExecutor`, split into `executor.rs` (parsing + dispatch) and
-   `functions.rs` (the actual filesystem work).
+2. **`src/file/`** — file-level metric executors, one submodule each (`exists`, `size`, `empty`, `lines`,
+   `compression`). Each exposes a `File*Executor` that implements `core::AssertionExecutor`, split into `executor.rs`
+   (parsing + dispatch) and `functions.rs` (the actual filesystem work). The `compression` submodule hosts two
+   executors sharing one detection routine: `file.compression` (a string label, one of `none`, `gzip`, `bgzf`,
+   `bzip2`, `xz`, `zstd`, `zip`) and `file.compressed` (a boolean). Detection reads only the leading magic bytes
+   (at most 18) and never decompresses, so it is cheap on large genomes; `bgzf` (the block-gzip variant used by
+   samtools and tabix) is reported in preference to `gzip` when its `BC` extra-field marker is present, since every
+   bgzf file is also a valid gzip file. A common use is a guard, `if reads.gz file.compression eq bgzf`, to gate a
+   samtools or tabix step.
 
 3. **`src/delimited/`** — CSV/TSV/PSV metric executors (`column_count`, `line_count`, `cell`, `column_all`), same
    `*Executor` + `functions.rs` shape, with shared helpers in `functions.rs`. `column_all` handles the
