@@ -280,3 +280,31 @@ tests/data/empty.fasta fasta.seq.count eq 0
 tests/data/empty.fasta fasta.seq.count lt 1
 tests/data/empty.fasta fasta.seq.count lte 0
 tests/data/empty.fasta fasta.length eq 0
+
+# ===========================================================================
+# text.* inline literal resource: value (string), length (numeric).
+# The locator is the literal itself, so these metrics never ERROR, only PASS/FAIL.
+# ===========================================================================
+
+# text.value (string): eq, ne, starts, ends, contains, matches
+'abc' text.value eq abc
+'abc' text.value ne xyz
+'abc' text.value starts a
+'abc' text.value ends c
+'abc' text.value contains b
+'abc' text.value matches '^a.*c$'
+# quoted literals containing dots, colons, and spaces resolve after quote-stripping
+'NC_000001.11' text.value eq 'NC_000001.11'
+'NC_000001.11' text.value matches '^NC_[0-9]+\.[0-9]+$'
+'Homo sapiens chromosome 1' text.value contains sapiens
+
+# text.length (character count in Unicode scalars): eq, ne, lt, lte, gt, gte
+'abc' text.length eq 3
+'abc' text.length ne 2
+'abc' text.length lt 4
+'abc' text.length lte 3
+'abc' text.length gt 2
+'abc' text.length gte 3
+# multibyte characters count as one each
+'café' text.length eq 4
+'' text.length eq 0
