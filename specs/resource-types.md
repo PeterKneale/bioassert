@@ -31,7 +31,7 @@ file, an inline literal or (later) a URL, with no per-type syntax and no second 
   `http://example.com` contains no whitespace so it already matches `unquoted`, and an inline literal `'x'`
   already matches `single_quoted`. No structural grammar change is required to *parse* these. The only grammar
   change is cosmetic: renaming the `file` rule to `resource` so the grammar reads honestly. The same rename
-  applies to `full_condition`, which reuses `file`.
+  applies to `condition`, which reuses `file`.
 - **Dispatch is metric-driven, not resource-driven.** `src/engine/executor.rs::dispatch` selects an executor
   purely by `*Executor::try_parse(metric)`. The locator is carried along untouched. This means the metric's first
   segment (`file`, `bam`, `fasta`, `tsv`, and now `text`) is *already* the resource-type discriminator. There is
@@ -96,12 +96,12 @@ file, an inline literal or (later) a URL, with no per-type syntax and no second 
 ### Grammar changes (`src/engine/assertions.pest`)
 
 The change is a rename plus one reorder. Replace the `file` rule name with `resource`, update its two uses (the
-`assertion` rule and `full_condition`), and put the quoted alternatives first:
+`assertion` rule and `condition`), and put the quoted alternatives first:
 
 ```pest
 resource = { single_quoted | double_quoted | unquoted }
 
-full_condition = { resource ~ metric ~ comparator ~ value }
+condition = { resource ~ metric ~ comparator ~ value }
 
 assertion = {
     resource ~ metric ~ comparator ~ value ~ (guard_keyword ~ condition)? ~ EOI
@@ -181,7 +181,7 @@ This spec implements the generalisation plus the `text` family. `http`, `json` a
 
 ### 1. Grammar (`src/engine/assertions.pest`)
 
-Rename the `file` rule to `resource` and update its two uses (`assertion`, `full_condition`) as shown in Syntax. No
+Rename the `file` rule to `resource` and update its two uses (`assertion`, `condition`) as shown in Syntax. No
 other rule changes.
 
 ### 2. Request type (`src/core/assertion_request.rs`)

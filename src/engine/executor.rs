@@ -4,7 +4,7 @@ use crate::bam::{BamCountExecutor, BamHeaderFieldExecutor, BamReadGroupPresentEx
 use crate::core::{AssertionExecutor, AssertionRequest, BioAssertError, Comparator, Value};
 use crate::delimited::{DelimitedCellExecutor, DelimitedColumnAllExecutor, DelimitedColumnCountExecutor, DelimitedLineCountExecutor};
 use crate::fasta::{FastaCountExecutor, FastaSequenceFieldExecutor, FastaSequencePresentExecutor};
-use crate::file::{FileEmptyExecutor, FileExistsExecutor, FileLinesExecutor, FileSizeExecutor};
+use crate::file::{FileCompressedExecutor, FileCompressionExecutor, FileEmptyExecutor, FileExistsExecutor, FileLinesExecutor, FileSizeExecutor};
 use crate::text::{TextLengthExecutor, TextValueExecutor};
 
 /// Evaluates every assertion and collects the outcomes into an [`AssertionReport`].
@@ -105,6 +105,8 @@ fn dispatch(metric: &str, request: &AssertionRequest) -> Result<(bool, Value), B
     if let Some(e) = FileSizeExecutor::try_parse(metric) { return run(e, request); }
     if let Some(e) = FileEmptyExecutor::try_parse(metric) { return run(e, request); }
     if let Some(e) = FileLinesExecutor::try_parse(metric) { return run(e, request); }
+    if let Some(e) = FileCompressionExecutor::try_parse(metric) { return run(e, request); }
+    if let Some(e) = FileCompressedExecutor::try_parse(metric) { return run(e, request); }
     if let Some(e) = DelimitedColumnCountExecutor::try_parse(metric) { return run(e, request); }
     if let Some(e) = DelimitedLineCountExecutor::try_parse(metric) { return run(e, request); }
     if let Some(e) = DelimitedCellExecutor::try_parse(metric) { return run(e, request); }
