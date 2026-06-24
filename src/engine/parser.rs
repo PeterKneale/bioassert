@@ -29,7 +29,7 @@ pub fn parse_assertion(input: &str) -> Result<Assertion, Box<dyn std::error::Err
 }
 
 /// Builds a [`Condition`] from a `condition` pair. A guard condition is a full assertion
-/// in its own right (resource, metric, comparator and value), read positionally — there
+/// in its own right (resource, metric, comparator and value), read positionally. There
 /// is no shorthand form.
 fn parse_condition(condition: pest::iterators::Pair<Rule>) -> Condition {
     let mut parts = condition.into_inner();
