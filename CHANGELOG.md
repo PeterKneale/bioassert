@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0](https://github.com/PeterKneale/bioassert/compare/v2.0.0...v3.0.0) - 2026-06-24
+
+### Added
+
+- generalise the first token to a resource locator and add text resources
+
+### Fixed
+
+- accept K/M/G count-unit suffixes on numeric values
+
+### Other
+
+- [**breaking**] require full form for guard conditions
+
 ## [2.0.0](https://github.com/PeterKneale/bioassert/compare/v1.4.0...v2.0.0) - 2026-06-23
 
 ### Added
