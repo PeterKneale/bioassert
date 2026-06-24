@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   upload-binaries:
-    name: ${{ matrix.target }}
+    name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -17,24 +17,36 @@ jobs:
         include:
           - target: aarch64-apple-darwin
             os: macos-14
+            name: macos-arm64
           - target: x86_64-apple-darwin
             os: macos-13
+            name: macos-x86_64
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
+            name: linux-x86_64
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
+            name: linux-arm64
     steps:
       - uses: actions/checkout@v4
 
-      # github.ref is refs/tags/vX.Y.Z on the release event, so this checks out
-      # the tagged source and uploads to that release. The tag is supplied by the
-      # release-plz-published release, not by any manual input.
-      - name: Build and upload ${{ matrix.target }}
+      # On the release event GITHUB_REF_NAME is the tag (vX.Y.Z); strip the
+      # leading v so the version embeds cleanly in the archive name. Mirrors the
+      # version extraction in docker.yml.
+      - name: Resolve version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      # `archive` is the non-extension portion; the action appends .tar.gz and
+      # names the checksum <archive>.sha256. Friendly platform labels (macos-arm64,
+      # linux-x86_64, ...) replace the verbose Rust target triples in the filename.
+      # Produces e.g. bioassert-3.0.2-macos-arm64.tar.gz (+ .sha256).
+      - name: Build and upload ${{ matrix.name }}
         uses: taiki-e/upload-rust-binary-action@v1
         with:
           bin: bioassert
           target: ${{ matrix.target }}
-          archive: $bin-$target
+          archive: bioassert-${{ steps.version.outputs.version }}-${{ matrix.name }}
           include: README.md
           checksum: sha256
           token: ${{ secrets.GITHUB_TOKEN }}
