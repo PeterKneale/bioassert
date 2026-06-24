@@ -1,4 +1,6 @@
-use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
+use crate::core::{
+    AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value,
+};
 
 pub struct DelimitedCellExecutor {
     pub delimiter: char,
@@ -14,17 +16,30 @@ impl AssertionExecutor for DelimitedCellExecutor {
                 let delimiter = crate::delimited::functions::delimiter_for_prefix(prefix)?;
                 let line = n.parse::<usize>().ok().filter(|&x| x > 0)?;
                 let col = m.parse::<usize>().ok().filter(|&x| x > 0)?;
-                Some(Self { delimiter, line, col })
+                Some(Self {
+                    delimiter,
+                    line,
+                    col,
+                })
             }
             _ => None,
         }
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected_str = crate::core::strip_quotes(&request.expected).to_string();
-        let actual_str = super::functions::cell(request.path(), self.delimiter, self.line, self.col)?;
-        let success = request.comparator.compare_string(&actual_str, &expected_str)?;
-        Ok(AssertionExecutionResult { success, actual: Value::StringValue(actual_str) })
+        let actual_str =
+            super::functions::cell(request.path(), self.delimiter, self.line, self.col)?;
+        let success = request
+            .comparator
+            .compare_string(&actual_str, &expected_str)?;
+        Ok(AssertionExecutionResult {
+            success,
+            actual: Value::StringValue(actual_str),
+        })
     }
 }
 
@@ -37,7 +52,11 @@ mod tests {
     fn try_parse_csv_cell() {
         assert!(matches!(
             DelimitedCellExecutor::try_parse("csv.line.2.column.3"),
-            Some(DelimitedCellExecutor { delimiter: ',', line: 2, col: 3 })
+            Some(DelimitedCellExecutor {
+                delimiter: ',',
+                line: 2,
+                col: 3
+            })
         ));
     }
 
@@ -45,7 +64,11 @@ mod tests {
     fn try_parse_tsv_cell() {
         assert!(matches!(
             DelimitedCellExecutor::try_parse("tsv.line.1.column.1"),
-            Some(DelimitedCellExecutor { delimiter: '\t', line: 1, col: 1 })
+            Some(DelimitedCellExecutor {
+                delimiter: '\t',
+                line: 1,
+                col: 1
+            })
         ));
     }
 

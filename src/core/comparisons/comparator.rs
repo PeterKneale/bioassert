@@ -56,7 +56,7 @@ impl Comparator {
                     "unsupported comparator for string comparison: {}",
                     self
                 ))
-                .into())
+                .into());
             }
         })
     }
@@ -145,15 +145,27 @@ mod tests {
 
     #[test]
     fn from_str_parses_all_string() {
-        assert!(matches!("starts".parse::<Comparator>(), Ok(Comparator::Starts)));
+        assert!(matches!(
+            "starts".parse::<Comparator>(),
+            Ok(Comparator::Starts)
+        ));
         assert!(matches!("ends".parse::<Comparator>(), Ok(Comparator::Ends)));
-        assert!(matches!("contains".parse::<Comparator>(), Ok(Comparator::Contains)));
-        assert!(matches!("matches".parse::<Comparator>(), Ok(Comparator::Matches)));
+        assert!(matches!(
+            "contains".parse::<Comparator>(),
+            Ok(Comparator::Contains)
+        ));
+        assert!(matches!(
+            "matches".parse::<Comparator>(),
+            Ok(Comparator::Matches)
+        ));
     }
 
     #[test]
     fn from_str_rejects_unknown() {
-        assert!(matches!("like".parse::<Comparator>(), Err(ComparatorError::UnknownComparator(_))));
+        assert!(matches!(
+            "like".parse::<Comparator>(),
+            Err(ComparatorError::UnknownComparator(_))
+        ));
     }
 
     #[test]
@@ -226,13 +238,21 @@ mod tests {
 
     #[test]
     fn compare_string_matches_valid_regex() {
-        assert!(Comparator::Matches.compare_string("Alice", "^A.*e$").unwrap());
+        assert!(
+            Comparator::Matches
+                .compare_string("Alice", "^A.*e$")
+                .unwrap()
+        );
         assert!(!Comparator::Matches.compare_string("Bob", "^A").unwrap());
     }
 
     #[test]
     fn compare_string_matches_invalid_regex_returns_err() {
-        assert!(Comparator::Matches.compare_string("Alice", "[invalid").is_err());
+        assert!(
+            Comparator::Matches
+                .compare_string("Alice", "[invalid")
+                .is_err()
+        );
     }
 
     #[test]

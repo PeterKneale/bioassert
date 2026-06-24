@@ -25,7 +25,13 @@ pub fn parse_assertion(input: &str) -> Result<Assertion, Box<dyn std::error::Err
         _ => None,
     };
 
-    Ok(Assertion { file, metric, comparator, expected, guard })
+    Ok(Assertion {
+        file,
+        metric,
+        comparator,
+        expected,
+        guard,
+    })
 }
 
 /// Builds a [`Condition`] from a `condition` pair. A guard condition is a full assertion
@@ -97,7 +103,8 @@ mod tests {
 
     #[test]
     fn parses_a_guard_against_the_assertion_file() {
-        let a = parse_assertion("data.tsv tsv.columns.count eq 18 if data.tsv file.exists eq true").unwrap();
+        let a = parse_assertion("data.tsv tsv.columns.count eq 18 if data.tsv file.exists eq true")
+            .unwrap();
         assert_eq!(a.metric, "tsv.columns.count");
         let guard = a.guard.expect("expected a guard");
         assert!(!guard.negate);
@@ -110,7 +117,9 @@ mod tests {
 
     #[test]
     fn parses_unless_as_a_negated_guard() {
-        let a = parse_assertion("data.tsv tsv.columns.count eq 18 unless data.tsv file.empty eq true").unwrap();
+        let a =
+            parse_assertion("data.tsv tsv.columns.count eq 18 unless data.tsv file.empty eq true")
+                .unwrap();
         let guard = a.guard.expect("expected a guard");
         assert!(guard.negate);
         assert_eq!(guard.condition.metric, "file.empty");
@@ -118,7 +127,9 @@ mod tests {
 
     #[test]
     fn parses_a_guard_against_another_file() {
-        let a = parse_assertion("out.tsv tsv.line.count gt 0 if other.bam bam.header.rg.count gt 0").unwrap();
+        let a =
+            parse_assertion("out.tsv tsv.line.count gt 0 if other.bam bam.header.rg.count gt 0")
+                .unwrap();
         let guard = a.guard.expect("expected a guard");
         assert!(!guard.negate);
         assert_eq!(guard.condition.file, "other.bam");
@@ -129,8 +140,14 @@ mod tests {
 
     #[test]
     fn guard_keyword_is_case_insensitive() {
-        assert!(parse_assertion("data.tsv tsv.columns.count eq 18 IF data.tsv file.exists eq true").is_ok());
-        assert!(parse_assertion("data.tsv tsv.columns.count eq 18 UNLESS data.tsv file.empty eq true").is_ok());
+        assert!(
+            parse_assertion("data.tsv tsv.columns.count eq 18 IF data.tsv file.exists eq true")
+                .is_ok()
+        );
+        assert!(
+            parse_assertion("data.tsv tsv.columns.count eq 18 UNLESS data.tsv file.empty eq true")
+                .is_ok()
+        );
     }
 
     #[test]

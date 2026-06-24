@@ -10,7 +10,10 @@ pub struct FileError {
 
 impl FileError {
     pub fn new(path: &Path, source: std::io::Error) -> Self {
-        Self { path: path.to_path_buf(), source }
+        Self {
+            path: path.to_path_buf(),
+            source,
+        }
     }
 }
 

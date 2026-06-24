@@ -1,4 +1,6 @@
-use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value};
+use crate::core::{
+    AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError, Value,
+};
 
 /// `text.value` — the literal resource compared as a string. The locator (already
 /// quote-stripped by the engine) is the value; the expected side is unwrapped here, as
@@ -10,10 +12,17 @@ impl AssertionExecutor for TextValueExecutor {
         (metric == "text.value").then_some(Self)
     }
 
-    fn execute(self, request: &AssertionRequest) -> Result<AssertionExecutionResult, BioAssertError> {
+    fn execute(
+        self,
+        request: &AssertionRequest,
+    ) -> Result<AssertionExecutionResult, BioAssertError> {
         let expected = crate::core::strip_quotes(&request.expected);
-        let success = super::functions::value_matches(&request.locator, request.comparator, expected)?;
-        Ok(AssertionExecutionResult { success, actual: Value::StringValue(request.locator.clone()) })
+        let success =
+            super::functions::value_matches(&request.locator, request.comparator, expected)?;
+        Ok(AssertionExecutionResult {
+            success,
+            actual: Value::StringValue(request.locator.clone()),
+        })
     }
 }
 

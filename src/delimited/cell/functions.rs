@@ -9,14 +9,26 @@ pub fn cell(file: &Path, delimiter: char, line: usize, column: usize) -> Result<
         .lines()
         .nth(line - 1)
         .ok_or_else(|| {
-            FileError::new(file, io::Error::new(io::ErrorKind::InvalidInput, format!("line {} not found", line)))
+            FileError::new(
+                file,
+                io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    format!("line {} not found", line),
+                ),
+            )
         })?
         .map_err(|e| FileError::new(file, e))?;
     super::super::functions::parse_fields(&raw, delimiter)
         .into_iter()
         .nth(column - 1)
         .ok_or_else(|| {
-            FileError::new(file, io::Error::new(io::ErrorKind::InvalidInput, format!("column {} not found", column)))
+            FileError::new(
+                file,
+                io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    format!("column {} not found", column),
+                ),
+            )
         })
 }
 

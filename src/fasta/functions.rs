@@ -48,7 +48,11 @@ pub fn read_records(file: &Path) -> Result<Rc<Vec<FastaRecord>>, FileError> {
         });
     }
     let records = Rc::new(records);
-    RECORD_CACHE.with(|cache| cache.borrow_mut().insert(file.to_path_buf(), Rc::clone(&records)));
+    RECORD_CACHE.with(|cache| {
+        cache
+            .borrow_mut()
+            .insert(file.to_path_buf(), Rc::clone(&records))
+    });
     Ok(records)
 }
 
@@ -153,9 +157,15 @@ ACGT
         clear_cache();
         let fasta = sample_fasta();
         let records = read_records(fasta.path()).unwrap();
-        assert_eq!(record_description(&records, 0).as_deref(), Some("Homo sapiens chromosome 1"));
+        assert_eq!(
+            record_description(&records, 0).as_deref(),
+            Some("Homo sapiens chromosome 1")
+        );
         assert_eq!(record_description(&records, 1), None);
-        assert_eq!(record_description(&records, 2).as_deref(), Some("alternate assembly"));
+        assert_eq!(
+            record_description(&records, 2).as_deref(),
+            Some("alternate assembly")
+        );
     }
 
     #[test]

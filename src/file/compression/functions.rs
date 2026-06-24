@@ -64,12 +64,16 @@ pub fn detect_compression(file: &Path) -> Result<Compression, FileError> {
 
 /// As the [`Value`] returned by the executor: the format label as a string.
 pub fn compression(file: &Path) -> Result<Value, FileError> {
-    Ok(Value::StringValue(detect_compression(file)?.as_str().to_string()))
+    Ok(Value::StringValue(
+        detect_compression(file)?.as_str().to_string(),
+    ))
 }
 
 /// As the [`Value`] returned by the executor: whether the file is compressed at all.
 pub fn compressed(file: &Path) -> Result<Value, FileError> {
-    Ok(Value::BooleanValue(detect_compression(file)?.is_compressed()))
+    Ok(Value::BooleanValue(
+        detect_compression(file)?.is_compressed(),
+    ))
 }
 
 /// Fills `buf` with the file's leading bytes, returning how many were read. Unlike
@@ -94,7 +98,10 @@ fn classify(bytes: &[u8]) -> Compression {
         Compression::Xz
     } else if bytes.starts_with(b"BZh") {
         Compression::Bzip2
-    } else if bytes.starts_with(b"PK\x03\x04") || bytes.starts_with(b"PK\x05\x06") || bytes.starts_with(b"PK\x07\x08") {
+    } else if bytes.starts_with(b"PK\x03\x04")
+        || bytes.starts_with(b"PK\x05\x06")
+        || bytes.starts_with(b"PK\x07\x08")
+    {
         Compression::Zip
     } else if bytes.starts_with(&[0x1f, 0x8b]) {
         if is_bgzf(bytes) {
@@ -141,14 +148,18 @@ mod tests {
     #[test]
     fn classifies_plain_gzip() {
         // 1f 8b 08 00 — deflate, no FEXTRA flag, so not bgzf
-        assert_eq!(classify(&[0x1f, 0x8b, 0x08, 0x00, 0, 0, 0, 0, 0, 3]), Compression::Gzip);
+        assert_eq!(
+            classify(&[0x1f, 0x8b, 0x08, 0x00, 0, 0, 0, 0, 0, 3]),
+            Compression::Gzip
+        );
     }
 
     #[test]
     fn classifies_bgzf() {
         // 1f 8b 08 04 ... XLEN=6 ... BC 02 00 (block-size subfield) — the samtools/tabix variant
         let bgzf = [
-            0x1f, 0x8b, 0x08, 0x04, 0, 0, 0, 0, 0, 0xff, 0x06, 0x00, 0x42, 0x43, 0x02, 0x00, 0x1b, 0x00,
+            0x1f, 0x8b, 0x08, 0x04, 0, 0, 0, 0, 0, 0xff, 0x06, 0x00, 0x42, 0x43, 0x02, 0x00, 0x1b,
+            0x00,
         ];
         assert_eq!(classify(&bgzf), Compression::Bgzf);
     }
@@ -156,7 +167,9 @@ mod tests {
     #[test]
     fn gzip_with_fextra_but_no_bc_is_plain_gzip() {
         // FEXTRA set, XLEN=4, but the subfield is `AB`, not `BC`
-        let gz = [0x1f, 0x8b, 0x08, 0x04, 0, 0, 0, 0, 0, 0xff, 0x04, 0x00, 0x41, 0x42, 0x00, 0x00];
+        let gz = [
+            0x1f, 0x8b, 0x08, 0x04, 0, 0, 0, 0, 0, 0xff, 0x04, 0x00, 0x41, 0x42, 0x00, 0x00,
+        ];
         assert_eq!(classify(&gz), Compression::Gzip);
     }
 
@@ -167,7 +180,10 @@ mod tests {
 
     #[test]
     fn classifies_xz() {
-        assert_eq!(classify(&[0xfd, b'7', b'z', b'X', b'Z', 0x00, 0x00]), Compression::Xz);
+        assert_eq!(
+            classify(&[0xfd, b'7', b'z', b'X', b'Z', 0x00, 0x00]),
+            Compression::Xz
+        );
     }
 
     #[test]
@@ -205,9 +221,15 @@ mod tests {
         let dir = tempdir().unwrap();
         let path = dir.path().join("x.gz");
         let mut f = File::create(&path).unwrap();
-        f.write_all(&[0x1f, 0x8b, 0x08, 0x00, 0, 0, 0, 0, 0, 3, b'r', b'e', b's', b't']).unwrap();
+        f.write_all(&[
+            0x1f, 0x8b, 0x08, 0x00, 0, 0, 0, 0, 0, 3, b'r', b'e', b's', b't',
+        ])
+        .unwrap();
         assert_eq!(detect_compression(&path).unwrap(), Compression::Gzip);
-        assert_eq!(compression(&path).unwrap(), Value::StringValue("gzip".to_string()));
+        assert_eq!(
+            compression(&path).unwrap(),
+            Value::StringValue("gzip".to_string())
+        );
         assert_eq!(compressed(&path).unwrap(), Value::BooleanValue(true));
     }
 
@@ -218,7 +240,10 @@ mod tests {
         let mut f = File::create(&path).unwrap();
         f.write_all(b"just some text").unwrap();
         assert_eq!(detect_compression(&path).unwrap(), Compression::None);
-        assert_eq!(compression(&path).unwrap(), Value::StringValue("none".to_string()));
+        assert_eq!(
+            compression(&path).unwrap(),
+            Value::StringValue("none".to_string())
+        );
         assert_eq!(compressed(&path).unwrap(), Value::BooleanValue(false));
     }
 

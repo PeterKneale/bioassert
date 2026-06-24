@@ -57,7 +57,11 @@ pub fn format_outcome(outcome: Outcome, message: &str, color: bool, icons: bool)
         Outcome::Skip => ("⚪", "\x1b[2m"),
     };
     // Two spaces keep the emoji from crowding the keyword in most terminals.
-    let prefix = if icons { format!("{icon}  ") } else { String::new() };
+    let prefix = if icons {
+        format!("{icon}  ")
+    } else {
+        String::new()
+    };
     let label = outcome.label();
     if color {
         format!("{prefix}{ansi}{label}\x1b[0m. {message}")
@@ -72,29 +76,50 @@ mod tests {
 
     #[test]
     fn plain_when_color_and_icons_off() {
-        assert_eq!(format_outcome(Outcome::Pass, "ok", false, false), "PASS. ok");
+        assert_eq!(
+            format_outcome(Outcome::Pass, "ok", false, false),
+            "PASS. ok"
+        );
     }
 
     #[test]
     fn icon_prefix_when_icons_on() {
-        assert_eq!(format_outcome(Outcome::Fail, "no", false, true), "🔴  FAIL. no");
-        assert_eq!(format_outcome(Outcome::Error, "boom", false, true), "🔥  ERROR. boom");
+        assert_eq!(
+            format_outcome(Outcome::Fail, "no", false, true),
+            "🔴  FAIL. no"
+        );
+        assert_eq!(
+            format_outcome(Outcome::Error, "boom", false, true),
+            "🔥  ERROR. boom"
+        );
     }
 
     #[test]
     fn colors_only_the_keyword_when_color_on() {
-        assert_eq!(format_outcome(Outcome::Pass, "ok", true, false), "\x1b[32mPASS\x1b[0m. ok");
+        assert_eq!(
+            format_outcome(Outcome::Pass, "ok", true, false),
+            "\x1b[32mPASS\x1b[0m. ok"
+        );
     }
 
     #[test]
     fn color_and_icons_are_independent() {
-        assert_eq!(format_outcome(Outcome::Pass, "ok", true, true), "🟢  \x1b[32mPASS\x1b[0m. ok");
+        assert_eq!(
+            format_outcome(Outcome::Pass, "ok", true, true),
+            "🟢  \x1b[32mPASS\x1b[0m. ok"
+        );
     }
 
     #[test]
     fn skip_renders_a_neutral_icon_and_label() {
-        assert_eq!(format_outcome(Outcome::Skip, "guarded out", false, false), "SKIP. guarded out");
-        assert_eq!(format_outcome(Outcome::Skip, "guarded out", false, true), "⚪  SKIP. guarded out");
+        assert_eq!(
+            format_outcome(Outcome::Skip, "guarded out", false, false),
+            "SKIP. guarded out"
+        );
+        assert_eq!(
+            format_outcome(Outcome::Skip, "guarded out", false, true),
+            "⚪  SKIP. guarded out"
+        );
     }
 
     #[test]
@@ -105,12 +130,18 @@ mod tests {
 
     #[test]
     fn explicit_path_wins() {
-        let p = resolve_report_file(Some(PathBuf::from("out.log")), Some(Path::new("checks.txt")));
+        let p = resolve_report_file(
+            Some(PathBuf::from("out.log")),
+            Some(Path::new("checks.txt")),
+        );
         assert_eq!(p, PathBuf::from("out.log"));
     }
 
     #[test]
     fn default_path_is_assertions_log() {
-        assert_eq!(resolve_report_file(None, None), PathBuf::from("assertions.log"));
+        assert_eq!(
+            resolve_report_file(None, None),
+            PathBuf::from("assertions.log")
+        );
     }
 }
