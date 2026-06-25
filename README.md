@@ -135,7 +135,7 @@ bioassert [OPTIONS] <COMMAND>
 | `--color <WHEN>`          | `auto`  | When to use ANSI color in console output: `auto`, `always` or `never` (see Color below). Also spelled `--colour`. |
 | `--icons <WHEN>`          | `auto`  | When to prefix `PASS`/`FAIL`/`ERROR` console lines with a status icon: `auto`, `always` or `never` (see Icons below). |
 | `-h`, `--help`            |         | Print help.                                                                                  |
-| `-V`, `--version`         |         | Print the version.                                                                           |
+| `-v`, `--version`         |         | Print the version.                                                                           |
 
 `--report-file`, `--color` and `--icons` are global, so they may appear either before or after the subcommand. For example, `bioassert run checks.txt --color=never` and `bioassert --color=never run checks.txt` are equivalent.
 

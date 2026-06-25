@@ -29,7 +29,7 @@ fn help_flag_exits_0_and_prints_usage() {
         "expected help flag listed: {stdout}"
     );
     assert!(
-        stdout.contains("-V, --version"),
+        stdout.contains("-v, --version"),
         "expected version flag listed: {stdout}"
     );
 }
@@ -54,7 +54,7 @@ fn version_flag_prints_version() {
 
 #[test]
 fn short_version_flag_prints_version() {
-    let output = exec(&["-V"]);
+    let output = exec(&["-v"]);
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
