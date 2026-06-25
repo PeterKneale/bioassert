@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.1](https://github.com/PeterKneale/bioassert/compare/v4.1.0...v4.1.1) - 2026-06-25
+
+### Fixed
+
+- show descriptions for the assert and run subcommands in --help ([#65](https://github.com/PeterKneale/bioassert/pull/65))
+
 ## [4.1.0](https://github.com/PeterKneale/bioassert/compare/v4.0.0...v4.1.0) - 2026-06-25
 
 ### Added
