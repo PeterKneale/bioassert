@@ -2,4 +2,4 @@
 source: tests/report_test.rs
 expression: contents
 ---
-FAIL. Expected tests/data/empty_file.txt file.exists == false, got true
+FAIL. Expected tests/data/empty_file.txt file.exists eq false, got true
