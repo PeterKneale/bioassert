@@ -1,0 +1,7 @@
+{
+  "name": "bioassert",
+  "description": "Write bioassert assertions and wire them into Nextflow pipelines",
+  "homepage": "https://github.com/PeterKneale/bioassert",
+  "license": "MIT",
+  "keywords": ["bioinformatics", "nextflow", "assertions", "validation"]
+}

@@ -317,8 +317,25 @@ Notes:
 A [Claude Code](https://claude.com/claude-code) skill that helps developers and bioinformaticians write bioassert
 assertions and wire them into Nextflow processes ships in this repo under [`skills/bioassert/`](skills/bioassert/). It
 covers the assertion syntax, the full metric reference, and copy-paste Nextflow process templates (hard gate, advisory,
-nf-core module). Claude Code discovers skills under `.claude/skills/`, so to use it copy the directory into your
-pipeline repo (or into `~/.claude/skills/` for all your projects):
+nf-core module).
+
+The repo doubles as a Claude Code plugin marketplace, so install the skill with the `claude` CLI:
+
+```bash
+claude plugin marketplace add PeterKneale/bioassert
+claude plugin install bioassert@peterkneale
+```
+
+Update or remove it later:
+
+```bash
+claude plugin update bioassert@peterkneale
+claude plugin uninstall bioassert@peterkneale
+```
+
+Installing the plugin makes the skill available to Claude; it does not install the `bioassert` binary itself (see
+[Installation](#installation)). Alternatively, copy the skill directory in by hand — Claude Code also discovers skills
+under `.claude/skills/`:
 
 ```bash
 cp -r skills/bioassert /path/to/your-pipeline/.claude/skills/
