@@ -80,9 +80,7 @@ impl When {
 #[derive(Subcommand)]
 pub enum Commands {
     /// Evaluate a single assertion passed as one quoted string.
-    Assert {
-        assertion: String,
-    },
+    Assert { assertion: String },
     /// Evaluate every assertion in a file (defaults to assertions.txt).
     Run {
         #[arg(
