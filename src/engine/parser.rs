@@ -161,4 +161,31 @@ mod tests {
     fn rejects_a_bare_metric_guard() {
         assert!(parse_assertion("data.tsv tsv.columns.count eq 18 if file.exists").is_err());
     }
+
+    #[test]
+    fn ignores_a_trailing_inline_comment() {
+        let a = parse_assertion("output.bam file.exists eq true  # file is present").unwrap();
+        assert_eq!(a.file, "output.bam");
+        assert_eq!(a.metric, "file.exists");
+        assert_eq!(a.comparator, "eq");
+        assert_eq!(a.expected, "true");
+        assert!(a.guard.is_none());
+    }
+
+    #[test]
+    fn ignores_an_inline_comment_after_a_guard() {
+        let a = parse_assertion(
+            "data.tsv tsv.columns.count eq 18 if data.tsv file.exists eq true  # guarded",
+        )
+        .unwrap();
+        let guard = a.guard.expect("expected a guard");
+        assert_eq!(guard.condition.metric, "file.exists");
+        assert_eq!(guard.condition.expected, "true");
+    }
+
+    #[test]
+    fn a_hash_inside_a_quoted_value_is_not_a_comment() {
+        let a = parse_assertion("notes.txt text.value eq '# not a comment'").unwrap();
+        assert_eq!(a.expected, "'# not a comment'");
+    }
 }

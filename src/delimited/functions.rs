@@ -7,6 +7,19 @@ pub(crate) fn delimiter_for_prefix(prefix: &str) -> Option<char> {
     }
 }
 
+/// Maps a (lowercased) file extension to its metric prefix, the reverse direction of
+/// [`delimiter_for_prefix`]. Extensions happen to equal prefixes today, but this is the
+/// seam for future aliases (e.g. `.tab` mapping to `tsv`). Used by the `suggest` command
+/// to pick the delimited family for a file by its extension.
+pub(crate) fn prefix_for_extension(ext: &str) -> Option<&'static str> {
+    match ext {
+        "csv" => Some("csv"),
+        "tsv" => Some("tsv"),
+        "psv" => Some("psv"),
+        _ => None,
+    }
+}
+
 pub(crate) fn parse_fields(line: &str, delimiter: char) -> Vec<String> {
     let mut fields = Vec::new();
     let mut current = String::new();
@@ -86,5 +99,18 @@ mod tests {
     #[test]
     fn delimiter_for_prefix_rejects_unknown() {
         assert_eq!(delimiter_for_prefix("dsv"), None);
+    }
+
+    #[test]
+    fn prefix_for_extension_maps_known_extensions() {
+        assert_eq!(prefix_for_extension("csv"), Some("csv"));
+        assert_eq!(prefix_for_extension("tsv"), Some("tsv"));
+        assert_eq!(prefix_for_extension("psv"), Some("psv"));
+    }
+
+    #[test]
+    fn prefix_for_extension_rejects_unknown() {
+        assert_eq!(prefix_for_extension("bam"), None);
+        assert_eq!(prefix_for_extension("txt"), None);
     }
 }

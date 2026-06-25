@@ -1,8 +1,8 @@
 mod compression;
 mod empty;
-mod exists;
+pub(crate) mod exists;
 mod lines;
-mod size;
+pub(crate) mod size;
 pub use compression::{FileCompressedExecutor, FileCompressionExecutor};
 pub use empty::FileEmptyExecutor;
 pub use exists::FileExistsExecutor;

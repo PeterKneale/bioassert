@@ -18,6 +18,17 @@ pub fn resolve_report_file(explicit: Option<PathBuf>, run_file: Option<&Path>) -
     PathBuf::from("assertions.log")
 }
 
+/// Resolves the path the `suggest` subcommand writes its suggested assertions to.
+///
+/// An explicit `--output` always wins. Otherwise the path is derived as
+/// `<input>.assertions.txt`, mirroring how [`resolve_report_file`] derives `<file>.log`.
+pub fn resolve_output_file(input: &Path, explicit: Option<PathBuf>) -> PathBuf {
+    if let Some(path) = explicit {
+        return path;
+    }
+    PathBuf::from(format!("{}.assertions.txt", input.to_string_lossy()))
+}
+
 /// Writes the assertion report to `path` as plain text (no color, no icons).
 pub fn write_report(path: &Path, report: &AssertionReport) -> io::Result<()> {
     fs::write(path, report.render())
@@ -142,6 +153,22 @@ mod tests {
         assert_eq!(
             resolve_report_file(None, None),
             PathBuf::from("assertions.log")
+        );
+    }
+
+    #[test]
+    fn output_file_derives_assertions_txt() {
+        assert_eq!(
+            resolve_output_file(Path::new("reads.tsv"), None),
+            PathBuf::from("reads.tsv.assertions.txt")
+        );
+    }
+
+    #[test]
+    fn output_file_explicit_wins() {
+        assert_eq!(
+            resolve_output_file(Path::new("reads.tsv"), Some(PathBuf::from("checks.txt"))),
+            PathBuf::from("checks.txt")
         );
     }
 }

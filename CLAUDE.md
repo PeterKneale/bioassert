@@ -23,6 +23,7 @@ cargo test <test_name>         # single test by name
 # Run
 cargo run -- assert "<file> <metric> <comparator> <value>"
 cargo run -- run tests/data/assertions.txt
+cargo run -- suggest tests/data/junctions.tsv   # writes tests/data/junctions.tsv.assertions.txt
 ```
 
 ## Architecture
@@ -85,15 +86,27 @@ string that the matched executor interprets.
    little the generator could not.
 
 7. **`src/engine/`** — ties it together:
-    - `cli.pest` — PEG grammar defining the assertion syntax (referenced as `#[grammar = "engine/cli.pest"]`)
+    - `assertions.pest` — PEG grammar defining the assertion syntax (referenced as
+      `#[grammar = "engine/assertions.pest"]`)
     - `parser.rs` — wraps the PEG parser into `Assertion` structs; `parse_assertion` handles a single assertion,
-      `parse_file` skips blank lines and `#` comments
+      `parse_file` skips blank lines and full-line `#` comments. The grammar also allows an optional trailing inline
+      `# comment` on an assertion (discarded), so an annotated `suggest` output round-trips through `run`; a `#` inside
+      a quoted resource or value is not a comment
     - `executor.rs` — `execute_all` / `execute`, which try each `*Executor` in turn and build an `AssertionReport`
     - `report.rs` — `AssertionReport`, `AssertionResult`, `Outcome`
 
-8. **Binary** (`src/main.rs`, `src/cli.rs`, `src/report.rs`) — `clap` derive API with two subcommands, `assert` (single
-   string) and `run` (path to assertions file). `src/report.rs` is the console/file presentation layer; the binary
-   reaches the library modules via the `bioassert::` crate path.
+8. **`src/suggest/`** — the inverse of evaluation: inspects a file and proposes a default set of assertions, written
+   to `<file>.assertions.txt` (the same format `run` consumes). `suggestion.rs` (the `Suggestion` line type, its
+   `render`, and the `band` helper for the +/- 50% bounds), `provider.rs` (the `SuggestionProvider` trait and the
+   ordered `providers()` registry, mirroring the executor dispatch order), `orchestrator.rs` (`suggest()` returning a
+   `SuggestResult`), and `providers/{file,delimited,bam,fasta}.rs` (one provider per resource family, each reusing
+   that family's property functions). The proposals are heuristic guesses from the file's current state, not verified
+   expectations, hence "suggest"; the author reviews and tightens them. See `specs/suggest.md`.
+
+9. **Binary** (`src/main.rs`, `src/cli.rs`, `src/report.rs`) — `clap` derive API with three subcommands, `assert`
+   (single string), `run` (path to assertions file), and `suggest` (inspect a file and write suggested assertions).
+   `src/report.rs` is the console/file presentation layer; the binary reaches the library modules via the
+   `bioassert::` crate path.
 
 ## Adding a new metric
 
@@ -105,6 +118,8 @@ string that the matched executor interprets.
 3. Add a `try_parse` dispatch line in `src/engine/executor.rs`.
 4. Extend `src/engine/assertions.pest` if new metric or value syntax is needed. The `metric` rule already accepts any
    dot-separated chain of identifiers/numbers (e.g. `bam.header.rg.0.sm`), so most new metrics need no grammar change.
+5. When adding a whole new resource family, also add a `SuggestionProvider` in `src/suggest/providers/` and register
+   it in `providers()` (`src/suggest/provider.rs`) so `suggest` proposes defaults for the new family.
 
 Expected values are matched by the grammar as a bare alphanumeric string, a quoted string, a number (with optional
 size/count unit), or a boolean. Values containing dots, dashes, colons, or spaces (e.g. `'H0164.2'`, `'1.6'`,
@@ -151,6 +166,30 @@ An assertion may carry an optional guard so it is evaluated only when a conditio
   `src/engine/report.rs`.
 - Boolean composition (`and`, `or`, `not`) is not yet supported. To use `if` or `unless` as a literal expected value,
   quote it. The full design is recorded in `specs/conditional-assertions.md`.
+
+## Suggest command
+
+`bioassert suggest <file>` inspects a file and writes a set of suggested default assertions to
+`<file>.assertions.txt` (or `--output FILE`), for the author to review and tighten:
+
+```
+bioassert suggest reads.tsv              # writes reads.tsv.assertions.txt
+bioassert suggest reads.tsv -o checks.txt
+bioassert suggest reads.tsv --force      # overwrite an existing output
+```
+
+- The output is ordinary assertion syntax with `#` comments, so `run` consumes it directly (the round-trip is an
+  integration test). It opens with a two-line provenance banner, then one `# <prefix>` group per contributing family.
+- Each family is a `SuggestionProvider` (`src/suggest/providers/`); `providers()` runs them broadest-first (file,
+  delimited, bam, fasta), mirroring the executor dispatch order. A provider that does not handle the file is skipped;
+  one that handles it but cannot read its properties records a warning (stderr) and is skipped, and the rest still
+  contribute.
+- Defaults: every file gets `file.exists eq true` and `file.size gt 0B`. Schema-like counts are pinned with `eq`
+  (delimited columns, fasta records, bam `@SQ`); quantities that vary run to run get a +/- 50% band of a `gte` lower
+  bound and an `lte` upper bound (delimited rows, fasta total length). These are guesses from the current file, not
+  verified expectations.
+- Exit codes: `0` on success, `2` on a fatal error (output exists without `--force`, write fails, or nothing could be
+  suggested). Warnings alone keep the exit code `0`. The full design is in `specs/suggest.md`.
 
 ## BAM test fixture
 
