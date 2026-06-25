@@ -1,0 +1,16 @@
+{
+  "name": "peterkneale",
+  "owner": {
+    "name": "Peter Kneale"
+  },
+  "description": "Claude Code plugins by Peter Kneale",
+  "plugins": [
+    {
+      "name": "bioassert",
+      "source": ".",
+      "description": "Write bioassert assertions and wire them into Nextflow pipelines",
+      "homepage": "https://github.com/PeterKneale/bioassert",
+      "license": "MIT"
+    }
+  ]
+}
