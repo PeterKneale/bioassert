@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.2](https://github.com/PeterKneale/bioassert/compare/v3.1.1...v3.1.2) - 2026-06-25
+
+### Other
+
+- refresh README for consumers and document current features ([#55](https://github.com/PeterKneale/bioassert/pull/55))
+- install the Claude Code skill via the claude plugin CLI ([#53](https://github.com/PeterKneale/bioassert/pull/53))
+
 ## [3.1.1](https://github.com/PeterKneale/bioassert/compare/v3.1.0...v3.1.1) - 2026-06-24
 
 ### Other
