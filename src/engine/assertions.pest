@@ -41,8 +41,15 @@ guard_keyword = { ^"if" | ^"unless" }
 // reads exactly like the assertion it guards and never implies a resource or `eq true`.
 condition = { resource ~ metric ~ comparator ~ value }
 
+// An optional inline comment runs from `#` to the end of the line and is discarded. It
+// sits after the optional guard so an assertion can carry an explanation (as `suggest`
+// emits) while still round-tripping through `run`. A `#` inside a quoted resource or
+// value is consumed by the quoted token before this rule is reached, so it is not a
+// comment; an unquoted value must be quoted to contain a literal `#`.
+comment = _{ "#" ~ ANY* }
+
 assertion = {
-    resource ~ metric ~ comparator ~ value ~ (guard_keyword ~ condition)? ~ EOI
+    resource ~ metric ~ comparator ~ value ~ (guard_keyword ~ condition)? ~ comment? ~ EOI
 }
 
 assertions = {

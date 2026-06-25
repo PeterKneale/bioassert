@@ -89,6 +89,22 @@ pub enum Commands {
         )]
         file: PathBuf,
     },
+    /// Inspect a file and write a set of suggested default assertions for review.
+    Suggest {
+        #[arg(help = "Path to the file to inspect")]
+        file: PathBuf,
+
+        #[arg(
+            short,
+            long,
+            value_name = "FILE",
+            help = "Write suggested assertions to FILE instead of <file>.assertions.txt"
+        )]
+        output: Option<PathBuf>,
+
+        #[arg(long, help = "Overwrite the output file if it already exists")]
+        force: bool,
+    },
 }
 
 #[cfg(test)]

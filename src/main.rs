@@ -1,5 +1,6 @@
 use bioassert::engine::{Assertion, AssertionReport, Outcome, executor};
 use clap::Parser;
+use std::path::{Path, PathBuf};
 
 mod cli;
 mod report;
@@ -16,6 +17,17 @@ fn main() {
     let no_color = std::env::var_os("NO_COLOR").is_some_and(|v| !v.is_empty());
     let color = cli.color.resolve(is_terminal, no_color);
     let icons = cli.icons.resolve(is_terminal, no_color);
+
+    // `suggest` is the inverse of evaluation: it writes an assertions file rather than
+    // reading one, so it is handled here, before the gather/evaluate/report pipeline.
+    if let Commands::Suggest {
+        file,
+        output,
+        force,
+    } = &cli.command
+    {
+        run_suggest(file, output.clone(), *force, color, icons);
+    }
 
     let run_file = match &cli.command {
         Commands::Run { file } => Some(file.clone()),
@@ -60,7 +72,57 @@ fn gather_assertions(command: &Commands) -> Result<Vec<Assertion>, String> {
                 std::fs::read_to_string(file).map_err(|e| format!("{}: {}", file.display(), e))?;
             bioassert::engine::parser::parse_file(&contents).map_err(|e| e.to_string())
         }
+        Commands::Suggest { .. } => unreachable!("suggest is handled before gather_assertions"),
     }
+}
+
+/// Suggests assertions for `file` and writes them to the resolved output path, then exits. The
+/// output path is `--output` if given, else `<file>.assertions.txt`; an existing output is not
+/// overwritten without `--force`. Provider warnings are printed to stderr as ERROR lines but do
+/// not change the exit code: a partial suggestion is still useful.
+fn run_suggest(file: &Path, output: Option<PathBuf>, force: bool, color: bool, icons: bool) -> ! {
+    let output_path = report::resolve_output_file(file, output);
+    if output_path.exists() && !force {
+        fatal(
+            &format!(
+                "output file {} already exists; pass --force to overwrite",
+                output_path.display()
+            ),
+            color,
+            icons,
+        );
+    }
+
+    let result = bioassert::suggest::suggest(file);
+    if result.suggestions.is_empty() {
+        fatal(
+            &format!("no assertions could be suggested for {}", file.display()),
+            color,
+            icons,
+        );
+    }
+
+    for warning in &result.warnings {
+        eprintln!(
+            "{}",
+            report::format_outcome(Outcome::Error, warning, color, icons)
+        );
+    }
+
+    if let Err(e) = std::fs::write(&output_path, &result.rendered) {
+        fatal(
+            &format!("could not write {}: {}", output_path.display(), e),
+            color,
+            icons,
+        );
+    }
+
+    println!(
+        "Wrote {} assertions to {}",
+        result.suggestions.len(),
+        output_path.display()
+    );
+    std::process::exit(0);
 }
 
 /// The worst outcome across the report determines the exit code: 2 if any assertion
