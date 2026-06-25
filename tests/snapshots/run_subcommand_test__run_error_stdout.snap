@@ -2,4 +2,4 @@
 source: tests/run_subcommand_test.rs
 expression: "String::from_utf8_lossy(&output.stdout)"
 ---
-PASS. Expected tests/data/empty_file.txt file.exists == true, got true
+PASS. Expected tests/data/empty_file.txt file.exists eq true, got true

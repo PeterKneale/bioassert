@@ -46,14 +46,14 @@ Each assertion prints a `PASS.`/`FAIL.` line, and the process exits non-zero if 
 gates a pipeline step cleanly:
 
 ```text
-PASS. Expected output.bam file.exists == true, got true
-PASS. Expected output.bam file.size > 1MB, got 5.00MB
-PASS. Expected results.vcf file.empty == false, got false
-PASS. Expected samples.csv csv.columns.count == 5, got 5
-PASS. Expected samples.csv csv.lines.count >= 2, got 101
-PASS. Expected output.bam bam.header.rg.count >= 1, got 2
-PASS. Expected output.bam bam.header.hd.so == coordinate, got coordinate
-PASS. Expected ref.fasta fasta.seq.count == 25, got 25
+PASS. Expected output.bam file.exists eq true, got true
+PASS. Expected output.bam file.size gt 1MB, got 5.00MB
+PASS. Expected results.vcf file.empty eq false, got false
+PASS. Expected samples.csv csv.columns.count eq 5, got 5
+PASS. Expected samples.csv csv.lines.count gte 2, got 101
+PASS. Expected output.bam bam.header.rg.count gte 1, got 2
+PASS. Expected output.bam bam.header.hd.so eq coordinate, got coordinate
+PASS. Expected ref.fasta fasta.seq.count eq 25, got 25
 ```
 
 The same lines are written to a report file (here `assertions.txt.log`) so they can be captured as a pipeline artifact.
@@ -162,8 +162,8 @@ Alongside the console output, `bioassert` writes an **assertion report**: a file
 For example, the report for a failing run reads:
 
 ```text
-PASS. Expected output.bam file.exists == true, got true
-FAIL. Expected results.vcf file.lines > 999, got 0
+PASS. Expected output.bam file.exists eq true, got true
+FAIL. Expected results.vcf file.lines gt 999, got 0
 ```
 
 ### Color
@@ -318,8 +318,8 @@ bioassert --color=always --icons=always run checks.txt
 Each result line is prefixed with its status icon, and the leading keyword is colored (green `PASS`, red `FAIL`/`ERROR`):
 
 ```text
-🟢  PASS. Expected output.bam file.exists == true, got true
-🔴  FAIL. Expected results.vcf file.lines > 999, got 0
+🟢  PASS. Expected output.bam file.exists eq true, got true
+🔴  FAIL. Expected results.vcf file.lines gt 999, got 0
 🔥  ERROR. unknown metric: file.explode
 ```
 
