@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.3](https://github.com/PeterKneale/bioassert/compare/v3.1.2...v3.1.3) - 2026-06-25
+
+### Other
+
+- use RELEASE_PLZ_TOKEN for the Homebrew formula push ([#58](https://github.com/PeterKneale/bioassert/pull/58))
+- auto-update the Homebrew tap formula on each release ([#56](https://github.com/PeterKneale/bioassert/pull/56))
+
 ## [3.1.2](https://github.com/PeterKneale/bioassert/compare/v3.1.1...v3.1.2) - 2026-06-25
 
 ### Other
