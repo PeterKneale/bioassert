@@ -155,7 +155,8 @@ pub struct Suggestion {
 
 ### Message formats
 
-- On success, stdout gets `Wrote <N> assertions to <path>`.
+- On success, stdout gets `Wrote <N> assertions to <path>`, followed by a hint line
+  `Review and tighten them, then run: bioassert run <path>` so the author knows how to use the file.
 - Each provider warning goes to stderr, formatted through the existing `format_outcome(Outcome::Error, ...)`
   path so color and icons stay consistent with the rest of the binary.
 - Fatal errors print through `fatal(...)` and exit `2`, the same as the other subcommands.
@@ -301,7 +302,8 @@ In `src/main.rs`, handle `Commands::Suggest` before the assertion-gathering and 
 resolve the output path; if it exists and `--force` is not set, `fatal(...)`; call
 `bioassert::suggest::suggest(file)`; if there are no suggestions, `fatal(...)`; print each warning to
 stderr; write `result.rendered` with `std::fs::write`, `fatal` on error; print
-`Wrote <N> assertions to <path>` on stdout; exit `0`.
+`Wrote <N> assertions to <path>` followed by a `Review and tighten them, then run: bioassert run <path>`
+hint on stdout; exit `0`.
 
 ### 8. Docs (`CLAUDE.md`, `README.md`)
 

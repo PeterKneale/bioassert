@@ -122,6 +122,10 @@ fn run_suggest(file: &Path, output: Option<PathBuf>, force: bool, color: bool, i
         result.suggestions.len(),
         output_path.display()
     );
+    println!(
+        "Review and tighten them, then run: bioassert run {}",
+        output_path.display()
+    );
     std::process::exit(0);
 }
 
