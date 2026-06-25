@@ -53,3 +53,58 @@ jobs:
           include: README.md
           checksum: sha256
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  # After all binaries are attached, regenerate the Homebrew formula in the tap
+  # repo so `brew install` always points at the just-published release.
+  update-formula:
+    name: Update Homebrew formula
+    needs: upload-binaries
+    runs-on: ubuntu-latest
+    env:
+      TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+    steps:
+      # The tap is a separate repo, so pushing to it needs a token with
+      # contents:write on PeterKneale/homebrew-tap. If that secret is not
+      # configured, skip with a warning rather than failing the release.
+      - name: Check tap token
+        id: gate
+        run: |
+          if [ -z "${TAP_TOKEN}" ]; then
+            echo "::warning::HOMEBREW_TAP_TOKEN not set; skipping Homebrew formula update."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out bioassert (for the update script)
+        if: steps.gate.outputs.skip != 'true'
+        uses: actions/checkout@v4
+
+      - name: Check out the Homebrew tap
+        if: steps.gate.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: PeterKneale/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Regenerate the formula for this release
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          bash .github/scripts/update-homebrew-formula.sh \
+            "$version" "${{ github.repository }}" homebrew-tap/Formula/bioassert.rb
+
+      - name: Commit and push to the tap
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/bioassert.rb
+          if git diff --cached --quiet; then
+            echo "Formula already up to date for ${GITHUB_REF_NAME}"
+          else
+            git commit -m "bioassert ${GITHUB_REF_NAME#v}"
+            git push
+          fi
