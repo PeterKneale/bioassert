@@ -5,10 +5,10 @@ in bioinformatics workflows.
 
 ## Quick start
 
-Install with cargo (see [Installation](#installation) for Docker):
+Install with Homebrew (see [Installation](#installation) for prebuilt binaries, Docker and cargo):
 
 ```bash
-cargo install bioassert
+brew install PeterKneale/tap/bioassert
 ```
 
 Write your checks to an assertions file. Each line is `<file> <metric> <comparator> <value>`; blank lines and lines
@@ -62,11 +62,28 @@ See [Writing assertions](#writing-assertions) for more examples, [Metrics](#metr
 
 ## Installation
 
-### cargo
+### Homebrew (macOS and Linux)
 
 ```bash
-cargo install bioassert
+brew install PeterKneale/tap/bioassert
 ```
+
+### Prebuilt binaries
+
+Download the archive for your platform from the [releases page](https://github.com/PeterKneale/bioassert/releases),
+unpack it, and move the `bioassert` binary onto your `PATH`. Builds are provided for macOS (Apple Silicon and Intel)
+and Linux (x86_64 and arm64), each with a matching `.sha256` checksum:
+
+```bash
+# Example for macOS Apple Silicon (substitute the current version and your platform)
+VERSION=3.1.1
+curl -LO "https://github.com/PeterKneale/bioassert/releases/download/v${VERSION}/bioassert-${VERSION}-macos-arm64.tar.gz"
+tar xzf "bioassert-${VERSION}-macos-arm64.tar.gz"
+mv bioassert /usr/local/bin/   # or any directory on your PATH
+```
+
+Asset names follow `bioassert-<version>-<platform>.tar.gz`, where `<platform>` is `macos-arm64`, `macos-x86_64`,
+`linux-x86_64` or `linux-arm64`.
 
 ### Docker
 
@@ -84,6 +101,14 @@ A single assertion can also be passed inline (see the `assert` subcommand below)
 
 ```bash
 docker run --rm -v "$PWD":/data ghcr.io/peterkneale/bioassert assert "/data/output.bam file.exists eq true"
+```
+
+### cargo
+
+If you have a Rust toolchain, install from [crates.io](https://crates.io/crates/bioassert):
+
+```bash
+cargo install bioassert
 ```
 
 ## Command-line interface
@@ -116,7 +141,7 @@ bioassert [OPTIONS] <COMMAND>
 
 ### Results and exit codes
 
-Result lines are written to **stdout**, one per assertion: `PASS.` when the assertion holds and `FAIL.` when it does not. Errors (invalid syntax, an unknown metric, an unreadable file) are written to **stderr** as `ERROR.` lines. The process exit code reflects the worst outcome across all assertions:
+Result lines are written to **stdout**, one per assertion: `PASS.` when the assertion holds and `FAIL.` when it does not. A guarded assertion whose condition is not met is reported as `SKIP.`, a neutral outcome. Errors (invalid syntax, an unknown metric, an unreadable file) are written to **stderr** as `ERROR.` lines. The process exit code reflects the worst outcome across all assertions:
 
 | Exit code | Meaning                                              |
 |-----------|------------------------------------------------------|
@@ -124,7 +149,7 @@ Result lines are written to **stdout**, one per assertion: `PASS.` when the asse
 | `1`       | At least one assertion failed (but none errored).    |
 | `2`       | At least one assertion could not be evaluated.       |
 
-This makes `bioassert` easy to gate a pipeline step on: a non-zero exit halts the workflow.
+A `SKIP` is neutral and never changes the exit code, so a run whose results are only `PASS` and `SKIP` still exits `0`. This makes `bioassert` easy to gate a pipeline step on: a non-zero exit halts the workflow.
 
 ### Output
 
@@ -170,8 +195,11 @@ Color and icons are resolved independently, so either can be on while the other 
 An assertions file has one assertion per line:
 
 ```
-<file> <metric> <comparator> <value>
+<resource> <metric> <comparator> <value>
 ```
+
+The first token is a resource locator: a file path for the `file.*`, `csv.*`/`tsv.*`/`psv.*`, `bam.*` and `fasta.*`
+metrics, or an inline literal string for the `text.*` family.
 
 Lines beginning with `#` are comments and blank lines are ignored. Whitespace between fields is flexible, so columns can
 be aligned for readability. Pass the file to `bioassert run`.
@@ -183,11 +211,13 @@ sequence names, descriptions) must be single- or double-quoted: `'H0164.2'`, `'1
 ### File checks
 
 ```text
-output.bam    file.exists   eq   true     # file exists
-results.vcf   file.empty    eq   false    # not empty
-output.bam    file.size     gte  1MB      # at least 1 MB
-results.tsv   file.lines    eq   1000     # exactly 1000 lines
-results.tsv   file.lines    gte  1        # at least one line
+output.bam     file.exists       eq   true     # file exists
+results.vcf    file.empty        eq   false    # not empty
+output.bam     file.size         gte  1MB      # at least 1 MB
+results.tsv    file.lines        eq   1000     # exactly 1000 lines
+results.tsv    file.lines        gte  1        # at least one line
+reads.bam      file.compression  eq   bgzf     # block-gzip (samtools/tabix); also gzip, bzip2, xz, zstd, zip, none
+reads.fastq.gz file.compressed   eq   true     # compressed in some format
 ```
 
 ### CSV / TSV / PSV checks
@@ -241,6 +271,34 @@ ref.fasta   fasta.seq.0.name         matches '^chr[0-9XYM]+$'         # name mat
 ref.fasta   fasta.seq.24.present     eq   true                        # a record exists at this index
 ```
 
+### Text checks
+
+The `text.*` family treats the first token as an inline literal string rather than a file path, so it does no file I/O
+and never errors on a missing file. It is handy for quick checks and as a [guard](#conditional-assertions-guards) input.
+Quote the literal if it contains dots, dashes, colons or spaces.
+
+```text
+sampleA       text.value    eq      sampleA      # literal equals
+sampleA       text.value    starts  sample       # literal prefix
+sampleA       text.length   eq      7            # character count (Unicode scalars)
+```
+
+### Conditional assertions (guards)
+
+Append `if` or `unless` and a full condition to evaluate an assertion only when that condition holds. The condition has
+the same `<resource> <metric> <comparator> <value>` shape as an assertion and may target a different file:
+
+```text
+report.tsv  tsv.columns.count    eq   18   if      report.tsv  file.exists  eq  true
+reads.bam   bam.header.rg.count  gte  1    unless  reads.bam   file.empty   eq  true
+```
+
+- `if` runs the assertion when the condition is satisfied; `unless` runs it when the condition is **not** satisfied.
+- When the guard is not satisfied the assertion is reported as **SKIP**, a neutral outcome that does not affect the
+  exit code (see [Results and exit codes](#results-and-exit-codes)).
+- If the guard itself cannot be evaluated (for example its file is missing) the assertion is reported as **ERROR**.
+  `file.exists` is the safe guard because it returns `false` rather than erroring on a missing file.
+
 ### A single inline assertion
 
 For a one-off check you can skip the file and pass a single assertion to the `assert` subcommand:
@@ -280,7 +338,7 @@ process REFERENCE_GENOME_ANNOTATIONS_ASSERTIONS {
     tag "reference_genome_annotations"
     label 'process_medium'
     conda "${moduleDir}/environment.yml"
-    container "ghcr.io/peterkneale/bioassert:1.4.0"
+    container "ghcr.io/peterkneale/bioassert:3.1.1"
 
     input:
     path(annotation)
@@ -344,8 +402,12 @@ cp -r skills/bioassert /path/to/your-pipeline/.claude/skills/
 ## Syntax
 
 ```
-<file> <metric> <comparator> <value>
+<resource> <metric> <comparator> <value> [if|unless <resource> <metric> <comparator> <value>]
 ```
+
+The first token is a **resource locator**. For file-backed metrics (`file.*`, `csv.*`/`tsv.*`/`psv.*`, `bam.*`,
+`fasta.*`) it is a filesystem path; for the `text.*` family it is an inline literal string. The optional `if`/`unless`
+clause is a [guard](#conditional-assertions-guards).
 
 ## Metrics
 
@@ -353,10 +415,12 @@ cp -r skills/bioassert /path/to/your-pipeline/.claude/skills/
 
 | Metric        | Description                    | Comparators                          | Value   |
 |---------------|--------------------------------|--------------------------------------|---------|
-| `file.exists` | Whether the file exists        | `eq`, `ne`                           | boolean |
-| `file.empty`  | Whether the file is zero bytes | `eq`, `ne`                           | boolean |
-| `file.size`   | File size                      | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | size    |
-| `file.lines`  | Line count                     | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | count   |
+| `file.exists`      | Whether the file exists        | `eq`, `ne`                           | boolean |
+| `file.empty`       | Whether the file is zero bytes | `eq`, `ne`                           | boolean |
+| `file.size`        | File size                      | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | size    |
+| `file.lines`       | Line count                     | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | count   |
+| `file.compression` | Compression format, detected from leading magic bytes (no decompression) | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string: `none`, `gzip`, `bgzf`, `bzip2`, `xz`, `zstd`, `zip` |
+| `file.compressed`  | Whether the file is compressed in any format | `eq`, `ne`             | boolean |
 
 ### Delimited file metrics (CSV, TSV, PSV)
 
@@ -411,6 +475,16 @@ whole-file aggregate. Records are addressed by 0-based index `N`, following file
 `name` is always present for a record; `description` is optional. Reading the name, description, or length of a record
 whose index is out of range is an **error**; use the `.present` form to test for presence without erroring. Quote names
 and descriptions that contain dots, dashes, colons or spaces (`'NC_000001.11'`, `'Homo sapiens chromosome 1'`).
+
+### Text metrics
+
+Metrics on an inline literal string under the `text.*` namespace. The first token is the literal itself (not a file
+path), so these never touch the filesystem. Quote the literal if it contains dots, dashes, colons or spaces.
+
+| Metric        | Description                       | Comparators                                         | Value  |
+|---------------|-----------------------------------|-----------------------------------------------------|--------|
+| `text.value`  | The literal string itself         | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
+| `text.length` | Character count (Unicode scalars) | `eq`, `ne`, `lt`, `lte`, `gt`, `gte`                | count  |
 
 ### Comparators
 
