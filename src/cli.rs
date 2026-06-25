@@ -2,10 +2,21 @@ use clap::{Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(version, about, arg_required_else_help = true)]
+#[command(
+    version,
+    about,
+    arg_required_else_help = true,
+    disable_version_flag = true
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
+
+    // The version flag is defined manually (rather than via the auto flag `#[command(version)]`
+    // adds) so its short form is the lowercase `-v` people expect, not clap's default `-V`.
+    // `disable_version_flag` suppresses the auto flag while `version` still sets the version string.
+    #[arg(short = 'v', long = "version", action = clap::ArgAction::Version, help = "Print the version")]
+    pub version: Option<bool>,
 
     #[arg(
         long,
