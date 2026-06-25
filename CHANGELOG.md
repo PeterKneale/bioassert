@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0](https://github.com/PeterKneale/bioassert/compare/v3.1.3...v4.0.0) - 2026-06-25
+
+### Added
+
+- add `suggest` command to bootstrap assertions files ([#63](https://github.com/PeterKneale/bioassert/pull/63))
+
+### Fixed
+
+- echo comparators as written in assertion output ([#60](https://github.com/PeterKneale/bioassert/pull/60))
+- use lowercase -v for the version flag ([#61](https://github.com/PeterKneale/bioassert/pull/61))
+
+### Other
+
+- specify the bioassert generate command ([#59](https://github.com/PeterKneale/bioassert/pull/59))
+
 ## [3.1.3](https://github.com/PeterKneale/bioassert/compare/v3.1.2...v3.1.3) - 2026-06-25
 
 ### Other
