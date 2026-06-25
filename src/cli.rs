@@ -2,7 +2,12 @@ use clap::{Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(version, about, arg_required_else_help = true, disable_version_flag = true)]
+#[command(
+    version,
+    about,
+    arg_required_else_help = true,
+    disable_version_flag = true
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
