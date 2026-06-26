@@ -41,16 +41,19 @@ impl Comparator {
     where
         T: PartialOrd + PartialEq,
     {
-        let base = match self.op {
-            Operator::Eq => actual == expected,
-            Operator::Ne => actual != expected,
-            Operator::Lt => actual < expected,
-            Operator::Le => actual <= expected,
-            Operator::Gt => actual > expected,
-            Operator::Ge => actual >= expected,
+        match self.op {
+            Operator::Eq => (actual == expected) ^ self.negate,
+            Operator::Ne => (actual != expected) ^ self.negate,
+            Operator::Lt => (actual < expected) ^ self.negate,
+            Operator::Le => (actual <= expected) ^ self.negate,
+            Operator::Gt => (actual > expected) ^ self.negate,
+            Operator::Ge => (actual >= expected) ^ self.negate,
+            // The string operators are not valid for `compare` (the numeric/boolean path).
+            // Return false regardless of `negate`, so a mis-paired `not contains` on a
+            // numeric metric stays an always-FAIL (a visible mistake) rather than flipping
+            // to an always-PASS that would silently hide the error in a validation gate.
             _ => false,
-        };
-        base ^ self.negate
+        }
     }
 
     pub fn compare_string(self, actual: &str, expected: &str) -> Result<bool, BioAssertError> {
@@ -303,6 +306,26 @@ mod tests {
         assert!(!not_gt.compare(6u64, 5u64));
         assert!(not_gt.compare(5u64, 5u64));
         assert!(not_gt.compare(4u64, 5u64));
+    }
+
+    #[test]
+    fn compare_returns_false_for_string_operators_even_when_negated() {
+        // A string comparator on a numeric/boolean metric is a mis-pairing. It must stay an
+        // always-false (a visible FAIL), not flip to an always-true under `not`, which would
+        // silently pass a check like `file.size not contains 1MB` in a validation gate.
+        assert!(!c(Operator::Contains).compare(5u64, 5u64));
+        assert!(
+            !"not contains"
+                .parse::<Comparator>()
+                .unwrap()
+                .compare(5u64, 5u64)
+        );
+        assert!(
+            !"not matches"
+                .parse::<Comparator>()
+                .unwrap()
+                .compare(5u64, 5u64)
+        );
     }
 
     #[test]

@@ -221,6 +221,8 @@ results.vcf    file.empty        eq   false    # not empty
 output.bam     file.size         gte  1MB      # at least 1 MB
 results.tsv    file.lines        eq   1000     # exactly 1000 lines
 results.tsv    file.lines        gte  1        # at least one line
+out.log        file.contents     contains       completed     # the log records completion
+out.log        file.contents     not contains   'Exception'   # the log has no Exception (replaces grep -v)
 reads.bam      file.compression  eq   bgzf     # block-gzip (samtools/tabix); also gzip, bzip2, xz, zstd, zip, none
 reads.fastq.gz file.compressed   eq   true     # compressed in some format
 ```
@@ -458,8 +460,15 @@ clause is a [guard](#conditional-assertions-guards).
 | `file.empty`       | Whether the file is zero bytes | `eq`, `ne`                           | boolean |
 | `file.size`        | File size                      | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | size    |
 | `file.lines`       | Line count                     | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | count   |
+| `file.contents`    | Whole file body, read as a UTF-8 string | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
 | `file.compression` | Compression format, detected from leading magic bytes (no decompression) | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string: `none`, `gzip`, `bgzf`, `bzip2`, `xz`, `zstd`, `zip` |
 | `file.compressed`  | Whether the file is compressed in any format | `eq`, `ne`             | boolean |
+
+`file.contents` reads the body into memory and matches the whole string, so it is for
+log-sized and config-sized text rather than multi-gigabyte genomes. The reported `got` is a
+bounded byte count, never the content, and a non-UTF-8 (binary) file reports an error. Paired
+with the `not` modifier (see [Comparators](#comparators)), `out.log file.contents not contains 'Exception'`
+checks that a word appears nowhere in a file, which is the native replacement for a `grep -v` pre-step.
 
 ### Delimited file metrics (CSV, TSV, PSV)
 
@@ -539,6 +548,13 @@ path), so these never touch the filesystem. Quote the literal if it contains dot
 | `ends`     | ends with     | string        |
 | `contains` | contains      | string        |
 | `matches`  | regex match   | string        |
+
+Any comparator may be prefixed with `not` to negate it (`not contains`, `not matches`, `not starts`,
+`not ends`). It is most useful with the four string comparators, which otherwise have no negation:
+`out.log file.contents not contains 'Exception'`, `ref.fasta fasta.seq.0.name not starts 'chrUn'`. With a
+numeric comparator it is redundant (`not gt` is `lte`). On the whole-column metrics the negation is applied
+**per cell**, so `junctions.tsv tsv.column.6.data.all not contains 'N'` means "no data cell contains N" and the
+report names the first cell that does.
 
 ### Values
 

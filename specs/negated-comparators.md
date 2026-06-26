@@ -88,10 +88,11 @@ modifier retire the most common pre-grep.
 - **`not` is accepted with any comparator and applied uniformly, but it is meaningful only on the four string
   predicates.** With the numeric comparators it duplicates an existing one (`not gt` is `lte`, `not eq` is `ne`), so
   it is redundant rather than wrong. We accept it everywhere for orthogonality rather than special-casing
-  string-only, which would need an extra validation rule. The one rough edge is a comparator that is already
-  mis-paired with its metric (for example a string comparator on `file.size`): negation flips an
-  already-meaningless result and stays meaningless. That is a pre-existing mis-pairing, addressed by the deferred
-  coherence checking in `specs/resource-types.md`, not by this spec.
+  string-only, which would need an extra validation rule. One subtlety matters for safety: a string comparator on a
+  numeric or boolean metric (for example `file.size not contains 1MB`) is a mis-pairing, and `compare` returns
+  `false` for the string operators **regardless of `negate`** rather than XORing a meaningless base. This keeps such
+  a mis-pairing a visible always-FAIL, not an always-PASS that would silently hide the mistake in a validation gate.
+  The deeper fix (rejecting the pairing outright) is the coherence checking deferred in `specs/resource-types.md`.
 - **Fold negation into `Comparator`, so executors and the AST are untouched.** `Comparator` carries a `negate`
   flag; `compare`, `compare_string`, `string_matcher` and the produced `StringMatcher` apply it; `FromStr` parses a
   leading `not`; `Display` prefixes it. Because every executor already calls `request.comparator.compare(..)` or
@@ -157,8 +158,10 @@ comparators with no extra grammar.
   contains no `Exception` anywhere, replacing the `grep -v` pre-step. `not matches` gives regex absence without the
   negative-lookahead that the `regex` crate does not support.
 - **`not` with a numeric comparator is redundant, not an error.** `file.size not gt 1MB` is accepted and equals
-  `file.size lte 1MB`. `not` with a string comparator on a numeric metric (or vice versa) stays a mis-pairing, as
-  it is today without `not`.
+  `file.size lte 1MB`. A mis-paired comparator stays as visible as it was before `not`: a string comparator on a
+  numeric metric (`file.size not contains 1MB`) is an always-FAIL (`compare` returns false for string operators
+  regardless of `negate`), and a numeric comparator on a string metric (`file.contents not gt 5`) ERRORs
+  (`string_matcher` rejects the numeric operators). Neither flips to a silent pass under `not`.
 
 ### Message formats
 

@@ -6,6 +6,7 @@
 #   numeric metrics (sizes, line/column counts, lengths): eq, ne, lt, lte, gt, gte
 #   string metrics  (cells, tags, names, descriptions):   eq, ne, starts, ends, contains, matches
 #   boolean metrics (exists, empty, *.present):           eq, ne
+#   any comparator may be prefixed with `not` to negate it (exercised at the end of this file)
 
 # ===========================================================================
 # file.exists (boolean)
@@ -72,6 +73,20 @@ tests/data/lines_10.txt file.lines gte 10
 tests/data/lines_100.txt file.lines eq 100
 tests/data/lines_100.txt file.lines lt 101
 tests/data/lines_100.txt file.lines gt 99
+
+# ===========================================================================
+# file.contents (whole body as a string): eq, ne, starts, ends, contains, matches
+# size_5B.txt is the 5 bytes "hello" with no trailing newline
+# ===========================================================================
+tests/data/size_5B.txt file.contents eq hello
+tests/data/size_5B.txt file.contents ne world
+tests/data/size_5B.txt file.contents starts he
+tests/data/size_5B.txt file.contents ends lo
+tests/data/size_5B.txt file.contents contains ell
+tests/data/size_5B.txt file.contents matches '^h.*o$'
+# clean_log.txt is a multi-line log with no Exception/ERROR/FATAL
+tests/data/clean_log.txt file.contents contains completed
+tests/data/clean_log.txt file.contents matches Trimmomatic
 
 # ===========================================================================
 # csv (comma): columns.count, lines.count, cell (line.N.column.M)
@@ -308,3 +323,42 @@ tests/data/empty.fasta fasta.length eq 0
 # multibyte characters count as one each
 'café' text.length eq 4
 '' text.length eq 0
+
+# ===========================================================================
+# negated comparators: any comparator may be prefixed with `not`. Negation is
+# applied per comparison, so a whole-column `.all not <cmp>` means "no cell ...".
+# ===========================================================================
+
+# string negation (the four predicates that otherwise have no opposite)
+tests/data/size_5B.txt file.contents not contains xyz
+tests/data/size_5B.txt file.contents not starts zz
+tests/data/size_5B.txt file.contents not ends zz
+tests/data/size_5B.txt file.contents not matches '^z'
+tests/data/clean_log.txt file.contents not contains 'Exception'
+tests/data/clean_log.txt file.contents not matches 'ERROR|FATAL'
+
+# string negation on a delimited cell
+tests/data/example.csv csv.line.2.column.1 not eq Bob
+tests/data/example.csv csv.line.2.column.1 not starts B
+tests/data/example.csv csv.line.2.column.1 not contains xyz
+
+# whole-column "none" semantics: negation applied per cell
+# strand cells are + or -, so no data cell contains N
+tests/data/junctions.tsv tsv.column.6.data.all not contains N
+# names are JUNC1..3, so no data cell starts with GENE
+tests/data/junctions.tsv tsv.column.4.data.all not starts GENE
+
+# numeric negation is redundant but accepted (not gt == lte)
+tests/data/size_5B.txt file.size not gt 1MB
+tests/data/lines_10.txt file.lines not lt 10
+
+# boolean negation
+tests/data/empty_file.txt file.exists not eq false
+
+# bam / fasta string negation
+tests/data/sample.bam bam.header.rg.0.sm not contains test
+tests/data/sample.fasta fasta.seq.0.name not starts chrUn
+
+# text negation
+'abc' text.value not contains z
+'abc' text.length not gt 5
