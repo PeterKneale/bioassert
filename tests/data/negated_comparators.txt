@@ -1,0 +1,22 @@
+# Negated comparators (the `not` modifier) and the file.contents metric. Every line here
+# passes, so the run exits 0. Drives the negated_subcommand_test run snapshot.
+
+# file.contents: string absence over a whole log (replaces a grep -v pre-step)
+tests/data/clean_log.txt file.contents not contains 'Exception'
+tests/data/clean_log.txt file.contents not matches 'ERROR|FATAL'
+tests/data/clean_log.txt file.contents contains completed
+
+# Whole-column "none" semantics: `not` is applied per cell, so this means "no data cell ...".
+# strand cells are + or -, so none contains N
+tests/data/junctions.tsv tsv.column.6.data.all not contains N
+# names are JUNC1..3, so none starts with GENE
+tests/data/junctions.tsv tsv.column.4.data.all not starts GENE
+
+# Scalar string metric: a single cell that is not the given value
+tests/data/junctions.tsv tsv.line.2.column.4 not eq JUNK
+
+# `not` with a numeric comparator is redundant but accepted (5B is not > 1MB)
+tests/data/size_5B.txt file.size not gt 1MB
+
+# text family
+'completed ok' text.value not contains Exception

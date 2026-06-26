@@ -10,8 +10,8 @@ use crate::engine::assertion::Assertion;
 use crate::engine::report::{AssertionReport, AssertionResult, Outcome};
 use crate::fasta::{FastaCountExecutor, FastaSequenceFieldExecutor, FastaSequencePresentExecutor};
 use crate::file::{
-    FileCompressedExecutor, FileCompressionExecutor, FileEmptyExecutor, FileExistsExecutor,
-    FileLinesExecutor, FileSizeExecutor,
+    FileCompressedExecutor, FileCompressionExecutor, FileContentsExecutor, FileEmptyExecutor,
+    FileExistsExecutor, FileLinesExecutor, FileSizeExecutor,
 };
 use crate::text::{TextLengthExecutor, TextValueExecutor};
 
@@ -140,6 +140,9 @@ fn dispatch(metric: &str, request: &AssertionRequest) -> Result<(bool, Value), B
         return run(e, request);
     }
     if let Some(e) = FileLinesExecutor::try_parse(metric) {
+        return run(e, request);
+    }
+    if let Some(e) = FileContentsExecutor::try_parse(metric) {
         return run(e, request);
     }
     if let Some(e) = FileCompressionExecutor::try_parse(metric) {

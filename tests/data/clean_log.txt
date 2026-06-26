@@ -1,0 +1,5 @@
+Pipeline started
+Trimmomatic run beginning
+Input Read Pairs: 1000
+Surviving: 950 (95.00%)
+Trimmomatic completed successfully
