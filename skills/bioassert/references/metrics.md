@@ -24,6 +24,7 @@ resource type. The resource locator is read as a **file path** for every family 
 | `file.lines`       | Line count                     | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | count   |
 | `file.compressed`  | Whether the file is compressed | `eq`, `ne`                           | boolean |
 | `file.compression` | Compression kind (label)       | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
+| `file.contents`    | The whole file body, as a string | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
 
 ```text
 output.bam    file.exists       eq   true
@@ -33,6 +34,19 @@ results.tsv   file.lines        gte  1
 reads.fastq.gz   file.compressed   eq   true
 out.vcf.gz       file.compression  eq   bgzf
 ref.fasta        file.compression  eq   none
+```
+
+`file.contents` reads the file as UTF-8 text and compares the whole body. `contains` is a
+substring search over the entire body and `matches` is a regex search over it, so
+`out.log file.contents not contains 'Exception'` checks that a word appears nowhere in the
+file (see the `not` modifier below). It reads the body into memory, so it is for log-sized
+and config-sized text, not multi-gigabyte genomes; the reported `got` is a bounded byte
+count, never the content, and a non-UTF-8 (binary) file reports ERROR.
+
+```text
+out.log   file.contents contains completed
+out.log   file.contents not contains 'Exception'
+out.log   file.contents not matches  'ERROR|FATAL'
 ```
 
 `file.compression` reports one of `none`, `gzip`, `bgzf`, `bzip2`, `xz`, `zstd`, `zip`.
@@ -163,6 +177,14 @@ They only PASS or FAIL, which makes them mainly useful as a guard input.
 | `ends`     | ends with        | string      |
 | `contains` | contains         | string      |
 | `matches`  | regex match      | string      |
+
+Any comparator may be prefixed with `not` to negate it (`not contains`, `not matches`,
+`not starts`, `not ends`). It is most useful with the four string comparators, which
+otherwise have no negation: `out.log file.contents not contains 'Exception'`,
+`ref.fasta fasta.seq.0.name not starts 'chrUn'`. With a numeric comparator it is redundant
+(`not gt` is `lte`). On the whole-column metrics the negation is applied **per cell**, so
+`junctions.tsv tsv.column.6.data.all not contains 'N'` means "no data cell contains N" and
+the report names the first cell that does.
 
 ## Values and quoting
 

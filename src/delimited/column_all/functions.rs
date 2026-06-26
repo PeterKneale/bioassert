@@ -57,7 +57,7 @@ pub fn check_column(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::Comparator;
+    use crate::core::{Comparator, Operator};
     use std::io::Write;
     use tempfile::NamedTempFile;
 
@@ -67,14 +67,14 @@ mod tests {
         f
     }
 
-    fn matcher(comparator: Comparator, expected: &str) -> StringMatcher {
-        comparator.string_matcher(expected).unwrap()
+    fn matcher(op: Operator, expected: &str) -> StringMatcher {
+        Comparator::new(op).string_matcher(expected).unwrap()
     }
 
     #[test]
     fn all_rows_match_includes_header() {
         let f = temp_file("strand\n+\n-\n");
-        let m = matcher(Comparator::Matches, "^[+-]$");
+        let m = matcher(Operator::Matches, "^[+-]$");
         // line 1 ("strand") is checked and does not match
         assert!(matches!(
             check_column(f.path(), '\t', 1, false, &m).unwrap(),
@@ -85,7 +85,7 @@ mod tests {
     #[test]
     fn skip_header_checks_only_data_rows() {
         let f = temp_file("strand\n+\n-\n+\n");
-        let m = matcher(Comparator::Matches, "^[+-]$");
+        let m = matcher(Operator::Matches, "^[+-]$");
         assert!(matches!(
             check_column(f.path(), '\t', 1, true, &m).unwrap(),
             ColumnCheck::AllMatch { checked: 3 }
@@ -95,7 +95,7 @@ mod tests {
     #[test]
     fn reports_first_failing_row_and_value() {
         let f = temp_file("a\tb\nJUNC1\tx\nNOPE\ty\n");
-        let m = matcher(Comparator::Matches, "^JUNC[0-9]+$");
+        let m = matcher(Operator::Matches, "^JUNC[0-9]+$");
         match check_column(f.path(), '\t', 1, true, &m).unwrap() {
             ColumnCheck::Mismatch { line, value } => {
                 assert_eq!(line, 3);
@@ -108,7 +108,7 @@ mod tests {
     #[test]
     fn header_only_file_passes_vacuously_when_skipping_header() {
         let f = temp_file("strand\n");
-        let m = matcher(Comparator::Matches, "^[+-]$");
+        let m = matcher(Operator::Matches, "^[+-]$");
         assert!(matches!(
             check_column(f.path(), '\t', 1, true, &m).unwrap(),
             ColumnCheck::AllMatch { checked: 0 }
@@ -118,7 +118,7 @@ mod tests {
     #[test]
     fn empty_file_passes_vacuously() {
         let f = temp_file("");
-        let m = matcher(Comparator::Matches, "^[+-]$");
+        let m = matcher(Operator::Matches, "^[+-]$");
         assert!(matches!(
             check_column(f.path(), '\t', 1, false, &m).unwrap(),
             ColumnCheck::AllMatch { checked: 0 }
@@ -128,14 +128,14 @@ mod tests {
     #[test]
     fn missing_column_on_a_row_is_an_error() {
         let f = temp_file("a\tb\tc\nx\ty\tz\nshort\n");
-        let m = matcher(Comparator::Matches, ".*");
+        let m = matcher(Operator::Matches, ".*");
         assert!(check_column(f.path(), '\t', 3, true, &m).is_err());
     }
 
     #[test]
     fn supports_non_regex_comparators() {
         let f = temp_file("n\n10\n20\n30\n");
-        let m = matcher(Comparator::Ne, "0");
+        let m = matcher(Operator::Ne, "0");
         assert!(matches!(
             check_column(f.path(), '\t', 1, true, &m).unwrap(),
             ColumnCheck::AllMatch { checked: 3 }

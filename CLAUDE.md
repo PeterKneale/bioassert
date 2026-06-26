@@ -38,9 +38,13 @@ string that the matched executor interprets.
     - `assertion_request.rs` — `AssertionRequest` (raw resource `locator` string, parsed `Comparator`, raw expected
       string); `locator` is interpreted by the matched executor, and `path()` reads it as a filesystem path for the
       file-backed families
-    - `comparisons/` — `Comparator` enum and its parsing; `compare` is generic over `PartialOrd`. String
-      comparison goes through `Comparator::string_matcher`, which returns a reusable `StringMatcher` (compiling any
-      `matches` regex once); `compare_string` is a one-shot convenience wrapper over it
+    - `comparisons/` — `Comparator` (an `Operator` plus a `negate` flag) and its parsing; `compare` is generic over
+      `PartialOrd`. String comparison goes through `Comparator::string_matcher`, which returns a reusable
+      `StringMatcher` (compiling any `matches` regex once); `compare_string` is a one-shot convenience wrapper over
+      it. Any comparator may be prefixed with `not` (`not contains`, `not matches`, ...); `Comparator::from_str`
+      splits the prefix into `negate`, and the negation is applied **per comparison** (XORed inside
+      `compare` / `StringMatcher::is_match`, not on the assertion's final result), so a whole-column
+      `*.column.N.all not contains 'X'` correctly means "no cell contains X" rather than the De Morgan dual
     - `values/` — `Value` enum (and `BytesValue`); size units are normalised to bytes
     - `executor.rs` — the `AssertionExecutor` trait (`try_parse` + `execute`) and `AssertionExecutionResult`
     - `errors.rs` / `file_error.rs` — `BioAssertError` and `FileError`
@@ -48,8 +52,12 @@ string that the matched executor interprets.
       path or literal containing spaces resolves) and reused by executors whose expected value may be quoted
 
 2. **`src/file/`** — file-level metric executors, one submodule each (`exists`, `size`, `empty`, `lines`,
-   `compression`). Each exposes a `File*Executor` that implements `core::AssertionExecutor`, split into `executor.rs`
-   (parsing + dispatch) and `functions.rs` (the actual filesystem work). The `compression` submodule hosts two
+   `contents`, `compression`). Each exposes a `File*Executor` that implements `core::AssertionExecutor`, split into
+   `executor.rs` (parsing + dispatch) and `functions.rs` (the actual filesystem work). `file.contents` reads the
+   whole body as a UTF-8 string and compares it with the string comparators (the file-backed twin of `text.value`);
+   it is for log-sized text, reports a bounded byte-count as its actual rather than the body, and errors on a
+   non-UTF-8 file. With the `not` modifier, `file.contents not contains 'Exception'` is the native replacement for
+   a `grep -v` pre-step. The `compression` submodule hosts two
    executors sharing one detection routine: `file.compression` (a string label, one of `none`, `gzip`, `bgzf`,
    `bzip2`, `xz`, `zstd`, `zip`) and `file.compressed` (a boolean). Detection reads only the leading magic bytes
    (at most 18) and never decompresses, so it is cheap on large genomes; `bgzf` (the block-gzip variant used by

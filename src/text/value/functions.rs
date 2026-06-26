@@ -15,35 +15,36 @@ pub fn value_matches(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::Operator;
 
     #[test]
     fn eq_matches_identical() {
-        assert!(value_matches("abc", Comparator::Eq, "abc").unwrap());
-        assert!(!value_matches("abc", Comparator::Eq, "abd").unwrap());
+        assert!(value_matches("abc", Operator::Eq.into(), "abc").unwrap());
+        assert!(!value_matches("abc", Operator::Eq.into(), "abd").unwrap());
     }
 
     #[test]
     fn ne_matches_different() {
-        assert!(value_matches("abc", Comparator::Ne, "xyz").unwrap());
-        assert!(!value_matches("abc", Comparator::Ne, "abc").unwrap());
+        assert!(value_matches("abc", Operator::Ne.into(), "xyz").unwrap());
+        assert!(!value_matches("abc", Operator::Ne.into(), "abc").unwrap());
     }
 
     #[test]
     fn starts_ends_contains() {
-        assert!(value_matches("abc", Comparator::Starts, "ab").unwrap());
-        assert!(value_matches("abc", Comparator::Ends, "bc").unwrap());
-        assert!(value_matches("abc", Comparator::Contains, "b").unwrap());
-        assert!(!value_matches("abc", Comparator::Starts, "bc").unwrap());
+        assert!(value_matches("abc", Operator::Starts.into(), "ab").unwrap());
+        assert!(value_matches("abc", Operator::Ends.into(), "bc").unwrap());
+        assert!(value_matches("abc", Operator::Contains.into(), "b").unwrap());
+        assert!(!value_matches("abc", Operator::Starts.into(), "bc").unwrap());
     }
 
     #[test]
     fn matches_regex_with_dots_and_anchors() {
-        assert!(value_matches("NC_000001.11", Comparator::Matches, r"^NC_\d+\.\d+$").unwrap());
-        assert!(!value_matches("chr1", Comparator::Matches, r"^NC_").unwrap());
+        assert!(value_matches("NC_000001.11", Operator::Matches.into(), r"^NC_\d+\.\d+$").unwrap());
+        assert!(!value_matches("chr1", Operator::Matches.into(), r"^NC_").unwrap());
     }
 
     #[test]
     fn numeric_comparator_errors() {
-        assert!(value_matches("abc", Comparator::Gt, "5").is_err());
+        assert!(value_matches("abc", Operator::Gt.into(), "5").is_err());
     }
 }

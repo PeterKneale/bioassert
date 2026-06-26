@@ -1,0 +1,12 @@
+---
+source: tests/negated_subcommand_test.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+PASS. Expected tests/data/clean_log.txt file.contents not contains 'Exception', got 125 bytes
+PASS. Expected tests/data/clean_log.txt file.contents not matches 'ERROR|FATAL', got 125 bytes
+PASS. Expected tests/data/clean_log.txt file.contents contains completed, got 125 bytes
+PASS. Expected tests/data/junctions.tsv tsv.column.6.data.all not contains N, got 3 rows checked
+PASS. Expected tests/data/junctions.tsv tsv.column.4.data.all not starts GENE, got 3 rows checked
+PASS. Expected tests/data/junctions.tsv tsv.line.2.column.4 not eq JUNK, got JUNC1
+PASS. Expected tests/data/size_5B.txt file.size not gt 1MB, got 5B
+PASS. Expected 'completed ok' text.value not contains Exception, got completed ok

@@ -50,6 +50,14 @@ PASS. Expected tests/data/lines_10.txt file.lines gte 10, got 10
 PASS. Expected tests/data/lines_100.txt file.lines eq 100, got 100
 PASS. Expected tests/data/lines_100.txt file.lines lt 101, got 100
 PASS. Expected tests/data/lines_100.txt file.lines gt 99, got 100
+PASS. Expected tests/data/size_5B.txt file.contents eq hello, got 5 bytes
+PASS. Expected tests/data/size_5B.txt file.contents ne world, got 5 bytes
+PASS. Expected tests/data/size_5B.txt file.contents starts he, got 5 bytes
+PASS. Expected tests/data/size_5B.txt file.contents ends lo, got 5 bytes
+PASS. Expected tests/data/size_5B.txt file.contents contains ell, got 5 bytes
+PASS. Expected tests/data/size_5B.txt file.contents matches '^h.*o$', got 5 bytes
+PASS. Expected tests/data/clean_log.txt file.contents contains completed, got 125 bytes
+PASS. Expected tests/data/clean_log.txt file.contents matches Trimmomatic, got 125 bytes
 PASS. Expected tests/data/example.csv csv.columns.count eq 3, got 3
 PASS. Expected tests/data/example.csv csv.columns.count ne 2, got 3
 PASS. Expected tests/data/example.csv csv.columns.count gt 2, got 3
@@ -227,3 +235,21 @@ PASS. Expected 'abc' text.length gt 2, got 3
 PASS. Expected 'abc' text.length gte 3, got 3
 PASS. Expected 'café' text.length eq 4, got 4
 PASS. Expected '' text.length eq 0, got 0
+PASS. Expected tests/data/size_5B.txt file.contents not contains xyz, got 5 bytes
+PASS. Expected tests/data/size_5B.txt file.contents not starts zz, got 5 bytes
+PASS. Expected tests/data/size_5B.txt file.contents not ends zz, got 5 bytes
+PASS. Expected tests/data/size_5B.txt file.contents not matches '^z', got 5 bytes
+PASS. Expected tests/data/clean_log.txt file.contents not contains 'Exception', got 125 bytes
+PASS. Expected tests/data/clean_log.txt file.contents not matches 'ERROR|FATAL', got 125 bytes
+PASS. Expected tests/data/example.csv csv.line.2.column.1 not eq Bob, got Alice
+PASS. Expected tests/data/example.csv csv.line.2.column.1 not starts B, got Alice
+PASS. Expected tests/data/example.csv csv.line.2.column.1 not contains xyz, got Alice
+PASS. Expected tests/data/junctions.tsv tsv.column.6.data.all not contains N, got 3 rows checked
+PASS. Expected tests/data/junctions.tsv tsv.column.4.data.all not starts GENE, got 3 rows checked
+PASS. Expected tests/data/size_5B.txt file.size not gt 1MB, got 5B
+PASS. Expected tests/data/lines_10.txt file.lines not lt 10, got 10
+PASS. Expected tests/data/empty_file.txt file.exists not eq false, got true
+PASS. Expected tests/data/sample.bam bam.header.rg.0.sm not contains test, got NA12878
+PASS. Expected tests/data/sample.fasta fasta.seq.0.name not starts chrUn, got chr1
+PASS. Expected 'abc' text.value not contains z, got abc
+PASS. Expected 'abc' text.length not gt 5, got 3

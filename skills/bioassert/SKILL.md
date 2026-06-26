@@ -37,6 +37,9 @@ samples.tsv  tsv.columns.count     eq   8
 - The **resource** (first token) is a file path for the `file.*`, `tsv/csv/psv.*`,
   `bam.*` and `fasta.*` families. (`text.*` treats it as an inline literal instead.)
 - Lines starting with `#` are comments, blank lines are ignored, and column whitespace is free.
+- Any comparator can be prefixed with `not` (`not contains`, `not matches`, `not starts`, `not ends`) to negate it.
+  On the whole-column `*.column.N.all` checks the negation is applied **per cell**, so `not contains 'X'` means
+  "no cell contains X".
 - An optional **guard** runs a check only when a condition holds (see Guards below).
 
 Exit codes are the gate:
@@ -142,6 +145,10 @@ out.vcf.gz  file.size  gt  0B  if out.vcf.gz file.compression eq bgzf
 - **FASTA reference**: `fasta.seq.count`, `fasta.length` (total bases), and named contigs
   (`fasta.seq.0.name`, `.length`).
 - **VCF / generic text outputs**: `file.exists`, `file.empty eq false`, `file.lines gte N`.
+- **Tool logs / plain-text outputs**: `file.contents contains '<success marker>'` to confirm a completion line, and
+  `file.contents not contains 'Exception'` (or `not matches 'ERROR|FATAL'`) to confirm an error word appears
+  nowhere. This is the native replacement for a `grep -v` pre-step. `file.contents` reads the body into memory, so
+  use it for log-sized text, not multi-gigabyte files.
 - **Sample sheets / count tables (CSV/TSV/PSV)**: `*.columns.count`, `*.lines.count`,
   specific cells (`*.line.N.column.M`), and whole-column regex
   (`*.column.N.data.all matches '...'`).

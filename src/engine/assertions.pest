@@ -20,7 +20,13 @@ metric_segment = _{ identifier | number }
 metric = @{
     identifier ~ ("." ~ metric_segment)+
 }
-comparator = { ^"gte" | ^"gt" | ^"lte" | ^"lt" | ^"eq" | ^"ne" | ^"starts" | ^"ends" | ^"contains" | ^"matches" }
+comparator_op = { ^"gte" | ^"gt" | ^"lte" | ^"lt" | ^"eq" | ^"ne" | ^"starts" | ^"ends" | ^"contains" | ^"matches" }
+// An optional `not` prefix negates the comparator (`not contains`, `not matches`, ...).
+// The whole thing is one compound-atomic token so the parser still reads a single
+// comparator pair whose `as_str()` is the source slice (e.g. `not contains`); `Comparator`
+// from_str splits the prefix off. No comparator operator begins with the letters of `not`
+// (`ne` shares only `n`), so the optional prefix never swallows a real comparator.
+comparator = ${ (^"not" ~ WHITESPACE+)? ~ comparator_op }
 size_unit = { ^"B" | ^"KB" | ^"MB" | ^"GB" | ^"TB" }
 count_unit = { ^"K" | ^"M" | ^"G" }
 boolean_unit = { "true" | "false" }
