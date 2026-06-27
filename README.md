@@ -381,7 +381,7 @@ process REFERENCE_GENOME_ANNOTATIONS_ASSERTIONS {
     tag "reference_genome_annotations"
     label 'process_medium'
     conda "${moduleDir}/environment.yml"
-    container "ghcr.io/peterkneale/bioassert:3.1.1"
+    container "ghcr.io/peterkneale/bioassert:latest"
 
     input:
     path(annotation)
