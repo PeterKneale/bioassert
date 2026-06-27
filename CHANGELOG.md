@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.1](https://github.com/PeterKneale/bioassert/compare/v5.0.0...v5.0.1) - 2026-06-27
+
+### Other
+
+- track plugin version and sync it from release-plz ([#70](https://github.com/PeterKneale/bioassert/pull/70))
+
 ## [5.0.0](https://github.com/PeterKneale/bioassert/compare/v4.1.1...v5.0.0) - 2026-06-26
 
 ### Added
