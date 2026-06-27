@@ -88,8 +88,10 @@ Asset names follow `bioassert-<version>-<platform>.tar.gz`, where `<platform>` i
 ### Docker
 
 ```bash
-docker pull ghcr.io/peterkneale/bioassert
+docker pull ghcr.io/peterkneale/bioassert:latest
 ```
+
+The `latest` tag always points to the newest release. Every release is also published under its version tag (for example `ghcr.io/peterkneale/bioassert:5.0.0`); pin to one in a pipeline for reproducible runs.
 
 Mount your working directory to `/data` and use that path prefix in your assertions. To run an assertions file:
 
@@ -379,7 +381,8 @@ process REFERENCE_GENOME_ANNOTATIONS_ASSERTIONS {
     tag "reference_genome_annotations"
     label 'process_medium'
     conda "${moduleDir}/environment.yml"
-    container "ghcr.io/peterkneale/bioassert:3.1.1"
+    // pin to a version tag (e.g. :5.0.0) for reproducible pipeline runs
+    container "ghcr.io/peterkneale/bioassert:latest"
 
     input:
     path(annotation)

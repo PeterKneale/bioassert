@@ -43,8 +43,41 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: release-plz/action@v0.5
+        id: release-pr
         with:
           command: release-pr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+      # release-plz bumps Cargo.toml + CHANGELOG on the release PR branch but
+      # knows nothing about the Claude Code plugin. Mirror the new crate version
+      # into .claude-plugin/plugin.json on that same branch so the marketplace
+      # advertises a version that moves in lockstep with each release.
+      - name: Sync plugin.json version onto the release PR
+        if: ${{ steps.release-pr.outputs.pr != '' }}
+        env:
+          PR: ${{ steps.release-pr.outputs.pr }}
+        run: |
+          set -euo pipefail
+          branch=$(printf '%s' "$PR" | jq -r '.head_branch // empty')
+          if [ -z "$branch" ]; then
+            echo "No release PR branch in output; nothing to sync."
+            exit 0
+          fi
+          git fetch origin "$branch"
+          git checkout -B "$branch" FETCH_HEAD
+          version=$(grep -m1 -E '^version[[:space:]]*=' Cargo.toml \
+            | sed -E 's/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')
+          current=$(jq -r '.version // empty' .claude-plugin/plugin.json)
+          if [ "$current" = "$version" ]; then
+            echo "plugin.json already at $version; nothing to do."
+            exit 0
+          fi
+          jq --arg v "$version" '.version = $v' .claude-plugin/plugin.json > plugin.json.tmp
+          mv plugin.json.tmp .claude-plugin/plugin.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .claude-plugin/plugin.json
+          git commit -m "chore: sync plugin.json version to ${version}"
+          git push origin "HEAD:${branch}"
