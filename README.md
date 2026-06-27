@@ -381,6 +381,7 @@ process REFERENCE_GENOME_ANNOTATIONS_ASSERTIONS {
     tag "reference_genome_annotations"
     label 'process_medium'
     conda "${moduleDir}/environment.yml"
+    // pin to a version tag (e.g. :5.0.0) for reproducible pipeline runs
     container "ghcr.io/peterkneale/bioassert:latest"
 
     input:
