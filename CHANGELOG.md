@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.2](https://github.com/PeterKneale/bioassert/compare/v5.0.1...v5.0.2) - 2026-06-30
+
+### Other
+
+- add a metrics overview table and exercise every metric in the passing fixture ([#72](https://github.com/PeterKneale/bioassert/pull/72))
+
 ## [5.0.1](https://github.com/PeterKneale/bioassert/compare/v5.0.0...v5.0.1) - 2026-06-27
 
 ### Other
