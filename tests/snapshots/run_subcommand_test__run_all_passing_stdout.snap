@@ -58,6 +58,21 @@ PASS. Expected tests/data/size_5B.txt file.contents contains ell, got 5 bytes
 PASS. Expected tests/data/size_5B.txt file.contents matches '^h.*o$', got 5 bytes
 PASS. Expected tests/data/clean_log.txt file.contents contains completed, got 125 bytes
 PASS. Expected tests/data/clean_log.txt file.contents matches Trimmomatic, got 125 bytes
+PASS. Expected tests/data/sample.bam file.compression eq bgzf, got bgzf
+PASS. Expected tests/data/sample.bam file.compression ne gzip, got bgzf
+PASS. Expected tests/data/sample.bam file.compression starts bg, got bgzf
+PASS. Expected tests/data/sample.bam file.compression ends zf, got bgzf
+PASS. Expected tests/data/sample.bam file.compression contains gz, got bgzf
+PASS. Expected tests/data/sample.bam file.compression matches '^b.*f$', got bgzf
+PASS. Expected tests/data/plain.txt.gz file.compression eq gzip, got gzip
+PASS. Expected tests/data/plain.txt.gz file.compression ne bgzf, got gzip
+PASS. Expected tests/data/empty_file.txt file.compression eq none, got none
+PASS. Expected tests/data/example.csv file.compression eq none, got none
+PASS. Expected tests/data/sample.bam file.compressed eq true, got true
+PASS. Expected tests/data/sample.bam file.compressed ne false, got true
+PASS. Expected tests/data/plain.txt.gz file.compressed eq true, got true
+PASS. Expected tests/data/empty_file.txt file.compressed eq false, got false
+PASS. Expected tests/data/example.csv file.compressed ne true, got false
 PASS. Expected tests/data/example.csv csv.columns.count eq 3, got 3
 PASS. Expected tests/data/example.csv csv.columns.count ne 2, got 3
 PASS. Expected tests/data/example.csv csv.columns.count gt 2, got 3
@@ -249,6 +264,9 @@ PASS. Expected tests/data/junctions.tsv tsv.column.4.data.all not starts GENE, g
 PASS. Expected tests/data/size_5B.txt file.size not gt 1MB, got 5B
 PASS. Expected tests/data/lines_10.txt file.lines not lt 10, got 10
 PASS. Expected tests/data/empty_file.txt file.exists not eq false, got true
+PASS. Expected tests/data/sample.bam file.compression not eq gzip, got bgzf
+PASS. Expected tests/data/sample.bam file.compression not contains zip, got bgzf
+PASS. Expected tests/data/example.csv file.compressed not eq true, got false
 PASS. Expected tests/data/sample.bam bam.header.rg.0.sm not contains test, got NA12878
 PASS. Expected tests/data/sample.fasta fasta.seq.0.name not starts chrUn, got chr1
 PASS. Expected 'abc' text.value not contains z, got abc

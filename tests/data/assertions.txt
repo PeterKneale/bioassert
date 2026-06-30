@@ -89,6 +89,29 @@ tests/data/clean_log.txt file.contents contains completed
 tests/data/clean_log.txt file.contents matches Trimmomatic
 
 # ===========================================================================
+# file.compression (string label) and file.compressed (boolean)
+# Format is read from the leading magic bytes only; the file is never decompressed.
+# sample.bam is bgzf (block-gzip), plain.txt.gz is plain gzip, text files are none.
+# ===========================================================================
+# file.compression (string): eq, ne, starts, ends, contains, matches
+tests/data/sample.bam file.compression eq bgzf
+tests/data/sample.bam file.compression ne gzip
+tests/data/sample.bam file.compression starts bg
+tests/data/sample.bam file.compression ends zf
+tests/data/sample.bam file.compression contains gz
+tests/data/sample.bam file.compression matches '^b.*f$'
+tests/data/plain.txt.gz file.compression eq gzip
+tests/data/plain.txt.gz file.compression ne bgzf
+tests/data/empty_file.txt file.compression eq none
+tests/data/example.csv file.compression eq none
+# file.compressed (boolean): eq, ne
+tests/data/sample.bam file.compressed eq true
+tests/data/sample.bam file.compressed ne false
+tests/data/plain.txt.gz file.compressed eq true
+tests/data/empty_file.txt file.compressed eq false
+tests/data/example.csv file.compressed ne true
+
+# ===========================================================================
 # csv (comma): columns.count, lines.count, cell (line.N.column.M)
 # ===========================================================================
 tests/data/example.csv csv.columns.count eq 3
@@ -354,6 +377,11 @@ tests/data/lines_10.txt file.lines not lt 10
 
 # boolean negation
 tests/data/empty_file.txt file.exists not eq false
+
+# compression negation: the label is a string, compressed is a boolean
+tests/data/sample.bam file.compression not eq gzip
+tests/data/sample.bam file.compression not contains zip
+tests/data/example.csv file.compressed not eq true
 
 # bam / fasta string negation
 tests/data/sample.bam bam.header.rg.0.sm not contains test

@@ -455,6 +455,44 @@ clause is a [guard](#conditional-assertions-guards).
 
 ## Metrics
 
+At a glance, every metric grouped by resource family. Each family is detailed, with comparators and value types,
+in the sections below.
+
+| Family    | Metric                            | Description                                                       |
+|-----------|-----------------------------------|-------------------------------------------------------------------|
+| File      | `file.exists`                     | Whether the file exists                                           |
+| File      | `file.empty`                      | Whether the file is zero bytes                                    |
+| File      | `file.size`                       | File size in bytes                                                |
+| File      | `file.lines`                      | Line count                                                        |
+| File      | `file.contents`                   | Whole file body, read as a UTF-8 string                           |
+| File      | `file.compression`                | Compression format, detected from leading magic bytes             |
+| File      | `file.compressed`                 | Whether the file is compressed in any format                      |
+| Delimited | `csv.columns.count`               | Number of columns in the header row                               |
+| Delimited | `csv.lines.count`                 | Number of lines in the file                                       |
+| Delimited | `csv.line.N.column.M`             | Content of the cell at line N, column M (1-indexed)               |
+| Delimited | `csv.column.N.all`                | Holds for every cell in column N, header included                 |
+| Delimited | `csv.column.N.data.all`           | Holds for every cell in column N, header skipped                  |
+| BAM       | `bam.header.rg.count`             | Number of `@RG` read groups                                       |
+| BAM       | `bam.header.sq.count`             | Number of `@SQ` reference sequences                               |
+| BAM       | `bam.header.pg.count`             | Number of `@PG` program records                                   |
+| BAM       | `bam.header.rg.N.<tag>`           | Tag value of read group N (`id`, `sm`, `lb`, `pl`, `pu`, ...)     |
+| BAM       | `bam.header.rg.N.present`         | Whether read group N exists                                       |
+| BAM       | `bam.header.rg.N.<tag>.present`   | Whether `<tag>` is set on read group N                            |
+| BAM       | `bam.header.hd.vn`                | `@HD` format version (VN)                                         |
+| BAM       | `bam.header.hd.so`                | `@HD` sort order (SO)                                             |
+| FASTA     | `fasta.seq.count`                 | Number of sequence records                                        |
+| FASTA     | `fasta.length`                    | Total bases summed across all records                             |
+| FASTA     | `fasta.seq.N.name`                | Name (ID) of record N                                             |
+| FASTA     | `fasta.seq.N.description`         | Description of record N                                           |
+| FASTA     | `fasta.seq.N.length`              | Length in bases of record N's sequence                            |
+| FASTA     | `fasta.seq.N.present`             | Whether a record exists at index N                                |
+| FASTA     | `fasta.seq.N.description.present` | Whether record N has a (non-empty) description                    |
+| Text      | `text.value`                      | The inline literal string itself                                  |
+| Text      | `text.length`                     | Character count (Unicode scalars)                                 |
+
+The Delimited metrics are shown with the `csv` prefix; replace it with `tsv` (tab-separated) or `psv`
+(pipe-separated) for those formats.
+
 ### File metrics
 
 | Metric        | Description                    | Comparators                          | Value   |
