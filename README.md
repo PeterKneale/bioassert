@@ -250,8 +250,9 @@ value (e.g. `got line 3 = "NDA"`). Any string comparator works, not just `matche
 
 ### BAM header checks
 
-Assertions on a BAM file's SAM header live under `bam.header.*`. Read groups (`@RG`) are addressed by 0-based index.
-Values containing dots, dashes or colons (read-group IDs, library names, ISO dates, version strings) must be quoted.
+Assertions on a BAM file's SAM header live under `bam.header.*`. Read groups (`@RG`) and programs (`@PG`) are
+addressed by 0-based index. Values containing dots, dashes, colons or spaces (read-group IDs, library names,
+version strings, program command lines) must be quoted.
 
 ```text
 output.bam   bam.header.rg.count        gte  1                  # at least one read group
@@ -260,6 +261,8 @@ output.bam   bam.header.rg.0.pl         eq   ILLUMINA           # sequencing pla
 output.bam   bam.header.rg.0.lb         eq   'Solexa-272222'    # library name (quoted: dash)
 output.bam   bam.header.rg.1.id         eq   'H0164.2'          # second read-group ID (quoted: dot)
 output.bam   bam.header.rg.0.pu.present eq   true               # a platform-unit tag is set
+output.bam   bam.header.pg.0.pn         eq   bwa                # first program (e.g. the aligner)
+output.bam   bam.header.pg.1.cl         contains 'samtools sort' # a program's command line (quoted: space)
 output.bam   bam.header.hd.so           eq   coordinate         # file is coordinate-sorted
 output.bam   bam.header.sq.count        eq   1                  # exactly one reference sequence
 ```
@@ -478,6 +481,9 @@ in the sections below.
 | BAM       | `bam.header.rg.N.<tag>`           | Tag value of read group N (`id`, `sm`, `lb`, `pl`, `pu`, ...)     |
 | BAM       | `bam.header.rg.N.present`         | Whether read group N exists                                       |
 | BAM       | `bam.header.rg.N.<tag>.present`   | Whether `<tag>` is set on read group N                            |
+| BAM       | `bam.header.pg.N.<tag>`           | Tag value of program N (`id`, `pn`, `pp`, `vn`, `cl`)             |
+| BAM       | `bam.header.pg.N.present`         | Whether program N exists                                          |
+| BAM       | `bam.header.pg.N.<tag>.present`   | Whether `<tag>` is set on program N                               |
 | BAM       | `bam.header.hd.vn`                | `@HD` format version (VN)                                         |
 | BAM       | `bam.header.hd.so`                | `@HD` sort order (SO)                                             |
 | FASTA     | `fasta.seq.count`                 | Number of sequence records                                        |
@@ -527,8 +533,10 @@ pass only when it holds for every checked cell; a header-only or empty file pass
 
 ### BAM header metrics
 
-Metrics on a BAM file's SAM header, all under the `bam.header.*` namespace. Read groups (`@RG`) are addressed by
-0-based index `N`, following header order. `<tag>` is a lowercased 2-letter SAM tag.
+Metrics on a BAM file's SAM header, all under the `bam.header.*` namespace. Read groups (`@RG`) and programs
+(`@PG`) are addressed by 0-based index `N`, following header order. `<tag>` is a 2-letter SAM tag. The `pg`
+segment and its tags are matched case-insensitively (`bam.header.PG.count`, `bam.header.pg.0.CL`), since `@PG`
+and its tags are uppercase in the SAM header.
 
 | Metric                          | Description                                            | Comparators                          | Value   |
 |---------------------------------|--------------------------------------------------------|--------------------------------------|---------|
@@ -538,13 +546,16 @@ Metrics on a BAM file's SAM header, all under the `bam.header.*` namespace. Read
 | `bam.header.rg.N.<tag>`         | Tag value of read group N (`id`, `sm`, `lb`, `pl`, `pu`, ...) | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
 | `bam.header.rg.N.present`       | Whether read group N exists                            | `eq`, `ne`                           | boolean |
 | `bam.header.rg.N.<tag>.present` | Whether `<tag>` is set on read group N                 | `eq`, `ne`                           | boolean |
+| `bam.header.pg.N.<tag>`         | Tag value of program N (`id`, `pn`, `pp`, `vn`, `cl`)  | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
+| `bam.header.pg.N.present`       | Whether program N exists                               | `eq`, `ne`                           | boolean |
+| `bam.header.pg.N.<tag>.present` | Whether `<tag>` is set on program N                    | `eq`, `ne`                           | boolean |
 | `bam.header.hd.vn`              | `@HD` format version (VN)                              | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
 | `bam.header.hd.so`              | `@HD` sort order (SO), e.g. `coordinate`               | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string |
 
-`id` resolves to the read-group identifier (the `@RG ID` field); other tags resolve to the read group's
-remaining fields. Reading a tag value (or `@HD` field) that is not set, or a read group whose index is out of
-range, is an **error**; use the `.present` form to test for presence without erroring. Quote values that contain
-dots, dashes or colons (`'H0164.2'`, `'Solexa-272222'`, `'1.6'`).
+`id` resolves to the record identifier (the `@RG`/`@PG ID` field); other tags resolve to the record's remaining
+fields. Reading a tag value (or `@HD` field) that is not set, or a record whose index is out of range, is an
+**error**; use the `.present` form to test for presence without erroring. Quote values that contain dots, dashes,
+colons or spaces (`'H0164.2'`, `'Solexa-272222'`, `'1.6'`, `'bwa mem ref.fa reads.fq'`).
 
 ### FASTA metrics
 

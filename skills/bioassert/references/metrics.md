@@ -88,8 +88,9 @@ junctions.tsv tsv.column.4.all        matches '^JUNC[0-9]+$'
 
 ## BAM header metrics (`bam.header.*`)
 
-All metrics read the SAM header only (header-only files work). Read groups (`@RG`) are
-addressed by **0-based** index `N` in header order. `<tag>` is a lowercased 2-letter SAM tag.
+All metrics read the SAM header only (header-only files work). Read groups (`@RG`) and
+programs (`@PG`) are addressed by **0-based** index `N` in header order. `<tag>` is a
+2-letter SAM tag.
 
 | Metric                          | Description                                  | Comparators | Value   |
 |---------------------------------|----------------------------------------------|-------------|---------|
@@ -99,13 +100,19 @@ addressed by **0-based** index `N` in header order. `<tag>` is a lowercased 2-le
 | `bam.header.rg.N.<tag>`         | Tag value of read group N (`id`, `sm`, `lb`, `pl`, `pu`, ...) | string | string |
 | `bam.header.rg.N.present`       | Whether read group N exists                  | `eq`, `ne`  | boolean |
 | `bam.header.rg.N.<tag>.present` | Whether `<tag>` is set on read group N       | `eq`, `ne`  | boolean |
+| `bam.header.pg.N.<tag>`         | Tag value of program N (`id`, `pn`, `pp`, `vn`, `cl`) | string | string |
+| `bam.header.pg.N.present`       | Whether program N exists                     | `eq`, `ne`  | boolean |
+| `bam.header.pg.N.<tag>.present` | Whether `<tag>` is set on program N          | `eq`, `ne`  | boolean |
 | `bam.header.hd.vn`              | `@HD` format version (VN)                    | string      | string  |
 | `bam.header.hd.so`              | `@HD` sort order (SO), e.g. `coordinate`     | string      | string  |
 
 - numeric is `eq`, `ne`, `lt`, `lte`, `gt`, `gte`. string is `eq`, `ne`, `starts`, `ends`,
   `contains`, `matches`.
-- `id` resolves to the `@RG ID` field. Other tags resolve to the read group's other fields.
-- Reading a tag or `@HD` field that is **not set**, or a read group index **out of range**,
+- `id` resolves to the `@RG`/`@PG ID` field. Other tags resolve to the record's other fields.
+- The `pg` segment and its tags are **case-insensitive** (`bam.header.PG.count`,
+  `bam.header.pg.0.CL`), since `@PG` and its tags are uppercase in the SAM header.
+- `@PG` programs chain via the `pp` (previous-program ID) tag, walkable by index.
+- Reading a tag or `@HD` field that is **not set**, or a record index **out of range**,
   is an **ERROR**. Use the `.present` form to test presence without erroring.
 
 ```text
@@ -115,6 +122,9 @@ output.bam   bam.header.rg.0.pl         eq   ILLUMINA
 output.bam   bam.header.rg.0.lb         eq   'Solexa-272222'    # quoted: dash
 output.bam   bam.header.rg.1.id         eq   'H0164.2'          # quoted: dot
 output.bam   bam.header.rg.0.pu.present eq   true
+output.bam   bam.header.pg.0.pn         eq   bwa
+output.bam   bam.header.pg.1.pp         eq   bwa                # previous-program chaining
+output.bam   bam.header.pg.1.cl         contains 'samtools sort' # quoted: space
 output.bam   bam.header.hd.so           eq   coordinate
 output.bam   bam.header.sq.count        eq   1
 ```

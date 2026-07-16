@@ -22,7 +22,8 @@ impl AssertionExecutor for BamCountExecutor {
         let kind = match parts.as_slice() {
             ["bam", "header", "rg", "count"] => Kind::ReadGroup,
             ["bam", "header", "sq", "count"] => Kind::Reference,
-            ["bam", "header", "pg", "count"] => Kind::Program,
+            // The `pg` segment is matched case-insensitively (`@PG` is uppercase in the file).
+            ["bam", "header", pg, "count"] if pg.eq_ignore_ascii_case("pg") => Kind::Program,
             _ => return None,
         };
         Some(Self { kind })
@@ -54,6 +55,8 @@ mod tests {
         assert!(BamCountExecutor::try_parse("bam.header.rg.count").is_some());
         assert!(BamCountExecutor::try_parse("bam.header.sq.count").is_some());
         assert!(BamCountExecutor::try_parse("bam.header.pg.count").is_some());
+        // the pg segment is case-insensitive (uppercase in the file).
+        assert!(BamCountExecutor::try_parse("bam.header.PG.count").is_some());
     }
 
     #[test]

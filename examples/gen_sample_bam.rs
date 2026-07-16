@@ -15,6 +15,7 @@ const SAMPLE_SAM: &str = "\
 @RG\tID:H0164.1\tSM:NA12878\tLB:Solexa-272222\tPL:ILLUMINA\tPU:H0164ALXX140820.1
 @RG\tID:H0164.2\tSM:NA12878\tLB:Solexa-272222\tPL:ILLUMINA\tPU:H0164ALXX140820.2
 @PG\tID:bwa\tPN:bwa\tVN:0.7.17\tCL:bwa mem ref.fa reads.fq
+@PG\tID:samtools\tPN:samtools\tPP:bwa\tVN:1.17\tCL:samtools sort
 ";
 
 const OUTPUT: &str = "tests/data/sample.bam";
