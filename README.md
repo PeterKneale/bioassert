@@ -29,6 +29,7 @@ samples.csv    csv.lines.count     gte  2
 # BAM header provenance is intact
 output.bam     bam.header.rg.count   gte  1
 output.bam     bam.header.hd.so      eq   coordinate
+output.bam     bam.header.pg.1.cl eq 'samtools sort'
 
 # The reference genome has the right number of contigs
 ref.fasta      fasta.seq.count   eq   25
