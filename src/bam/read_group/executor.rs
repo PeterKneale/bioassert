@@ -100,6 +100,7 @@ mod tests {
     #[test]
     fn try_parse_tag_value() {
         assert!(BamReadGroupTagExecutor::try_parse("bam.header.rg.0.sm").is_some());
+        assert!(BamReadGroupTagExecutor::try_parse("bam.header.rg.0.SM").is_some());
         assert!(BamReadGroupTagExecutor::try_parse("bam.header.rg.12.pu").is_some());
         assert!(BamReadGroupTagExecutor::try_parse("bam.header.rg.0.id").is_some());
     }
@@ -119,6 +120,7 @@ mod tests {
     fn try_parse_present() {
         assert!(BamReadGroupPresentExecutor::try_parse("bam.header.rg.0.present").is_some());
         assert!(BamReadGroupPresentExecutor::try_parse("bam.header.rg.0.sm.present").is_some());
+        assert!(BamReadGroupPresentExecutor::try_parse("bam.header.rg.0.SM.present").is_some());
     }
 
     #[test]
