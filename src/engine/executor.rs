@@ -1,5 +1,6 @@
 use crate::bam::{
-    BamCountExecutor, BamHeaderFieldExecutor, BamReadGroupPresentExecutor, BamReadGroupTagExecutor,
+    BamCountExecutor, BamHeaderFieldExecutor, BamProgramPresentExecutor, BamProgramTagExecutor,
+    BamReadGroupPresentExecutor, BamReadGroupTagExecutor,
 };
 use crate::core::{AssertionExecutor, AssertionRequest, BioAssertError, Value};
 use crate::delimited::{
@@ -173,6 +174,12 @@ fn dispatch(metric: &str, request: &AssertionRequest) -> Result<(bool, Value), B
         return run(e, request);
     }
     if let Some(e) = BamReadGroupTagExecutor::try_parse(metric) {
+        return run(e, request);
+    }
+    if let Some(e) = BamProgramPresentExecutor::try_parse(metric) {
+        return run(e, request);
+    }
+    if let Some(e) = BamProgramTagExecutor::try_parse(metric) {
         return run(e, request);
     }
     if let Some(e) = FastaCountExecutor::try_parse(metric) {

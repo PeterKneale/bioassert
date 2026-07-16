@@ -73,10 +73,15 @@ string that the matched executor interprets.
 
 4. **`src/bam/`** — BAM SAM-header metric executors built on the `noodles` crate, all under the `bam.header.*`
    namespace: `count` (`bam.header.rg.count`, `bam.header.sq.count`, `bam.header.pg.count`), `read_group`
-   (`bam.header.rg.<n>.<tag>` and the `.present` variants), and `header` (`bam.header.hd.vn`, `bam.header.hd.so`).
-   `functions.rs` is the only place that touches `noodles`; its `read_header` caches the parsed `sam::Header` per
-   path in a thread-local so a `run` over many `bam.header.*` assertions parses each file once. The `bam.header.*`
-   prefix leaves room for future record/body metrics under a sibling namespace (e.g. `bam.records.*`).
+   (`bam.header.rg.<n>.<tag>` and the `.present` variants), `program` (`bam.header.pg.<n>.<tag>` and the
+   `.present` variants, for `@PG` records with tags `id`/`pn`/`pp`/`vn`/`cl`), and `header` (`bam.header.hd.vn`,
+   `bam.header.hd.so`). The `program` executors match the `pg` segment with `eq_ignore_ascii_case` (so
+   `bam.header.PG.count` and `bam.header.pg.0.CL` also parse), and the same count-executor branch is relaxed;
+   SAM tags are already case-folded at execute time by `functions::tag_bytes`. `functions.rs` is the only place
+   that touches `noodles`; its `read_header` caches the parsed `sam::Header` per path in a thread-local so a `run`
+   over many `bam.header.*` assertions parses each file once (note `header.programs()` is a newtype over an
+   `IndexMap`, so `program_*` helpers index it through `.as_ref()`). The `bam.header.*` prefix leaves room for
+   future record/body metrics under a sibling namespace (e.g. `bam.records.*`).
 
 5. **`src/fasta/`** — FASTA sequence metric executors built on the `noodles` crate, under the `fasta.seq.*`
    namespace for per-record metrics plus the `fasta.length` whole-file aggregate: `count` (`fasta.seq.count`,

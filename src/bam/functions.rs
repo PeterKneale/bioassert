@@ -75,6 +75,27 @@ pub fn read_group_tag(header: &sam::Header, index: usize, tag: &str) -> Option<S
         .map(|(_, value)| value.to_string())
 }
 
+/// Whether a `@PG` program exists at the given 0-based index. `Programs` is a newtype over an
+/// `IndexMap`, so indexing goes through `as_ref()`.
+pub fn program_present(header: &sam::Header, index: usize) -> bool {
+    header.programs().as_ref().get_index(index).is_some()
+}
+
+/// Value of a `@PG` program tag at the given 0-based index. `id` resolves to the program key;
+/// all other tags (`pn`, `pp`, `vn`, `cl`, ...) are looked up in the record's other fields.
+/// Returns `None` when the index is out of range or the tag is not set.
+pub fn program_tag(header: &sam::Header, index: usize, tag: &str) -> Option<String> {
+    let (id, map) = header.programs().as_ref().get_index(index)?;
+    if tag.eq_ignore_ascii_case("id") {
+        return Some(id.to_string());
+    }
+    let want = tag_bytes(tag)?;
+    map.other_fields()
+        .iter()
+        .find(|&(key, _)| key.as_ref() == &want)
+        .map(|(_, value)| value.to_string())
+}
+
 /// Value of an `@HD` field. `vn` resolves to the typed version; other fields (e.g. `so`)
 /// are looked up in the header's other fields. Returns `None` when there is no `@HD` line
 /// or the field is not set.
@@ -108,6 +129,7 @@ pub(crate) mod test_support {
 @RG\tID:H0164.1\tSM:NA12878\tLB:Solexa-272222\tPL:ILLUMINA\tPU:H0164ALXX140820.1
 @RG\tID:H0164.2\tSM:NA12878\tLB:Solexa-272222\tPL:ILLUMINA\tPU:H0164ALXX140820.2
 @PG\tID:bwa\tPN:bwa\tVN:0.7.17\tCL:bwa mem ref.fa reads.fq
+@PG\tID:samtools\tPN:samtools\tPP:bwa\tVN:1.17\tCL:samtools sort
 ";
 
     /// Parses SAM header text and writes it as a (header-only) BAM into a temp file.
@@ -138,7 +160,41 @@ mod tests {
         let header = read_header(bam.path()).unwrap();
         assert_eq!(read_group_count(&header), 2);
         assert_eq!(reference_count(&header), 1);
-        assert_eq!(program_count(&header), 1);
+        assert_eq!(program_count(&header), 2);
+    }
+
+    #[test]
+    fn reads_program_tags() {
+        let bam = test_support::sample_bam();
+        let header = read_header(bam.path()).unwrap();
+        // index 0 is the aligner, index 1 chains from it via PP.
+        assert_eq!(program_tag(&header, 0, "id").as_deref(), Some("bwa"));
+        assert_eq!(program_tag(&header, 0, "pn").as_deref(), Some("bwa"));
+        assert_eq!(program_tag(&header, 0, "vn").as_deref(), Some("0.7.17"));
+        assert_eq!(
+            program_tag(&header, 0, "cl").as_deref(),
+            Some("bwa mem ref.fa reads.fq")
+        );
+        assert_eq!(program_tag(&header, 1, "id").as_deref(), Some("samtools"));
+        assert_eq!(program_tag(&header, 1, "pp").as_deref(), Some("bwa"));
+        assert_eq!(
+            program_tag(&header, 1, "cl").as_deref(),
+            Some("samtools sort")
+        );
+        // tags are matched case-insensitively (they are uppercase in the file).
+        assert_eq!(program_tag(&header, 1, "PP").as_deref(), Some("bwa"));
+        // the aligner has no PP (it is the root of the chain).
+        assert_eq!(program_tag(&header, 0, "pp"), None);
+    }
+
+    #[test]
+    fn out_of_range_program() {
+        let bam = test_support::sample_bam();
+        let header = read_header(bam.path()).unwrap();
+        assert!(program_present(&header, 0));
+        assert!(program_present(&header, 1));
+        assert!(!program_present(&header, 2));
+        assert_eq!(program_tag(&header, 2, "id"), None);
     }
 
     #[test]

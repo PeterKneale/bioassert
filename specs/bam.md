@@ -40,7 +40,7 @@ and have them pass/fail like any other metric.
 - **Read groups addressed by index** (`bam.header.rg.0.sm`), following header order — robust given that read-group IDs
   contain dots (`H0164.2`) which collide with the dot-delimited metric grammar.
 - **Presence via count + boolean `.present` suffix** — a missing tag/RG yields `false`, not an error.
-- **Scope**: read groups (full) plus counts for `@SQ`/`@PG` and `@HD` fields.
+- **Scope**: read groups and programs (`@PG`) in full, plus counts for `@SQ` and `@HD` fields.
 - **Namespaced under `bam.header.*`.** A BAM has two sections — the header and the alignment records. Every
   metric here is a header metric, so they live under `bam.header.*`. This reserves a sibling namespace for
   future record/body metrics (e.g. `bam.records.count`, mapped/unmapped/duplicate counts, MAPQ thresholds) and
@@ -60,11 +60,16 @@ and have them pass/fail like any other metric.
 | `bam.header.rg.<n>.<tag>`         | string     | tag value of the nth read group (`id`, `sm`, `lb`, `pl`, `pu`, `pi`, `dt`, `cn`, `ds`, `pm`, ...) |
 | `bam.header.rg.<n>.present`       | bool       | whether a read group exists at index n                                                            |
 | `bam.header.rg.<n>.<tag>.present` | bool       | whether that tag is set on read group n                                                           |
+| `bam.header.pg.<n>.<tag>`         | string     | tag value of the nth program (`id`, `pn`, `pp`, `vn`, `cl`, `ds`)                                 |
+| `bam.header.pg.<n>.present`       | bool       | whether a program exists at index n                                                               |
+| `bam.header.pg.<n>.<tag>.present` | bool       | whether that tag is set on program n                                                              |
 | `bam.header.hd.vn`                | string     | `@HD` version (VN)                                                                                |
 | `bam.header.hd.so`                | string     | `@HD` sort order (SO)                                                                             |
 
-`<n>` is a 0-based index. `<tag>` is the lowercased 2-letter SAM tag; `id` resolves to the read-group key,
-all others to `other_fields`.
+`<n>` is a 0-based index. `<tag>` is the 2-letter SAM tag; `id` resolves to the record key, all others to
+`other_fields`. The `pg` segment and its tags are matched **case-insensitively** (`bam.header.PG.count`,
+`bam.header.pg.0.CL`), since `@PG` and its tags are uppercase in the SAM header itself. Programs are addressed
+by header order, so `@PG` chaining (`pp`, previous-program ID) can be walked by index.
 
 ### Examples
 
@@ -76,6 +81,7 @@ all others to `other_fields`.
 @RG	ID:H0164.1	SM:NA12878	LB:Solexa-272222	PL:ILLUMINA	PU:H0164ALXX140820.1
 @RG	ID:H0164.2	SM:NA12878	LB:Solexa-272222	PL:ILLUMINA	PU:H0164ALXX140820.2
 @PG	ID:bwa	PN:bwa	VN:0.7.17	CL:bwa mem ref.fa reads.fq
+@PG	ID:samtools	PN:samtools	PP:bwa	VN:1.17	CL:samtools sort
 ```
 
 All examples below are evaluated against the sample header above. The trailing comment is the expected outcome.
@@ -87,7 +93,8 @@ sample.bam bam.header.rg.count        eq  2            # PASS
 sample.bam bam.header.rg.count        gte 1            # PASS
 sample.bam bam.header.rg.count        lt  5            # PASS
 sample.bam bam.header.sq.count        eq  1            # PASS
-sample.bam bam.header.pg.count        eq  1            # PASS
+sample.bam bam.header.pg.count        eq  2            # PASS
+sample.bam bam.header.PG.count        eq  2            # PASS (pg segment is case-insensitive)
 sample.bam bam.header.rg.count        eq  3            # FAIL (actual 2)
 ```
 
@@ -125,6 +132,25 @@ sample.bam bam.header.rg.0.cn.present eq  false    # PASS (no CN tag in sample)
 sample.bam bam.header.rg.0.pi.present eq  false    # PASS (no PI tag in sample)
 ```
 
+#### Program records (@PG)
+
+Programs are addressed by index in header order. The `pg` segment and its tags are case-insensitive.
+
+```
+sample.bam bam.header.pg.0.id         eq  bwa                     # PASS (ID is the @PG key)
+sample.bam bam.header.pg.0.pn         eq  bwa                     # PASS (program name)
+sample.bam bam.header.pg.0.vn         eq  '0.7.17'                # PASS (quote: dots)
+sample.bam bam.header.pg.0.cl         eq  'bwa mem ref.fa reads.fq' # PASS (quote: spaces)
+sample.bam bam.header.pg.0.cl         contains 'bwa mem'          # PASS
+sample.bam bam.header.pg.1.id         eq  samtools                # PASS
+sample.bam bam.header.pg.1.pp         eq  bwa                     # PASS (previous-program chaining)
+sample.bam bam.header.pg.1.PP         eq  bwa                     # PASS (tag is case-insensitive)
+sample.bam bam.header.pg.0.present    eq  true                    # PASS
+sample.bam bam.header.pg.2.present    eq  false                   # PASS (only 2 programs)
+sample.bam bam.header.pg.0.pp.present eq  false                   # PASS (the aligner has no PP)
+sample.bam bam.header.pg.1.pp.present eq  true                    # PASS
+```
+
 #### Header line (@HD)
 
 ```
@@ -138,16 +164,17 @@ sample.bam bam.header.hd.so           ne  queryname    # PASS
 ```
 sample.bam bam.header.rg.2.sm         eq  NA12878   # ERROR (read-group index out of range)
 sample.bam bam.header.rg.0.dt         eq  X         # ERROR (tag not present — use .present to test softly)
+sample.bam bam.header.pg.5.id         eq  X         # ERROR (program index out of range)
 missing.bam bam.header.rg.count       eq  2         # ERROR (file cannot be opened)
 notabam.txt  bam.header.rg.count      eq  2         # ERROR (not a valid BAM)
 ```
 
 ### Semantics
 
-Value metrics (`bam.header.rg.<n>.<tag>`, `bam.header.hd.*`) **error** if the RG index / tag / `@HD` is absent (
-consistent
-with `DelimitedCellExecutor` erroring on a missing cell). The `.present` metrics **never error** on absence —
-they return `false`. This is how a user safely tests "is this set" versus "what is its value".
+Value metrics (`bam.header.rg.<n>.<tag>`, `bam.header.pg.<n>.<tag>`, `bam.header.hd.*`) **error** if the index /
+tag / `@HD` is absent (consistent with `DelimitedCellExecutor` erroring on a missing cell). The `.present`
+metrics **never error** on absence — they return `false`. This is how a user safely tests "is this set" versus
+"what is its value".
 
 ## Implementation
 
@@ -169,9 +196,11 @@ noodles = { version = "<latest>", features = ["bam", "sam"] }
       on a miss it opens the file, parses the header, and stores it. Maps `io::Error` via `FileError::new`.
     - helpers take `&sam::Header` (so they work straight off the cached `Rc`): `read_group_count`,
       `reference_count`, `program_count`, `read_group_tag(header, n, tag) -> Option<String>`,
-      `read_group_present(header, n) -> bool`, `hd_field(header, field) -> Option<String>`.
-    - tag lookup: `id` → nth key of `read_groups()`; otherwise build `Tag` from the uppercased 2 bytes and read
-      `other_fields()`.
+      `read_group_present(header, n) -> bool`, `program_tag(header, n, tag) -> Option<String>`,
+      `program_present(header, n) -> bool`, `hd_field(header, field) -> Option<String>`.
+    - tag lookup: `id` → nth key of `read_groups()` / `programs().as_ref()`; otherwise build `Tag` from the
+      uppercased 2 bytes and read `other_fields()`. (`Programs` is a newtype over `IndexMap`, so it is indexed
+      through `as_ref()`.)
     - every `bam.header.*` executor's `execute` calls `read_header` and then a helper; none open the file directly.
 - `src/bam/count/executor.rs` — `BamCountExecutor`: `try_parse` matches `[ "bam", kind, "count" ]` for
   `kind ∈ {rg, sq, pg}`; `execute` returns `Value::from_integer(expected)` numeric-compared against the count.
@@ -179,6 +208,9 @@ noodles = { version = "<latest>", features = ["bam", "sam"] }
     - `BamReadGroupTagExecutor`: `[ "bam", "rg", n, tag ]` → `StringValue`, `compare_string`, errors if absent.
     - `BamReadGroupPresentExecutor`: `[ "bam", "rg", n, "present" ]` and `[ "bam", "rg", n, tag, "present" ]`
       → `Value::from_boolean(expected)` compared against the boolean.
+- `src/bam/program/executor.rs` — `BamProgramTagExecutor` and `BamProgramPresentExecutor`, mirroring the
+  read-group pair but for `[ "bam", "header", pg, n, ... ]`, where the `pg` segment is matched with
+  `eq_ignore_ascii_case("pg")` so `PG` also parses; they call `functions::program_tag` / `program_present`.
 - `src/bam/header/executor.rs` — `BamHeaderFieldExecutor`: `[ "bam", "hd", field ]` for `field ∈ {vn, so}` →
   `StringValue`.
 
@@ -250,8 +282,9 @@ Add the `mod bam;` declaration and re-exports alongside the existing modules in 
 ### 6. Tests
 
 **The canonical fixture is the sample header shown above.** Both the on-the-fly unit-test BAM and the committed
-`tests/data/sample.bam` must encode exactly this header — 2 `@RG`, 1 `@SQ` (`chr1`, length 248956422), 1 `@PG`,
-and an `@HD` with `VN:1.6 SO:coordinate` — so the assertions and snapshot below are deterministic:
+`tests/data/sample.bam` must encode exactly this header — 2 `@RG`, 1 `@SQ` (`chr1`, length 248956422), 2 `@PG`
+(the second chained from the first via `PP:bwa`), and an `@HD` with `VN:1.6 SO:coordinate` — so the assertions
+and snapshot below are deterministic:
 
 ```
 @HD	VN:1.6	SO:coordinate
@@ -259,14 +292,17 @@ and an `@HD` with `VN:1.6 SO:coordinate` — so the assertions and snapshot belo
 @RG	ID:H0164.1	SM:NA12878	LB:Solexa-272222	PL:ILLUMINA	PU:H0164ALXX140820.1
 @RG	ID:H0164.2	SM:NA12878	LB:Solexa-272222	PL:ILLUMINA	PU:H0164ALXX140820.2
 @PG	ID:bwa	PN:bwa	VN:0.7.17	CL:bwa mem ref.fa reads.fq
+@PG	ID:samtools	PN:samtools	PP:bwa	VN:1.17	CL:samtools sort
 ```
 
 - **Unit tests** (`src/bam/functions.rs`): a helper builds this exact header with noodles' `sam::Header` builder +
   `bam::io::Writer` into a `NamedTempFile`, then asserts each function against the known values — e.g.
-  `read_group_count == 2`, `reference_count == 1`, `program_count == 1`,
+  `read_group_count == 2`, `reference_count == 1`, `program_count == 2`,
   `read_group_tag(h, 0, "id") == Some("H0164.1")`,
   `read_group_tag(h, 0, "sm") == Some("NA12878")`, `read_group_tag(h, 1, "pu") == Some("H0164ALXX140820.2")`,
-  `read_group_tag(h, 0, "dt") == None`, `read_group_present(h, 2) == false`, `hd_field(h, "vn") == Some("1.6")`,
+  `read_group_tag(h, 0, "dt") == None`, `read_group_present(h, 2) == false`,
+  `program_tag(h, 0, "id") == Some("bwa")`, `program_tag(h, 1, "pp") == Some("bwa")`,
+  `program_tag(h, 0, "pp") == None`, `program_present(h, 2) == false`, `hd_field(h, "vn") == Some("1.6")`,
   `hd_field(h, "so") == Some("coordinate")`. Each executor's `#[cfg(test)] mod tests` covers `try_parse` shapes.
 - **Caching test** (`src/bam/functions.rs`): call `clear_cache()`, `read_header` once, delete/rename the temp
   file, then `read_header` again — the second call must still succeed (served from cache) and return an `Rc` that

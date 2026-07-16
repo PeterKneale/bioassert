@@ -5,7 +5,8 @@ expression: "String::from_utf8_lossy(&output.stdout)"
 PASS. Expected tests/data/sample.bam bam.header.rg.count eq 2, got 2
 PASS. Expected tests/data/sample.bam bam.header.rg.count gte 1, got 2
 PASS. Expected tests/data/sample.bam bam.header.sq.count eq 1, got 1
-PASS. Expected tests/data/sample.bam bam.header.pg.count eq 1, got 1
+PASS. Expected tests/data/sample.bam bam.header.pg.count eq 2, got 2
+PASS. Expected tests/data/sample.bam bam.header.PG.count eq 2, got 2
 PASS. Expected tests/data/sample.bam bam.header.rg.0.id eq 'H0164.1', got H0164.1
 PASS. Expected tests/data/sample.bam bam.header.rg.1.id eq 'H0164.2', got H0164.2
 PASS. Expected tests/data/sample.bam bam.header.rg.0.sm eq NA12878, got NA12878
@@ -25,6 +26,21 @@ PASS. Expected tests/data/sample.bam bam.header.rg.0.sm.present eq true, got tru
 PASS. Expected tests/data/sample.bam bam.header.rg.0.pu.present eq true, got true
 PASS. Expected tests/data/sample.bam bam.header.rg.0.dt.present eq false, got false
 PASS. Expected tests/data/sample.bam bam.header.rg.0.cn.present eq false, got false
+PASS. Expected tests/data/sample.bam bam.header.pg.0.id eq bwa, got bwa
+PASS. Expected tests/data/sample.bam bam.header.pg.0.pn eq bwa, got bwa
+PASS. Expected tests/data/sample.bam bam.header.pg.0.vn eq '0.7.17', got 0.7.17
+PASS. Expected tests/data/sample.bam bam.header.pg.0.cl eq 'bwa mem ref.fa reads.fq', got bwa mem ref.fa reads.fq
+PASS. Expected tests/data/sample.bam bam.header.pg.0.cl contains 'bwa mem', got bwa mem ref.fa reads.fq
+PASS. Expected tests/data/sample.bam bam.header.pg.1.id eq samtools, got samtools
+PASS. Expected tests/data/sample.bam bam.header.pg.1.pp eq bwa, got bwa
+PASS. Expected tests/data/sample.bam bam.header.pg.1.PP eq bwa, got bwa
+PASS. Expected tests/data/sample.bam bam.header.pg.1.vn eq '1.17', got 1.17
+PASS. Expected tests/data/sample.bam bam.header.pg.1.cl eq 'samtools sort', got samtools sort
+PASS. Expected tests/data/sample.bam bam.header.pg.0.present eq true, got true
+PASS. Expected tests/data/sample.bam bam.header.pg.1.present eq true, got true
+PASS. Expected tests/data/sample.bam bam.header.pg.2.present eq false, got false
+PASS. Expected tests/data/sample.bam bam.header.pg.0.pp.present eq false, got false
+PASS. Expected tests/data/sample.bam bam.header.pg.1.pp.present eq true, got true
 PASS. Expected tests/data/sample.bam bam.header.hd.vn eq '1.6', got 1.6
 PASS. Expected tests/data/sample.bam bam.header.hd.so eq coordinate, got coordinate
 PASS. Expected tests/data/sample.bam bam.header.hd.so ne queryname, got coordinate
