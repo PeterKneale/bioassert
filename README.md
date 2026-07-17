@@ -621,3 +621,4 @@ report names the first cell that does.
 Count values accept optional decimal multiplier suffixes: `K` = 1,000, `M` = 1,000,000,
 `G` = 1,000,000,000 (so `5K` is `5000`). These are case-insensitive and distinct from the
 binary, 1024-based size suffixes (`KB`, `MB`, `GB`) used by `file.size`.
+
