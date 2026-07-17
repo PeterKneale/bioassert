@@ -67,6 +67,28 @@ fn unless_skips_when_condition_holds() {
 }
 
 #[test]
+fn run_with_guard_error_exits_2() {
+    // A run file whose second line has a guard that cannot be evaluated: the guard errors,
+    // so that assertion is reported as ERROR and the whole run exits 2, while the first
+    // line's satisfied guard still passes.
+    let output = exec(&["run", "tests/data/conditional_error.txt"]);
+    assert_eq!(output.status.code(), Some(2));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("ERROR."),
+        "expected ERROR. in stderr: {stderr}"
+    );
+    assert!(
+        stderr.contains("guard could not be evaluated"),
+        "expected guard error message in stderr: {stderr}"
+    );
+    assert!(
+        String::from_utf8_lossy(&output.stdout).contains("PASS."),
+        "expected the satisfied line to still PASS"
+    );
+}
+
+#[test]
 fn guard_that_errors_exits_2() {
     let output = exec(&[
         "assert",

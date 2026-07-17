@@ -1,3 +1,4 @@
+use insta::assert_snapshot;
 use std::process::{Command, Output};
 
 fn exec(args: &[&str]) -> Output {
@@ -7,6 +8,74 @@ fn exec(args: &[&str]) -> Output {
         .args(args)
         .output()
         .expect("failed to run bioassert")
+}
+
+#[test]
+fn run_all_passing_compression_assertions() {
+    // Exercises every recognised label (none, gzip, bgzf, bzip2, xz, zstd, zip) end to end.
+    let output = exec(&["run", "tests/data/compression_assertions.txt"]);
+    assert!(
+        output.status.success(),
+        "expected exit code 0, got {}\nstdout:\n{}\nstderr:\n{}",
+        output.status,
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr),
+    );
+    assert_snapshot!(
+        "run_compression_stdout",
+        String::from_utf8_lossy(&output.stdout)
+    );
+}
+
+#[test]
+fn bzip2_file_is_detected_as_bzip2() {
+    let output = exec(&[
+        "assert",
+        "tests/data/plain.txt.bz2 file.compression eq bzip2",
+    ]);
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
+}
+
+#[test]
+fn xz_file_is_detected_as_xz() {
+    let output = exec(&["assert", "tests/data/plain.txt.xz file.compression eq xz"]);
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
+}
+
+#[test]
+fn zstd_file_is_detected_as_zstd() {
+    let output = exec(&[
+        "assert",
+        "tests/data/plain.txt.zst file.compression eq zstd",
+    ]);
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
+}
+
+#[test]
+fn zip_file_is_detected_as_zip() {
+    let output = exec(&["assert", "tests/data/plain.zip file.compression eq zip"]);
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
+}
+
+#[test]
+fn compressed_is_true_for_every_recognised_format() {
+    for path in [
+        "tests/data/plain.txt.bz2",
+        "tests/data/plain.txt.xz",
+        "tests/data/plain.txt.zst",
+        "tests/data/plain.zip",
+    ] {
+        let output = exec(&["assert", &format!("{path} file.compressed eq true")]);
+        assert!(
+            output.status.success(),
+            "expected PASS for {path}: {}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+    }
 }
 
 #[test]

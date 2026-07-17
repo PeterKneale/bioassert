@@ -1,0 +1,28 @@
+# Compression-format assertions covering every label the detector recognises (all passing).
+# Detection reads only the leading magic bytes and never decompresses, so these tiny
+# fixtures are enough. Drives the run_compression_stdout snapshot.
+
+# file.compression (string label): one assertion per recognised format
+tests/data/example.tsv file.compression eq none
+tests/data/plain.txt.gz file.compression eq gzip
+tests/data/sample.bam file.compression eq bgzf
+tests/data/plain.txt.bz2 file.compression eq bzip2
+tests/data/plain.txt.xz file.compression eq xz
+tests/data/plain.txt.zst file.compression eq zstd
+tests/data/plain.zip file.compression eq zip
+
+# string comparators on the label
+tests/data/plain.txt.bz2 file.compression ne gzip
+tests/data/plain.txt.xz file.compression starts x
+tests/data/plain.txt.zst file.compression ends td
+tests/data/plain.zip file.compression contains zi
+tests/data/plain.txt.bz2 file.compression matches '^bz'
+
+# file.compressed (boolean): true for every compressed format, false for plain text
+tests/data/example.tsv file.compressed eq false
+tests/data/plain.txt.gz file.compressed eq true
+tests/data/sample.bam file.compressed eq true
+tests/data/plain.txt.bz2 file.compressed eq true
+tests/data/plain.txt.xz file.compressed eq true
+tests/data/plain.txt.zst file.compressed eq true
+tests/data/plain.zip file.compressed eq true
