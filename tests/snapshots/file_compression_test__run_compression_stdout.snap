@@ -1,0 +1,23 @@
+---
+source: tests/file_compression_test.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+PASS. Expected tests/data/example.tsv file.compression eq none, got none
+PASS. Expected tests/data/plain.txt.gz file.compression eq gzip, got gzip
+PASS. Expected tests/data/sample.bam file.compression eq bgzf, got bgzf
+PASS. Expected tests/data/plain.txt.bz2 file.compression eq bzip2, got bzip2
+PASS. Expected tests/data/plain.txt.xz file.compression eq xz, got xz
+PASS. Expected tests/data/plain.txt.zst file.compression eq zstd, got zstd
+PASS. Expected tests/data/plain.zip file.compression eq zip, got zip
+PASS. Expected tests/data/plain.txt.bz2 file.compression ne gzip, got bzip2
+PASS. Expected tests/data/plain.txt.xz file.compression starts x, got xz
+PASS. Expected tests/data/plain.txt.zst file.compression ends td, got zstd
+PASS. Expected tests/data/plain.zip file.compression contains zi, got zip
+PASS. Expected tests/data/plain.txt.bz2 file.compression matches '^bz', got bzip2
+PASS. Expected tests/data/example.tsv file.compressed eq false, got false
+PASS. Expected tests/data/plain.txt.gz file.compressed eq true, got true
+PASS. Expected tests/data/sample.bam file.compressed eq true, got true
+PASS. Expected tests/data/plain.txt.bz2 file.compressed eq true, got true
+PASS. Expected tests/data/plain.txt.xz file.compressed eq true, got true
+PASS. Expected tests/data/plain.txt.zst file.compressed eq true, got true
+PASS. Expected tests/data/plain.zip file.compressed eq true, got true

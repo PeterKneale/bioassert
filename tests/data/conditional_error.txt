@@ -1,0 +1,7 @@
+# A run containing a guard that cannot be evaluated. The second guard reads file.size on a
+# missing file, which errors rather than returning false, so that assertion is reported as
+# ERROR and the run exits 2. The first line's guard is satisfied and passes, so this also
+# exercises a mixed run (a PASS on stdout alongside a guard ERROR on stderr).
+
+tests/data/example.tsv tsv.columns.count eq 3 if tests/data/example.tsv file.exists eq true
+tests/data/example.tsv tsv.lines.count gt 0 if tests/data/missing.tsv file.size gt 0B
