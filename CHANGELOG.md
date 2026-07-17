@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.0](https://github.com/PeterKneale/bioassert/compare/v5.0.1...v5.1.0) - 2026-07-17
+
+### Added
+
+- add @PG program header inspection and assertions ([#74](https://github.com/PeterKneale/bioassert/pull/74)) ([#77](https://github.com/PeterKneale/bioassert/pull/77))
+
+### Other
+
+- Update README.md ([#80](https://github.com/PeterKneale/bioassert/pull/80))
+- Add PG header check for samtools sort in README ([#79](https://github.com/PeterKneale/bioassert/pull/79))
+- Add permissions ([#78](https://github.com/PeterKneale/bioassert/pull/78))
+- add case insensitive tests ([#75](https://github.com/PeterKneale/bioassert/pull/75))
+- add a metrics overview table and exercise every metric in the passing fixture ([#72](https://github.com/PeterKneale/bioassert/pull/72))
+
 ## [5.0.1](https://github.com/PeterKneale/bioassert/compare/v5.0.0...v5.0.1) - 2026-06-27
 
 ### Other
