@@ -1,6 +1,6 @@
 {
   "name": "bioassert",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "description": "Write bioassert assertions and wire them into Nextflow pipelines",
   "homepage": "https://github.com/PeterKneale/bioassert",
   "license": "MIT",
