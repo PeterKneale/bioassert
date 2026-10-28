@@ -145,7 +145,9 @@ out.vcf.gz  file.size  gt  0B  if out.vcf.gz file.compression eq bgzf
 - **FASTA reference**: `fasta.seq.count`, `fasta.length` (total bases), and named contigs
   (`fasta.seq.0.name`, `.length`).
 - **FASTQ reads**: `fastq.valid eq true` (every record well formed, file not truncated; gzip is
-  read transparently). Use it as a guard for any downstream check on the same file.
+  read transparently), `fastq.read.count gte N`, `fastq.read.length.max lte <kit length>`,
+  `fastq.read.length.min gte <trim floor>` and `fastq.quality.encoding eq phred33`. The
+  aggregates error on an invalid file, so guard them with `fastq.valid` when that should skip.
 - **VCF / generic text outputs**: `file.exists`, `file.empty eq false`, `file.lines gte N`.
 - **Tool logs / plain-text outputs**: `file.contents contains '<success marker>'` to confirm a completion line, and
   `file.contents not contains 'Exception'` (or `not matches 'ERROR|FATAL'`) to confirm an error word appears

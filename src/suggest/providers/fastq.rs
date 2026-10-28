@@ -1,12 +1,15 @@
 use crate::core::BioAssertError;
-use crate::fastq::functions::scan;
+use crate::fastq::functions::{QualityEncoding, scan};
 use crate::suggest::Suggestion;
 use crate::suggest::provider::SuggestionProvider;
+use crate::suggest::suggestion::band;
 use std::path::Path;
 
-/// Suggests the default check for a FASTQ file (`.fastq`, `.fq`, optionally `.gz`): that it
-/// parses as well-formed records. Emitted whether or not the file currently passes, since a
-/// malformed read set is never the expectation.
+/// Suggests the default checks for a FASTQ file (`.fastq`, `.fq`, optionally `.gz`): that it
+/// parses as well-formed records, and when it does, a +/- 50% band on the read count, the
+/// current shortest and longest read as bounds, and the quality encoding when it could be
+/// inferred. The validity check is emitted whether or not the file currently passes, since a
+/// malformed read set is never the expectation; the rest need a complete scan.
 pub struct FastqProvider;
 
 impl SuggestionProvider for FastqProvider {
@@ -24,14 +27,60 @@ impl SuggestionProvider for FastqProvider {
     }
 
     fn suggest(&self, path: &Path) -> Result<Vec<Suggestion>, BioAssertError> {
-        scan(path)?;
-        Ok(vec![Suggestion::new(
-            path.to_string_lossy().as_ref(),
+        let resource = path.to_string_lossy();
+        let scan = scan(path)?;
+        let mut suggestions = vec![Suggestion::new(
+            resource.as_ref(),
             "fastq.valid",
             "eq",
             "true",
             Some("every record is well formed"),
-        )])
+        )];
+        if !scan.is_valid() {
+            return Ok(suggestions);
+        }
+        let (lower, upper) = band(scan.reads);
+        suggestions.extend([
+            Suggestion::new(
+                resource.as_ref(),
+                "fastq.read.count",
+                "gte",
+                lower.to_string(),
+                Some(&format!("read count within +/- 50% of {}", scan.reads)),
+            ),
+            Suggestion::new(
+                resource.as_ref(),
+                "fastq.read.count",
+                "lte",
+                upper.to_string(),
+                None,
+            ),
+            Suggestion::new(
+                resource.as_ref(),
+                "fastq.read.length.min",
+                "gte",
+                scan.min_length.to_string(),
+                Some("shortest read"),
+            ),
+            Suggestion::new(
+                resource.as_ref(),
+                "fastq.read.length.max",
+                "lte",
+                scan.max_length.to_string(),
+                Some("longest read"),
+            ),
+        ]);
+        let encoding = scan.encoding();
+        if encoding != QualityEncoding::Ambiguous {
+            suggestions.push(Suggestion::new(
+                resource.as_ref(),
+                "fastq.quality.encoding",
+                "eq",
+                encoding.as_str(),
+                Some("inferred from the quality characters"),
+            ));
+        }
+        Ok(suggestions)
     }
 }
 
@@ -52,21 +101,46 @@ mod tests {
     }
 
     #[test]
-    fn suggests_valid_check() {
+    fn sample_fastq_suggests_full_set() {
         let suggestions = FastqProvider
             .suggest(Path::new("tests/data/sample.fastq"))
             .unwrap();
-        assert_eq!(suggestions.len(), 1);
-        assert_eq!(suggestions[0].metric, "fastq.valid");
-        assert_eq!(suggestions[0].expected, "true");
+        let lines: Vec<(&str, &str, &str)> = suggestions
+            .iter()
+            .map(|s| (s.metric.as_str(), s.comparator, s.expected.as_str()))
+            .collect();
+        assert_eq!(
+            lines,
+            [
+                ("fastq.valid", "eq", "true"),
+                ("fastq.read.count", "gte", "1"),
+                ("fastq.read.count", "lte", "5"),
+                ("fastq.read.length.min", "gte", "8"),
+                ("fastq.read.length.max", "lte", "100"),
+                ("fastq.quality.encoding", "eq", "phred33"),
+            ]
+        );
     }
 
     #[test]
-    fn suggests_valid_check_for_invalid_file() {
+    fn invalid_file_suggests_only_the_validity_check() {
         let suggestions = FastqProvider
             .suggest(Path::new("tests/data/truncated.fastq"))
             .unwrap();
+        assert_eq!(suggestions.len(), 1);
         assert_eq!(suggestions[0].metric, "fastq.valid");
+    }
+
+    #[test]
+    fn ambiguous_encoding_is_not_suggested() {
+        let suggestions = FastqProvider
+            .suggest(Path::new("tests/data/ambiguous.fastq"))
+            .unwrap();
+        assert!(
+            suggestions
+                .iter()
+                .all(|s| s.metric != "fastq.quality.encoding")
+        );
     }
 
     #[test]

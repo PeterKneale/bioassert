@@ -12,3 +12,17 @@ PASS. Expected tests/data/truncated.fastq.gz fastq.valid eq false, got false (re
 PASS. Expected tests/data/sample.fasta fastq.valid eq false, got false (record 0 (line 1): invalid name prefix)
 PASS. Expected tests/data/sample.fastq file.size gt 0B, got 385B
 SKIP. Skipped (condition not met): tests/data/truncated.fastq fastq.valid eq true, got false (record 1 (line 5): unexpected end of file)
+PASS. Expected tests/data/sample.fastq fastq.read.count eq 3, got 3
+PASS. Expected tests/data/sample.fastq.gz fastq.read.count eq 3, got 3
+PASS. Expected tests/data/sample.fastq fastq.length eq 128, got 128
+PASS. Expected tests/data/sample.fastq fastq.read.length.min eq 8, got 8
+PASS. Expected tests/data/sample.fastq fastq.read.length.max eq 100, got 100
+PASS. Expected tests/data/sample.fastq fastq.read.length.max lte 151, got 100
+PASS. Expected tests/data/empty.fastq fastq.read.count eq 0, got 0
+PASS. Expected tests/data/empty.fastq fastq.read.length.max eq 0, got 0
+PASS. Expected tests/data/sample.fastq fastq.quality.encoding eq phred33, got phred33
+PASS. Expected tests/data/phred64.fastq fastq.quality.encoding eq phred64, got phred64
+PASS. Expected tests/data/ambiguous.fastq fastq.quality.encoding eq ambiguous, got ambiguous
+PASS. Expected tests/data/empty.fastq fastq.quality.encoding eq ambiguous, got ambiguous
+PASS. Expected tests/data/sample.fastq fastq.quality.encoding ne phred64, got phred33
+SKIP. Skipped (condition not met): tests/data/truncated.fastq fastq.valid eq true, got false (record 1 (line 5): unexpected end of file)

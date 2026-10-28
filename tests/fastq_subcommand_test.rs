@@ -97,3 +97,33 @@ fn guard_on_invalid_file_skips() {
         "stdout: {stdout}"
     );
 }
+
+#[test]
+fn assert_read_count_passes() {
+    let output = exec(&["assert", "tests/data/sample.fastq.gz fastq.read.count eq 3"]);
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("PASS."));
+}
+
+#[test]
+fn assert_encoding_fails_on_phred64_file() {
+    let output = exec(&[
+        "assert",
+        "tests/data/phred64.fastq fastq.quality.encoding eq phred33",
+    ]);
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stdout).contains("got phred64"));
+}
+
+#[test]
+fn aggregate_on_invalid_file_errors_with_reason() {
+    let output = exec(&["assert", "tests/data/truncated.fastq fastq.read.count eq 1"]);
+    assert_eq!(output.status.code(), Some(2));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains(
+            "ERROR. tests/data/truncated.fastq: record 1 (line 5): unexpected end of file"
+        ),
+        "stderr: {stderr}"
+    );
+}

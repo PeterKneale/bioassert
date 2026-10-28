@@ -93,16 +93,18 @@ string that the matched executor interprets.
    multi-gigabyte genomes) keyed by path in a thread-local, so a `run` over many `fasta.*` assertions reads each
    file once. The `fasta.seq.*` prefix leaves room for future index metrics (e.g. `fasta.index.*`).
 
-6. **`src/fastq/`** — FASTQ read-set metric executors under the `fastq.*` namespace, currently `valid`
-   (`fastq.valid`, a boolean: every record is a well-formed four-line record and the file ends on a record
-   boundary). `functions.rs` is the only place that touches `noodles::fastq` and `flate2`; its `scan` streams the
-   file once, transparently decompressing gzip and bgzf (sniffed through `file::compression::functions`, never by
-   extension; other compressions are an error), and caches a fixed-size `FastqScan { reads, invalid }` summary per
-   path in a thread-local, never record data, so memory is constant for any read count. `fastq.valid` reports
-   `false` rather than erroring on a malformed or truncated file (the `file.exists` pattern), so it is the safe
-   guard for the rest of the family. Read sets are assessed in aggregate only: per-record `fastq.read.<n>.*`
-   metrics are deliberately not planned; aggregates (count, length and quality summaries) are the intended next
-   additions on the same pass. See `specs/fastq.md`.
+6. **`src/fastq/`** — FASTQ read-set metric executors under the `fastq.*` namespace, assessed in aggregate only
+   (per-record `fastq.read.<n>.*` metrics are deliberately not provided): `valid` (`fastq.valid`, a boolean: every
+   record is a well-formed four-line record and the file ends on a record boundary), `count` (`fastq.read.count`,
+   `fastq.length`), `read_length` (`fastq.read.length.min`, `.max`) and `quality` (`fastq.quality.encoding`, one of
+   `phred33`, `phred64`, `ambiguous`, inferred from the quality-character range in a fixed order). `functions.rs`
+   is the only place that touches `noodles::fastq` and `flate2`; its `scan` streams the file once, transparently
+   decompressing gzip and bgzf (sniffed through `file::compression::functions`, never by extension; other
+   compressions are an error), and caches a fixed-size `FastqScan` summary (counts, length and quality bounds, and
+   the reason if invalid) per path in a thread-local, never record data, so memory is constant for any read count.
+   `fastq.valid` reports `false` rather than erroring on a malformed or truncated file (the `file.exists` pattern)
+   and carries the reason as the result's `detail`; the aggregates go through `scan_valid` and are an ERROR with
+   the same reason on such a file, so `fastq.valid` is their guard. See `specs/fastq.md`.
 
 7. **`src/text/`** — inline text resource executors under the `text.*` namespace: `value` (`text.value`, the literal
    compared as a string) and `length` (`text.length`, its character count compared numerically). The resource is the
@@ -211,9 +213,10 @@ bioassert suggest reads.tsv --force      # overwrite an existing output
   skipped; one that handles it but cannot read its properties records a warning (stderr) and is skipped, and the rest
   still contribute.
 - Defaults: every file gets `file.exists eq true` and `file.size gt 0B`. Schema-like counts are pinned with `eq`
-  (delimited columns, fasta records, bam `@SQ`); a fastq file gets `fastq.valid eq true`; quantities that vary run to
-  run get a +/- 50% band of a `gte` lower bound and an `lte` upper bound (delimited rows, fasta total length). These
-  are guesses from the current file, not verified expectations.
+  (delimited columns, fasta records, bam `@SQ`); quantities that vary run to run get a +/- 50% band of a `gte` lower
+  bound and an `lte` upper bound (delimited rows, fasta total length, fastq read count). A fastq file also gets
+  `fastq.valid eq true`, its current shortest and longest read as bounds, and its quality encoding when not
+  ambiguous. These are guesses from the current file, not verified expectations.
 - Exit codes: `0` on success, `2` on a fatal error (output exists without `--force`, write fails, or nothing could be
   suggested). Warnings alone keep the exit code `0`. The full design is in `specs/suggest.md`.
 

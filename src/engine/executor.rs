@@ -10,7 +10,9 @@ use crate::delimited::{
 use crate::engine::assertion::Assertion;
 use crate::engine::report::{AssertionReport, AssertionResult, Outcome};
 use crate::fasta::{FastaCountExecutor, FastaSequenceFieldExecutor, FastaSequencePresentExecutor};
-use crate::fastq::FastqValidExecutor;
+use crate::fastq::{
+    FastqCountExecutor, FastqQualityEncodingExecutor, FastqReadLengthExecutor, FastqValidExecutor,
+};
 use crate::file::{
     FileCompressedExecutor, FileCompressionExecutor, FileContentsExecutor, FileEmptyExecutor,
     FileExistsExecutor, FileLinesExecutor, FileSizeExecutor,
@@ -214,6 +216,15 @@ fn dispatch(
         return run(e, request);
     }
     if let Some(e) = FastqValidExecutor::try_parse(metric) {
+        return run(e, request);
+    }
+    if let Some(e) = FastqCountExecutor::try_parse(metric) {
+        return run(e, request);
+    }
+    if let Some(e) = FastqReadLengthExecutor::try_parse(metric) {
+        return run(e, request);
+    }
+    if let Some(e) = FastqQualityEncodingExecutor::try_parse(metric) {
         return run(e, request);
     }
     if let Some(e) = TextValueExecutor::try_parse(metric) {
