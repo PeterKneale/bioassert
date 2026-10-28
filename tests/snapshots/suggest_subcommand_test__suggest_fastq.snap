@@ -11,3 +11,8 @@ tests/data/sample.fastq.gz file.size gt 0B  # file is not empty
 
 # fastq
 tests/data/sample.fastq.gz fastq.valid eq true  # every record is well formed
+tests/data/sample.fastq.gz fastq.read.count gte 1  # read count within +/- 50% of 3
+tests/data/sample.fastq.gz fastq.read.count lte 5
+tests/data/sample.fastq.gz fastq.read.length.min gte 8  # shortest read
+tests/data/sample.fastq.gz fastq.read.length.max lte 100  # longest read
+tests/data/sample.fastq.gz fastq.quality.encoding eq phred33  # inferred from the quality characters

@@ -287,13 +287,18 @@ ref.fasta   fasta.seq.24.present     eq   true                        # a record
 ### FASTQ checks
 
 The `fastq.*` family streams a FASTQ file once, transparently decompressing gzip and bgzf (detected from the magic
-bytes, not the file name). `fastq.valid` reports whether every record is well formed: four lines, an `@` header with a
-name, a `+` separator and a quality string exactly as long as the sequence, with no partial record at the end. A
-malformed or truncated file reports `false` rather than erroring, so it also works as a guard.
+bytes, not the file name), and assesses the read set in aggregate. `fastq.valid` reports whether every record is well
+formed: four lines, an `@` header with a name, a `+` separator and a quality string exactly as long as the sequence,
+with no partial record at the end. A malformed or truncated file reports `false` rather than erroring, so it also works
+as a guard; the other `fastq.*` metrics error on such a file, with the reason.
 
 ```text
-reads_R1.fastq.gz   fastq.valid   eq   true                                           # every record is well formed
-reads_R1.fastq.gz   file.size     gt   1GB  if reads_R1.fastq.gz fastq.valid eq true  # only once it parses
+reads_R1.fastq.gz   fastq.valid              eq   true       # every record is well formed
+reads_R1.fastq.gz   fastq.read.count         gte  1000000    # at least a million reads
+reads_R1.fastq.gz   fastq.read.length.max    lte  151        # nothing longer than the kit
+reads_R1.fastq.gz   fastq.read.length.min    gte  20         # after trimming
+reads_R1.fastq.gz   fastq.quality.encoding   eq   phred33    # not a legacy phred64 file
+reads_R1.fastq.gz   fastq.length             gt   0   if reads_R1.fastq.gz fastq.valid eq true  # skip if unsound
 ```
 
 ### Text checks
@@ -507,6 +512,11 @@ in the sections below.
 | FASTA     | `fasta.seq.N.present`             | Whether a record exists at index N                                |
 | FASTA     | `fasta.seq.N.description.present` | Whether record N has a (non-empty) description                    |
 | FASTQ     | `fastq.valid`                     | Whether every record is well-formed four-line FASTQ               |
+| FASTQ     | `fastq.read.count`                | Number of records                                                 |
+| FASTQ     | `fastq.length`                    | Total bases summed across all records                             |
+| FASTQ     | `fastq.read.length.min`           | Length of the shortest read                                       |
+| FASTQ     | `fastq.read.length.max`           | Length of the longest read                                        |
+| FASTQ     | `fastq.quality.encoding`          | `phred33`, `phred64` or `ambiguous`                               |
 | Text      | `text.value`                      | The inline literal string itself                                  |
 | Text      | `text.length`                     | Character count (Unicode scalars)                                 |
 
@@ -592,17 +602,28 @@ and descriptions that contain dots, dashes, colons or spaces (`'NC_000001.11'`, 
 
 ### FASTQ metrics
 
-Metrics on a FASTQ read set under the `fastq.*` namespace. The file is streamed once and never held in memory; gzip and
-bgzf compression is decompressed transparently. Other compression formats (bzip2, xz, zstd, zip) are an **error**.
+Metrics on a FASTQ read set under the `fastq.*` namespace, assessed in aggregate (there are no per-record metrics).
+The file is streamed once and never held in memory; gzip and bgzf compression is decompressed transparently. Other
+compression formats (bzip2, xz, zstd, zip) are an **error**.
 
-| Metric        | Description                                                                | Comparators | Value   |
-|---------------|----------------------------------------------------------------------------|-------------|---------|
-| `fastq.valid` | Whether every record is well formed and the file ends at a record boundary | `eq`, `ne`  | boolean |
+| Metric                   | Description                                                                | Comparators                                         | Value   |
+|--------------------------|----------------------------------------------------------------------------|-----------------------------------------------------|---------|
+| `fastq.valid`            | Whether every record is well formed and the file ends at a record boundary | `eq`, `ne`                                          | boolean |
+| `fastq.read.count`       | Number of records                                                          | `eq`, `ne`, `lt`, `lte`, `gt`, `gte`                | count   |
+| `fastq.length`           | Total bases summed across all records                                      | `eq`, `ne`, `lt`, `lte`, `gt`, `gte`                | count   |
+| `fastq.read.length.min`  | Length of the shortest read (`0` on an empty file)                         | `eq`, `ne`, `lt`, `lte`, `gt`, `gte`                | count   |
+| `fastq.read.length.max`  | Length of the longest read (`0` on an empty file)                          | `eq`, `ne`, `lt`, `lte`, `gt`, `gte`                | count   |
+| `fastq.quality.encoding` | `phred33`, `phred64` or `ambiguous`, inferred from the quality characters  | `eq`, `ne`, `starts`, `ends`, `contains`, `matches` | string  |
 
 A record is well formed when it is exactly four lines: an `@` header with a non-empty name, the sequence, a `+`
 separator and a quality string the same length as the sequence. Multi-line (wrapped) FASTQ is not accepted. An empty
-file is valid with zero records. A file that opens but does not parse reports `false` rather than erroring, with the
-reason in brackets on the report line (`got false (record 1 (line 5): unexpected end of file)`); a missing file is still an **error**.
+file is valid with zero records. A file that opens but does not parse reports `fastq.valid` as `false` rather than
+erroring, with the reason in brackets on the report line (`got false (record 1 (line 5): unexpected end of file)`);
+every other `fastq.*` metric on such a file is an **error** carrying the same reason, so guard them with `fastq.valid`
+to skip instead. A missing file is always an **error**.
+
+The encoding is a heuristic: any quality character below `@` proves `phred33`; otherwise any character above `J` is
+taken as `phred64`; a file whose characters all lie between, or an empty file, is `ambiguous`.
 
 ### Text metrics
 

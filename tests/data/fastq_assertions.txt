@@ -15,3 +15,23 @@ tests/data/sample.fasta fastq.valid eq false
 # As a guard
 tests/data/sample.fastq file.size gt 0B if tests/data/sample.fastq fastq.valid eq true
 tests/data/truncated.fastq file.size gt 0B if tests/data/truncated.fastq fastq.valid eq true
+
+# Aggregates over tests/data/sample.fastq: 3 reads of 100, 20 and 8 bases
+tests/data/sample.fastq fastq.read.count eq 3
+tests/data/sample.fastq.gz fastq.read.count eq 3
+tests/data/sample.fastq fastq.length eq 128
+tests/data/sample.fastq fastq.read.length.min eq 8
+tests/data/sample.fastq fastq.read.length.max eq 100
+tests/data/sample.fastq fastq.read.length.max lte 151
+tests/data/empty.fastq fastq.read.count eq 0
+tests/data/empty.fastq fastq.read.length.max eq 0
+
+# Quality encoding inferred from the quality characters
+tests/data/sample.fastq fastq.quality.encoding eq phred33
+tests/data/phred64.fastq fastq.quality.encoding eq phred64
+tests/data/ambiguous.fastq fastq.quality.encoding eq ambiguous
+tests/data/empty.fastq fastq.quality.encoding eq ambiguous
+tests/data/sample.fastq fastq.quality.encoding ne phred64
+
+# Aggregates on an invalid file are an error; guard with fastq.valid to skip instead
+tests/data/truncated.fastq fastq.read.count gt 0 if tests/data/truncated.fastq fastq.valid eq true

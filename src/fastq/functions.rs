@@ -10,17 +10,68 @@ use std::io::{self, BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
-/// What one streaming pass over a FASTQ file found: how many records were read before the
-/// pass stopped and, if the file is not valid FASTQ, why. Never holds record data.
-#[derive(Debug, Clone, PartialEq)]
+/// What one streaming pass over a FASTQ file found: the aggregates over the records read
+/// before the pass stopped and, if the file is not valid FASTQ, why. Never holds record data.
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct FastqScan {
     pub reads: u64,
+    pub bases: u64,
+    pub min_length: u64,
+    pub max_length: u64,
+    /// Lowest and highest quality characters seen; `None` until a quality byte is read.
+    pub min_quality: Option<u8>,
+    pub max_quality: Option<u8>,
     pub invalid: Option<String>,
+}
+
+/// Quality encoding inferred from the range of quality characters, see [`FastqScan::encoding`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum QualityEncoding {
+    Phred33,
+    Phred64,
+    Ambiguous,
+}
+
+impl QualityEncoding {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Phred33 => "phred33",
+            Self::Phred64 => "phred64",
+            Self::Ambiguous => "ambiguous",
+        }
+    }
 }
 
 impl FastqScan {
     pub fn is_valid(&self) -> bool {
         self.invalid.is_none()
+    }
+
+    /// A character below `@` (64) cannot be phred64, so it proves phred33. Otherwise a
+    /// character above `J` (74, Q41 in phred33) is taken as phred64. Everything in between,
+    /// or no quality bytes at all, is ambiguous.
+    pub fn encoding(&self) -> QualityEncoding {
+        match (self.min_quality, self.max_quality) {
+            (Some(min), _) if min < 64 => QualityEncoding::Phred33,
+            (Some(_), Some(max)) if max > 74 => QualityEncoding::Phred64,
+            _ => QualityEncoding::Ambiguous,
+        }
+    }
+
+    fn add(&mut self, sequence: &[u8], quality: &[u8]) {
+        let length = sequence.len() as u64;
+        self.bases += length;
+        self.min_length = if self.reads == 0 {
+            length
+        } else {
+            self.min_length.min(length)
+        };
+        self.max_length = self.max_length.max(length);
+        if let (Some(&lo), Some(&hi)) = (quality.iter().min(), quality.iter().max()) {
+            self.min_quality = Some(self.min_quality.map_or(lo, |q| q.min(lo)));
+            self.max_quality = Some(self.max_quality.map_or(hi, |q| q.max(hi)));
+        }
+        self.reads += 1;
     }
 }
 
@@ -45,6 +96,19 @@ pub fn scan(file: &Path) -> Result<Rc<FastqScan>, FileError> {
             .insert(file.to_path_buf(), Rc::clone(&scan))
     });
     Ok(scan)
+}
+
+/// As [`scan`], but an invalid file is an error carrying the reason, for the aggregate metrics
+/// whose values would be misleading on a partial read. Guard them with `fastq.valid` to skip.
+pub fn scan_valid(file: &Path) -> Result<Rc<FastqScan>, FileError> {
+    let scan = scan(file)?;
+    match &scan.invalid {
+        Some(reason) => Err(FileError::new(
+            file,
+            io::Error::new(io::ErrorKind::InvalidData, reason.clone()),
+        )),
+        None => Ok(scan),
+    }
 }
 
 #[cfg(test)]
@@ -80,39 +144,39 @@ fn open(file: &Path) -> Result<Box<dyn BufRead>, FileError> {
 fn validate<R: BufRead>(reader: R) -> FastqScan {
     let mut reader = fastq::io::Reader::new(reader);
     let mut record = fastq::Record::default();
-    let mut reads = 0u64;
+    let mut scan = FastqScan::default();
     loop {
         match reader.read_record(&mut record) {
             Ok(0) => break,
             Ok(_) => {}
             Err(e) if e.kind() == io::ErrorKind::UnexpectedEof => {
-                return invalid(reads, "unexpected end of file");
+                return invalid(scan, "unexpected end of file");
             }
-            Err(e) => return invalid(reads, e),
+            Err(e) => return invalid(scan, e),
         }
         if record.name().is_empty() {
-            return invalid(reads, "empty name");
+            return invalid(scan, "empty name");
         }
-        let (sequence, quality) = (record.sequence().len(), record.quality_scores().len());
-        if sequence != quality {
+        let (sequence, quality) = (record.sequence(), record.quality_scores());
+        if sequence.len() != quality.len() {
             return invalid(
-                reads,
-                format!("quality length {quality} does not match sequence length {sequence}"),
+                scan,
+                format!(
+                    "quality length {} does not match sequence length {}",
+                    quality.len(),
+                    sequence.len()
+                ),
             );
         }
-        reads += 1;
+        scan.add(sequence, quality);
     }
-    FastqScan {
-        reads,
-        invalid: None,
-    }
+    scan
 }
 
-fn invalid(reads: u64, reason: impl Display) -> FastqScan {
-    FastqScan {
-        reads,
-        invalid: Some(format!("record {reads} (line {}): {reason}", reads * 4 + 1)),
-    }
+fn invalid(mut scan: FastqScan, reason: impl Display) -> FastqScan {
+    let reads = scan.reads;
+    scan.invalid = Some(format!("record {reads} (line {}): {reason}", reads * 4 + 1));
+    scan
 }
 
 #[cfg(test)]
@@ -132,6 +196,65 @@ mod tests {
         let scan = validate_bytes(VALID);
         assert!(scan.is_valid());
         assert_eq!(scan.reads, 2);
+        assert_eq!(scan.bases, 12);
+        assert_eq!(scan.min_length, 4);
+        assert_eq!(scan.max_length, 8);
+        assert_eq!(scan.min_quality, Some(b'I'));
+        assert_eq!(scan.max_quality, Some(b'I'));
+    }
+
+    #[test]
+    fn empty_sequence_sets_min_length_zero() {
+        let scan = validate_bytes(b"@r1\nACGT\n+\nIIII\n@r2\n\n+\n\n");
+        assert_eq!(scan.min_length, 0);
+        assert_eq!(scan.max_length, 4);
+        assert_eq!(scan.bases, 4);
+    }
+
+    #[test]
+    fn empty_file_has_zero_aggregates_and_ambiguous_encoding() {
+        let scan = validate_bytes(b"");
+        assert_eq!((scan.bases, scan.min_length, scan.max_length), (0, 0, 0));
+        assert_eq!(scan.min_quality, None);
+        assert_eq!(scan.encoding(), QualityEncoding::Ambiguous);
+    }
+
+    #[test]
+    fn encoding_phred33_when_any_char_below_at() {
+        let scan = validate_bytes(b"@r1\nACGT\n+\n#I~h\n");
+        assert_eq!(scan.encoding(), QualityEncoding::Phred33);
+    }
+
+    #[test]
+    fn encoding_phred64_when_all_at_or_above_and_some_above_j() {
+        let scan = validate_bytes(b"@r1\nACGT\n+\n@hhB\n");
+        assert_eq!(scan.encoding(), QualityEncoding::Phred64);
+    }
+
+    #[test]
+    fn encoding_ambiguous_between_at_and_j() {
+        let scan = validate_bytes(b"@r1\nACGT\n+\n@CIJ\n");
+        assert_eq!(scan.encoding(), QualityEncoding::Ambiguous);
+    }
+
+    #[test]
+    fn invalid_scan_keeps_aggregates_of_records_before_the_fault() {
+        let scan = validate_bytes(b"@r1\nACGTACGT\n+\nIIIIIIII\n@r2\nACGT\n");
+        assert!(!scan.is_valid());
+        assert_eq!(scan.reads, 1);
+        assert_eq!(scan.bases, 8);
+    }
+
+    #[test]
+    fn scan_valid_errors_with_the_reason() {
+        clear_cache();
+        let err = scan_valid(Path::new("tests/data/truncated.fastq")).unwrap_err();
+        assert_eq!(err.source.kind(), io::ErrorKind::InvalidData);
+        assert_eq!(
+            err.to_string(),
+            "tests/data/truncated.fastq: record 1 (line 5): unexpected end of file"
+        );
+        assert!(scan_valid(Path::new("tests/data/sample.fastq")).is_ok());
     }
 
     #[test]
