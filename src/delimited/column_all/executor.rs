@@ -54,6 +54,7 @@ impl AssertionExecutor for DelimitedColumnAllExecutor {
         Ok(AssertionExecutionResult {
             success,
             actual: Value::StringValue(actual),
+            detail: None,
         })
     }
 }

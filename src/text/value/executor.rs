@@ -22,6 +22,7 @@ impl AssertionExecutor for TextValueExecutor {
         Ok(AssertionExecutionResult {
             success,
             actual: Value::StringValue(request.locator.clone()),
+            detail: None,
         })
     }
 }

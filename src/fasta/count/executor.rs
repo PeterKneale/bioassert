@@ -38,7 +38,11 @@ impl AssertionExecutor for FastaCountExecutor {
         };
         let actual = Value::IntegerValue(value);
         let success = request.comparator.compare(&actual, &expected);
-        Ok(AssertionExecutionResult { success, actual })
+        Ok(AssertionExecutionResult {
+            success,
+            actual,
+            detail: None,
+        })
     }
 }
 

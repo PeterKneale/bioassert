@@ -7,8 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `bioassert` is a Rust CLI tool for asserting properties of resources using a simple declarative syntax, designed to
 validate pipeline outputs in bioinformatics workflows. The primary resource is a file, but the first token of an
 assertion is a generic resource locator whose meaning is decided by the metric namespace (`file.*`, `tsv.*`, `bam.*`,
-`fasta.*` treat it as a path; `text.*` treats it as an inline literal). It is a single crate that builds both a library
-(`src/lib.rs`) and a binary (`src/main.rs`); only the `bioassert` crate is published.
+`fasta.*`, `fastq.*` treat it as a path; `text.*` treats it as an inline literal). It is a single crate that builds both
+a library (`src/lib.rs`) and a binary (`src/main.rs`); only the `bioassert` crate is published.
 
 ## Commands
 
@@ -47,6 +47,8 @@ string that the matched executor interprets.
       `*.column.N.all not contains 'X'` correctly means "no cell contains X" rather than the De Morgan dual
     - `values/` — `Value` enum (and `BytesValue`); size units are normalised to bytes
     - `executor.rs` — the `AssertionExecutor` trait (`try_parse` + `execute`) and `AssertionExecutionResult`
+      (`success`, `actual` and an optional `detail` that the engine appends to the report line in brackets, for
+      executors whose actual value alone does not tell the reader why, e.g. `fastq.valid`)
     - `errors.rs` / `file_error.rs` — `BioAssertError` and `FileError`
     - `strings.rs` — `strip_quotes`, applied centrally to the locator in `engine::executor::run_metric` (so a quoted
       path or literal containing spaces resolves) and reused by executors whose expected value may be quoted
@@ -91,14 +93,25 @@ string that the matched executor interprets.
    multi-gigabyte genomes) keyed by path in a thread-local, so a `run` over many `fasta.*` assertions reads each
    file once. The `fasta.seq.*` prefix leaves room for future index metrics (e.g. `fasta.index.*`).
 
-6. **`src/text/`** — inline text resource executors under the `text.*` namespace: `value` (`text.value`, the literal
+6. **`src/fastq/`** — FASTQ read-set metric executors under the `fastq.*` namespace, currently `valid`
+   (`fastq.valid`, a boolean: every record is a well-formed four-line record and the file ends on a record
+   boundary). `functions.rs` is the only place that touches `noodles::fastq` and `flate2`; its `scan` streams the
+   file once, transparently decompressing gzip and bgzf (sniffed through `file::compression::functions`, never by
+   extension; other compressions are an error), and caches a fixed-size `FastqScan { reads, invalid }` summary per
+   path in a thread-local, never record data, so memory is constant for any read count. `fastq.valid` reports
+   `false` rather than erroring on a malformed or truncated file (the `file.exists` pattern), so it is the safe
+   guard for the rest of the family. Read sets are assessed in aggregate only: per-record `fastq.read.<n>.*`
+   metrics are deliberately not planned; aggregates (count, length and quality summaries) are the intended next
+   additions on the same pass. See `specs/fastq.md`.
+
+7. **`src/text/`** — inline text resource executors under the `text.*` namespace: `value` (`text.value`, the literal
    compared as a string) and `length` (`text.length`, its character count compared numerically). The resource is the
    assertion's first token taken verbatim (after central quote-stripping), so there is no I/O and the metrics never
    produce the "could not open" ERROR; they only PASS or FAIL. Same `executor.rs` + `functions.rs` shape as the other
    families. Useful as a guard input, with the caveat that a guard comparing literals known at generation time decides
    little the generator could not.
 
-7. **`src/engine/`** — ties it together:
+8. **`src/engine/`** — ties it together:
     - `assertions.pest` — PEG grammar defining the assertion syntax (referenced as
       `#[grammar = "engine/assertions.pest"]`)
     - `parser.rs` — wraps the PEG parser into `Assertion` structs; `parse_assertion` handles a single assertion,
@@ -108,25 +121,25 @@ string that the matched executor interprets.
     - `executor.rs` — `execute_all` / `execute`, which try each `*Executor` in turn and build an `AssertionReport`
     - `report.rs` — `AssertionReport`, `AssertionResult`, `Outcome`
 
-8. **`src/suggest/`** — the inverse of evaluation: inspects a file and proposes a default set of assertions, written
+9. **`src/suggest/`** — the inverse of evaluation: inspects a file and proposes a default set of assertions, written
    to `<file>.assertions.txt` (the same format `run` consumes). `suggestion.rs` (the `Suggestion` line type, its
    `render`, and the `band` helper for the +/- 50% bounds), `provider.rs` (the `SuggestionProvider` trait and the
    ordered `providers()` registry, mirroring the executor dispatch order), `orchestrator.rs` (`suggest()` returning a
-   `SuggestResult`), and `providers/{file,delimited,bam,fasta}.rs` (one provider per resource family, each reusing
+   `SuggestResult`), and `providers/{file,delimited,bam,fasta,fastq}.rs` (one provider per resource family, each reusing
    that family's property functions). The proposals are heuristic guesses from the file's current state, not verified
    expectations, hence "suggest"; the author reviews and tightens them. See `specs/suggest.md`.
 
-9. **Binary** (`src/main.rs`, `src/cli.rs`, `src/report.rs`) — `clap` derive API with three subcommands, `assert`
+10. **Binary** (`src/main.rs`, `src/cli.rs`, `src/report.rs`) — `clap` derive API with three subcommands, `assert`
    (single string), `run` (path to assertions file), and `suggest` (inspect a file and write suggested assertions).
    `src/report.rs` is the console/file presentation layer; the binary reaches the library modules via the
    `bioassert::` crate path.
 
 ## Adding a new metric
 
-1. Add a submodule under `src/file/`, `src/delimited/`, `src/bam/`, `src/fasta/`, or `src/text/` (or a new resource
-   family directory) with a `*Executor` implementing `core::AssertionExecutor` (`executor.rs` for parsing/dispatch,
-   `functions.rs` for the work). A file-backed executor reads `request.path()`; a non-file family (like `text`) reads
-   `request.locator` directly.
+1. Add a submodule under `src/file/`, `src/delimited/`, `src/bam/`, `src/fasta/`, `src/fastq/`, or `src/text/` (or a
+   new resource family directory) with a `*Executor` implementing `core::AssertionExecutor` (`executor.rs` for
+   parsing/dispatch, `functions.rs` for the work). A file-backed executor reads `request.path()`; a non-file family
+   (like `text`) reads `request.locator` directly.
 2. Re-export the new `*Executor` from that module's `mod.rs`.
 3. Add a `try_parse` dispatch line in `src/engine/executor.rs`.
 4. Extend `src/engine/assertions.pest` if new metric or value syntax is needed. The `metric` rule already accepts any
@@ -142,10 +155,10 @@ call `core::strip_quotes` to unwrap them.
 ## Resource types
 
 The first token of an assertion is a resource locator, not necessarily a file path. Its type is decided by the metric
-namespace, never by inspecting the locator: `file.*`, `tsv.*`, `bam.*` and `fasta.*` read the locator as a path
-(`request.path()`), while `text.*` reads it verbatim (`request.locator`) as an inline literal. There is no per-resource
-prefix on the locator, the metric's first segment already names the type. A mismatched pairing (e.g. `file.size` on a
-URL-looking locator) simply errors when the executor tries to open it.
+namespace, never by inspecting the locator: `file.*`, `tsv.*`, `bam.*`, `fasta.*` and `fastq.*` read the locator as a
+path (`request.path()`), while `text.*` reads it verbatim (`request.locator`) as an inline literal. There is no
+per-resource prefix on the locator, the metric's first segment already names the type. A mismatched pairing (e.g.
+`file.size` on a URL-looking locator) simply errors when the executor tries to open it.
 
 The `text` family supports `text.value` (string comparison against the literal) and `text.length` (its character count,
 counted in Unicode scalars). The locator is quoted when it contains dots, dashes, colons or spaces, exactly as for
@@ -194,13 +207,13 @@ bioassert suggest reads.tsv --force      # overwrite an existing output
 - The output is ordinary assertion syntax with `#` comments, so `run` consumes it directly (the round-trip is an
   integration test). It opens with a two-line provenance banner, then one `# <prefix>` group per contributing family.
 - Each family is a `SuggestionProvider` (`src/suggest/providers/`); `providers()` runs them broadest-first (file,
-  delimited, bam, fasta), mirroring the executor dispatch order. A provider that does not handle the file is skipped;
-  one that handles it but cannot read its properties records a warning (stderr) and is skipped, and the rest still
-  contribute.
+  delimited, bam, fasta, fastq), mirroring the executor dispatch order. A provider that does not handle the file is
+  skipped; one that handles it but cannot read its properties records a warning (stderr) and is skipped, and the rest
+  still contribute.
 - Defaults: every file gets `file.exists eq true` and `file.size gt 0B`. Schema-like counts are pinned with `eq`
-  (delimited columns, fasta records, bam `@SQ`); quantities that vary run to run get a +/- 50% band of a `gte` lower
-  bound and an `lte` upper bound (delimited rows, fasta total length). These are guesses from the current file, not
-  verified expectations.
+  (delimited columns, fasta records, bam `@SQ`); a fastq file gets `fastq.valid eq true`; quantities that vary run to
+  run get a +/- 50% band of a `gte` lower bound and an `lte` upper bound (delimited rows, fasta total length). These
+  are guesses from the current file, not verified expectations.
 - Exit codes: `0` on success, `2` on a fatal error (output exists without `--force`, write fails, or nothing could be
   suggested). Warnings alone keep the exit code `0`. The full design is in `specs/suggest.md`.
 

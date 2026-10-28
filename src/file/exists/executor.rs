@@ -16,6 +16,10 @@ impl AssertionExecutor for FileExistsExecutor {
         let expected = Value::from_boolean(&request.expected)?;
         let actual = super::functions::exists(request.path());
         let success = request.comparator.compare(&actual, &expected);
-        Ok(AssertionExecutionResult { success, actual })
+        Ok(AssertionExecutionResult {
+            success,
+            actual,
+            detail: None,
+        })
     }
 }

@@ -39,6 +39,7 @@ impl AssertionExecutor for DelimitedCellExecutor {
         Ok(AssertionExecutionResult {
             success,
             actual: Value::StringValue(actual_str),
+            detail: None,
         })
     }
 }

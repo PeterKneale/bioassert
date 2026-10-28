@@ -1,6 +1,8 @@
 use crate::core::BioAssertError;
 use crate::suggest::Suggestion;
-use crate::suggest::providers::{BamProvider, DelimitedProvider, FastaProvider, FileProvider};
+use crate::suggest::providers::{
+    BamProvider, DelimitedProvider, FastaProvider, FastqProvider, FileProvider,
+};
 use std::path::Path;
 
 /// A source of suggested assertions for one resource family. There is one provider per family
@@ -30,5 +32,6 @@ pub fn providers() -> Vec<Box<dyn SuggestionProvider>> {
         Box::new(DelimitedProvider),
         Box::new(BamProvider),
         Box::new(FastaProvider),
+        Box::new(FastqProvider),
     ]
 }

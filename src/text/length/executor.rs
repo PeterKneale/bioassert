@@ -18,7 +18,11 @@ impl AssertionExecutor for TextLengthExecutor {
         let expected = Value::from_integer(&request.expected)?;
         let actual = Value::IntegerValue(length(&request.locator));
         let success = request.comparator.compare(&actual, &expected);
-        Ok(AssertionExecutionResult { success, actual })
+        Ok(AssertionExecutionResult {
+            success,
+            actual,
+            detail: None,
+        })
     }
 }
 

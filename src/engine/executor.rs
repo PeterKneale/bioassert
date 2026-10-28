@@ -2,7 +2,7 @@ use crate::bam::{
     BamCountExecutor, BamHeaderFieldExecutor, BamProgramPresentExecutor, BamProgramTagExecutor,
     BamReadGroupPresentExecutor, BamReadGroupTagExecutor,
 };
-use crate::core::{AssertionExecutor, AssertionRequest, BioAssertError, Value};
+use crate::core::{AssertionExecutionResult, AssertionExecutor, AssertionRequest, BioAssertError};
 use crate::delimited::{
     DelimitedCellExecutor, DelimitedColumnAllExecutor, DelimitedColumnCountExecutor,
     DelimitedLineCountExecutor,
@@ -10,6 +10,7 @@ use crate::delimited::{
 use crate::engine::assertion::Assertion;
 use crate::engine::report::{AssertionReport, AssertionResult, Outcome};
 use crate::fasta::{FastaCountExecutor, FastaSequenceFieldExecutor, FastaSequencePresentExecutor};
+use crate::fastq::FastqValidExecutor;
 use crate::file::{
     FileCompressedExecutor, FileCompressionExecutor, FileContentsExecutor, FileEmptyExecutor,
     FileExistsExecutor, FileLinesExecutor, FileSizeExecutor,
@@ -68,10 +69,10 @@ pub fn execute(assertion: Assertion) -> AssertionResult {
 fn evaluate(assertion: &Assertion) -> Result<Evaluation, BioAssertError> {
     if let Some(guard) = &assertion.guard {
         let c = &guard.condition;
-        let (held, actual) = run_metric(&c.file, &c.metric, &c.comparator, &c.expected)
+        let result = run_metric(&c.file, &c.metric, &c.comparator, &c.expected)
             .map_err(|e| BioAssertError::Guard(Box::new(e)))?;
         // `unless` inverts the condition: the assertion runs when the condition does not hold.
-        let active = held ^ guard.negate;
+        let active = result.success ^ guard.negate;
         if !active {
             let reason = if guard.negate {
                 "condition met"
@@ -81,43 +82,62 @@ fn evaluate(assertion: &Assertion) -> Result<Evaluation, BioAssertError> {
             return Ok(Evaluation::Skipped {
                 // Echo the comparator exactly as written (`c.comparator`, e.g. `eq`/`gt`)
                 // rather than its symbolic form, so the line matches the source assertion.
-                message: format!(
-                    "Skipped ({}): {} {} {} {}, got {}",
-                    reason, c.file, c.metric, c.comparator, c.expected, actual
+                message: with_detail(
+                    format!(
+                        "Skipped ({}): {} {} {} {}, got {}",
+                        reason, c.file, c.metric, c.comparator, c.expected, result.actual
+                    ),
+                    result.detail,
                 ),
             });
         }
     }
 
-    let (success, actual) = run_metric(
+    let result = run_metric(
         &assertion.file,
         &assertion.metric,
         &assertion.comparator,
         &assertion.expected,
     )?;
     Ok(Evaluation::Ran {
-        success,
+        success: result.success,
         // Echo the comparator exactly as written (`assertion.comparator`, e.g. `eq`/`gt`)
         // rather than its symbolic form, so the line matches the source assertion and is
         // easy to grep back to.
-        message: format!(
-            "Expected {} {} {} {}, got {}",
-            assertion.file, assertion.metric, assertion.comparator, assertion.expected, actual
+        message: with_detail(
+            format!(
+                "Expected {} {} {} {}, got {}",
+                assertion.file,
+                assertion.metric,
+                assertion.comparator,
+                assertion.expected,
+                result.actual
+            ),
+            result.detail,
         ),
     })
 }
 
+/// Appends an executor's detail to the message in brackets, so the console and the log
+/// both say why the actual value is what it is.
+fn with_detail(message: String, detail: Option<String>) -> String {
+    match detail {
+        Some(detail) => format!("{message} ({detail})"),
+        None => message,
+    }
+}
+
 /// Runs a single metric against a resource: builds the request, finds the matching
-/// executor and returns whether the comparison held and the actual value. The comparator
-/// is parsed only to drive the comparison; the caller renders the raw comparator string
-/// it already holds, so it is not returned here. Shared by the main assertion and by
-/// guard conditions, so any metric can guard any other.
+/// executor and returns its result. The comparator is parsed only to drive the comparison;
+/// the caller renders the raw comparator string it already holds, so it is not returned
+/// here. Shared by the main assertion and by guard conditions, so any metric can guard
+/// any other.
 fn run_metric(
     resource: &str,
     metric: &str,
     comparator: &str,
     expected: &str,
-) -> Result<(bool, Value), BioAssertError> {
+) -> Result<AssertionExecutionResult, BioAssertError> {
     let request = AssertionRequest {
         // Strip the locator's quotes once here, so every executor receives a clean locator
         // and a quoted path/literal containing spaces (e.g. 'my output.tsv') resolves too.
@@ -128,9 +148,11 @@ fn run_metric(
     dispatch(metric, &request)
 }
 
-/// Finds the executor matching `metric` and runs it, returning whether the comparison
-/// held and the actual value. Dispatch is first-match-wins.
-fn dispatch(metric: &str, request: &AssertionRequest) -> Result<(bool, Value), BioAssertError> {
+/// Finds the executor matching `metric` and runs it. Dispatch is first-match-wins.
+fn dispatch(
+    metric: &str,
+    request: &AssertionRequest,
+) -> Result<AssertionExecutionResult, BioAssertError> {
     if let Some(e) = FileExistsExecutor::try_parse(metric) {
         return run(e, request);
     }
@@ -191,6 +213,9 @@ fn dispatch(metric: &str, request: &AssertionRequest) -> Result<(bool, Value), B
     if let Some(e) = FastaSequencePresentExecutor::try_parse(metric) {
         return run(e, request);
     }
+    if let Some(e) = FastqValidExecutor::try_parse(metric) {
+        return run(e, request);
+    }
     if let Some(e) = TextValueExecutor::try_parse(metric) {
         return run(e, request);
     }
@@ -203,14 +228,22 @@ fn dispatch(metric: &str, request: &AssertionRequest) -> Result<(bool, Value), B
 fn run<E: AssertionExecutor>(
     executor: E,
     request: &AssertionRequest,
-) -> Result<(bool, Value), BioAssertError> {
-    let result = executor.execute(request)?;
-    Ok((result.success, result.actual))
+) -> Result<AssertionExecutionResult, BioAssertError> {
+    executor.execute(request)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn with_detail_appends_in_brackets() {
+        assert_eq!(
+            with_detail("got false".to_string(), Some("record 0: bad".to_string())),
+            "got false (record 0: bad)"
+        );
+        assert_eq!(with_detail("got true".to_string(), None), "got true");
+    }
     use crate::engine::assertion::{Condition, Guard};
 
     fn assertion(

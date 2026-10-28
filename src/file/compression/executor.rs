@@ -24,7 +24,11 @@ impl AssertionExecutor for FileCompressionExecutor {
         let success = request
             .comparator
             .compare_string(&actual.to_string(), expected)?;
-        Ok(AssertionExecutionResult { success, actual })
+        Ok(AssertionExecutionResult {
+            success,
+            actual,
+            detail: None,
+        })
     }
 }
 
@@ -44,7 +48,11 @@ impl AssertionExecutor for FileCompressedExecutor {
         let expected = Value::from_boolean(&request.expected)?;
         let actual = compressed(request.path())?;
         let success = request.comparator.compare(&actual, &expected);
-        Ok(AssertionExecutionResult { success, actual })
+        Ok(AssertionExecutionResult {
+            success,
+            actual,
+            detail: None,
+        })
     }
 }
 

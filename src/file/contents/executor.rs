@@ -31,6 +31,7 @@ impl AssertionExecutor for FileContentsExecutor {
         Ok(AssertionExecutionResult {
             success,
             actual: Value::StringValue(functions::summarize(&body)),
+            detail: None,
         })
     }
 }

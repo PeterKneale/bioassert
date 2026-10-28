@@ -204,8 +204,8 @@ An assertions file has one assertion per line:
 <resource> <metric> <comparator> <value>
 ```
 
-The first token is a resource locator: a file path for the `file.*`, `csv.*`/`tsv.*`/`psv.*`, `bam.*` and `fasta.*`
-metrics, or an inline literal string for the `text.*` family.
+The first token is a resource locator: a file path for the `file.*`, `csv.*`/`tsv.*`/`psv.*`, `bam.*`, `fasta.*` and
+`fastq.*` metrics, or an inline literal string for the `text.*` family.
 
 Lines beginning with `#` are comments and blank lines are ignored. A `#` later on a line starts an inline comment
 (everything after it is ignored), which is how `suggest` annotates its output; quote a value that must contain a
@@ -282,6 +282,18 @@ ref.fasta   fasta.seq.0.length       gte  20000000                    # first re
 ref.fasta   fasta.seq.0.description  eq   'Homo sapiens chromosome 1' # description (quoted: spaces)
 ref.fasta   fasta.seq.0.name         matches '^chr[0-9XYM]+$'         # name matches a regex
 ref.fasta   fasta.seq.24.present     eq   true                        # a record exists at this index
+```
+
+### FASTQ checks
+
+The `fastq.*` family streams a FASTQ file once, transparently decompressing gzip and bgzf (detected from the magic
+bytes, not the file name). `fastq.valid` reports whether every record is well formed: four lines, an `@` header with a
+name, a `+` separator and a quality string exactly as long as the sequence, with no partial record at the end. A
+malformed or truncated file reports `false` rather than erroring, so it also works as a guard.
+
+```text
+reads_R1.fastq.gz   fastq.valid   eq   true                                           # every record is well formed
+reads_R1.fastq.gz   file.size     gt   1GB  if reads_R1.fastq.gz fastq.valid eq true  # only once it parses
 ```
 
 ### Text checks
@@ -454,7 +466,7 @@ cp -r skills/bioassert /path/to/your-pipeline/.claude/skills/
 ```
 
 The first token is a **resource locator**. For file-backed metrics (`file.*`, `csv.*`/`tsv.*`/`psv.*`, `bam.*`,
-`fasta.*`) it is a filesystem path; for the `text.*` family it is an inline literal string. The optional `if`/`unless`
+`fasta.*`, `fastq.*`) it is a filesystem path; for the `text.*` family it is an inline literal string. The optional `if`/`unless`
 clause is a [guard](#conditional-assertions-guards).
 
 ## Metrics
@@ -494,6 +506,7 @@ in the sections below.
 | FASTA     | `fasta.seq.N.length`              | Length in bases of record N's sequence                            |
 | FASTA     | `fasta.seq.N.present`             | Whether a record exists at index N                                |
 | FASTA     | `fasta.seq.N.description.present` | Whether record N has a (non-empty) description                    |
+| FASTQ     | `fastq.valid`                     | Whether every record is well-formed four-line FASTQ               |
 | Text      | `text.value`                      | The inline literal string itself                                  |
 | Text      | `text.length`                     | Character count (Unicode scalars)                                 |
 
@@ -576,6 +589,20 @@ whole-file aggregate. Records are addressed by 0-based index `N`, following file
 `name` is always present for a record; `description` is optional. Reading the name, description, or length of a record
 whose index is out of range is an **error**; use the `.present` form to test for presence without erroring. Quote names
 and descriptions that contain dots, dashes, colons or spaces (`'NC_000001.11'`, `'Homo sapiens chromosome 1'`).
+
+### FASTQ metrics
+
+Metrics on a FASTQ read set under the `fastq.*` namespace. The file is streamed once and never held in memory; gzip and
+bgzf compression is decompressed transparently. Other compression formats (bzip2, xz, zstd, zip) are an **error**.
+
+| Metric        | Description                                                                | Comparators | Value   |
+|---------------|----------------------------------------------------------------------------|-------------|---------|
+| `fastq.valid` | Whether every record is well formed and the file ends at a record boundary | `eq`, `ne`  | boolean |
+
+A record is well formed when it is exactly four lines: an `@` header with a non-empty name, the sequence, a `+`
+separator and a quality string the same length as the sequence. Multi-line (wrapped) FASTQ is not accepted. An empty
+file is valid with zero records. A file that opens but does not parse reports `false` rather than erroring, with the
+reason in brackets on the report line (`got false (record 1 (line 5): unexpected end of file)`); a missing file is still an **error**.
 
 ### Text metrics
 

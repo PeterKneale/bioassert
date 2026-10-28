@@ -44,6 +44,7 @@ impl AssertionExecutor for BamReadGroupTagExecutor {
         Ok(AssertionExecutionResult {
             success,
             actual: Value::StringValue(actual),
+            detail: None,
         })
     }
 }
@@ -83,7 +84,11 @@ impl AssertionExecutor for BamReadGroupPresentExecutor {
         };
         let actual = Value::BooleanValue(present);
         let success = request.comparator.compare(&actual, &expected);
-        Ok(AssertionExecutionResult { success, actual })
+        Ok(AssertionExecutionResult {
+            success,
+            actual,
+            detail: None,
+        })
     }
 }
 

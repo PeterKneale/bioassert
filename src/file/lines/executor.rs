@@ -17,6 +17,10 @@ impl AssertionExecutor for FileLinesExecutor {
         let expected = Value::from_integer(&request.expected)?;
         let actual = functions::count_lines(request.path())?;
         let success = request.comparator.compare(&actual, &expected);
-        Ok(AssertionExecutionResult { success, actual })
+        Ok(AssertionExecutionResult {
+            success,
+            actual,
+            detail: None,
+        })
     }
 }
