@@ -1,11 +1,13 @@
 mod bam;
 mod delimited;
 mod fasta;
+mod fastq;
 mod file;
 
 pub use bam::BamProvider;
 pub use delimited::DelimitedProvider;
 pub use fasta::FastaProvider;
+pub use fastq::FastqProvider;
 pub use file::FileProvider;
 
 use std::path::Path;

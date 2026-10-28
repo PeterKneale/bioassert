@@ -11,6 +11,7 @@ pub mod core;
 pub mod delimited;
 pub mod engine;
 pub mod fasta;
+pub mod fastq;
 pub mod file;
 pub mod suggest;
 pub mod text;

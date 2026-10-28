@@ -1,0 +1,14 @@
+---
+source: tests/fastq_subcommand_test.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+PASS. Expected tests/data/sample.fastq fastq.valid eq true, got true
+PASS. Expected tests/data/sample.fastq.gz fastq.valid eq true, got true
+PASS. Expected tests/data/sample.fastq.gz file.compression eq gzip, got gzip
+PASS. Expected tests/data/empty.fastq fastq.valid eq true, got true
+PASS. Expected tests/data/truncated.fastq fastq.valid eq false, got false (record 1 (line 5): unexpected end of file)
+PASS. Expected tests/data/mismatch.fastq fastq.valid eq false, got false (record 1 (line 5): quality length 4 does not match sequence length 8)
+PASS. Expected tests/data/truncated.fastq.gz fastq.valid eq false, got false (record 1 (line 5): unexpected end of file)
+PASS. Expected tests/data/sample.fasta fastq.valid eq false, got false (record 0 (line 1): invalid name prefix)
+PASS. Expected tests/data/sample.fastq file.size gt 0B, got 385B
+SKIP. Skipped (condition not met): tests/data/truncated.fastq fastq.valid eq true, got false (record 1 (line 5): unexpected end of file)

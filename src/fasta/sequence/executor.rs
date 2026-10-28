@@ -48,7 +48,11 @@ impl AssertionExecutor for FastaSequenceFieldExecutor {
                     .ok_or_else(|| out_of_range(request.path(), self.index))?;
                 let actual = Value::IntegerValue(length);
                 let success = request.comparator.compare(&actual, &expected);
-                Ok(AssertionExecutionResult { success, actual })
+                Ok(AssertionExecutionResult {
+                    success,
+                    actual,
+                    detail: None,
+                })
             }
             Field::Name => {
                 let expected = crate::core::strip_quotes(&request.expected).to_string();
@@ -58,6 +62,7 @@ impl AssertionExecutor for FastaSequenceFieldExecutor {
                 Ok(AssertionExecutionResult {
                     success,
                     actual: Value::StringValue(actual),
+                    detail: None,
                 })
             }
             Field::Description => {
@@ -79,6 +84,7 @@ impl AssertionExecutor for FastaSequenceFieldExecutor {
                 Ok(AssertionExecutionResult {
                     success,
                     actual: Value::StringValue(actual),
+                    detail: None,
                 })
             }
         }
@@ -119,7 +125,11 @@ impl AssertionExecutor for FastaSequencePresentExecutor {
         };
         let actual = Value::BooleanValue(present);
         let success = request.comparator.compare(&actual, &expected);
-        Ok(AssertionExecutionResult { success, actual })
+        Ok(AssertionExecutionResult {
+            success,
+            actual,
+            detail: None,
+        })
     }
 }
 

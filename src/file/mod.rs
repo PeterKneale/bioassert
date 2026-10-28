@@ -1,4 +1,4 @@
-mod compression;
+pub(crate) mod compression;
 mod contents;
 mod empty;
 pub(crate) mod exists;

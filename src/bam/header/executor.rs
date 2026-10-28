@@ -40,6 +40,7 @@ impl AssertionExecutor for BamHeaderFieldExecutor {
         Ok(AssertionExecutionResult {
             success,
             actual: Value::StringValue(actual),
+            detail: None,
         })
     }
 }

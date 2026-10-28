@@ -18,7 +18,11 @@ impl AssertionExecutor for DelimitedLineCountExecutor {
         let expected = Value::from_integer(&request.expected)?;
         let actual = super::functions::line_count(request.path())?;
         let success = request.comparator.compare(&actual, &expected);
-        Ok(AssertionExecutionResult { success, actual })
+        Ok(AssertionExecutionResult {
+            success,
+            actual,
+            detail: None,
+        })
     }
 }
 

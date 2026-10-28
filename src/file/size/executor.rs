@@ -17,6 +17,10 @@ impl AssertionExecutor for FileSizeExecutor {
         let expected = Value::from_bytes(&request.expected)?;
         let actual = get_file_size(request.path())?;
         let success = request.comparator.compare(&actual, &expected);
-        Ok(AssertionExecutionResult { success, actual })
+        Ok(AssertionExecutionResult {
+            success,
+            actual,
+            detail: None,
+        })
     }
 }

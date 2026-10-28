@@ -42,7 +42,11 @@ impl AssertionExecutor for BamCountExecutor {
         };
         let actual = Value::IntegerValue(count);
         let success = request.comparator.compare(&actual, &expected);
-        Ok(AssertionExecutionResult { success, actual })
+        Ok(AssertionExecutionResult {
+            success,
+            actual,
+            detail: None,
+        })
     }
 }
 

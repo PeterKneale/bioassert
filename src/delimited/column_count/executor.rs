@@ -20,7 +20,11 @@ impl AssertionExecutor for DelimitedColumnCountExecutor {
         let expected = Value::from_integer(&request.expected)?;
         let actual = super::functions::column_count(request.path(), self.delimiter)?;
         let success = request.comparator.compare(&actual, &expected);
-        Ok(AssertionExecutionResult { success, actual })
+        Ok(AssertionExecutionResult {
+            success,
+            actual,
+            detail: None,
+        })
     }
 }
 

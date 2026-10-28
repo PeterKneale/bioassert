@@ -1,0 +1,17 @@
+# FASTQ assertions against tests/data/*.fastq fixtures (all passing).
+
+# Well-formed files, plain and gzipped (compression is sniffed, not inferred from the name)
+tests/data/sample.fastq fastq.valid eq true
+tests/data/sample.fastq.gz fastq.valid eq true
+tests/data/sample.fastq.gz file.compression eq gzip
+tests/data/empty.fastq fastq.valid eq true
+
+# Malformed files report false rather than erroring
+tests/data/truncated.fastq fastq.valid eq false
+tests/data/mismatch.fastq fastq.valid eq false
+tests/data/truncated.fastq.gz fastq.valid eq false
+tests/data/sample.fasta fastq.valid eq false
+
+# As a guard
+tests/data/sample.fastq file.size gt 0B if tests/data/sample.fastq fastq.valid eq true
+tests/data/truncated.fastq file.size gt 0B if tests/data/truncated.fastq fastq.valid eq true

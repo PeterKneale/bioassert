@@ -35,7 +35,7 @@ samples.tsv  tsv.columns.count     eq   8
 ```
 
 - The **resource** (first token) is a file path for the `file.*`, `tsv/csv/psv.*`,
-  `bam.*` and `fasta.*` families. (`text.*` treats it as an inline literal instead.)
+  `bam.*`, `fasta.*` and `fastq.*` families. (`text.*` treats it as an inline literal instead.)
 - Lines starting with `#` are comments, blank lines are ignored, and column whitespace is free.
 - Any comparator can be prefixed with `not` (`not contains`, `not matches`, `not starts`, `not ends`) to negate it.
   On the whole-column `*.column.N.all` checks the negation is applied **per cell**, so `not contains 'X'` means
@@ -144,6 +144,8 @@ out.vcf.gz  file.size  gt  0B  if out.vcf.gz file.compression eq bgzf
   count, and sample/platform tags (`bam.header.rg.0.sm`, `.pl`).
 - **FASTA reference**: `fasta.seq.count`, `fasta.length` (total bases), and named contigs
   (`fasta.seq.0.name`, `.length`).
+- **FASTQ reads**: `fastq.valid eq true` (every record well formed, file not truncated; gzip is
+  read transparently). Use it as a guard for any downstream check on the same file.
 - **VCF / generic text outputs**: `file.exists`, `file.empty eq false`, `file.lines gte N`.
 - **Tool logs / plain-text outputs**: `file.contents contains '<success marker>'` to confirm a completion line, and
   `file.contents not contains 'Exception'` (or `not matches 'ERROR|FATAL'`) to confirm an error word appears

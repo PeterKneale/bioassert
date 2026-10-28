@@ -47,6 +47,14 @@ fn suggest_fasta_snapshot() {
 }
 
 #[test]
+fn suggest_fastq_snapshot() {
+    assert_snapshot!(
+        "suggest_fastq",
+        suggested_body("tests/data/sample.fastq.gz")
+    );
+}
+
+#[test]
 fn suggest_unknown_extension_snapshot() {
     assert_snapshot!(
         "suggest_unknown_extension",
