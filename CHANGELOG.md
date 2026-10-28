@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/PeterKneale/bioassert/compare/v5.1.0...v6.0.0) - 2026-10-28
+
+### Added
+
+- add fastq aggregate metrics on the same scan
+- add fastq.valid with transparent gzip and a reported reason
+
+### Other
+
+- cover all compression labels and a guard error in run fixtures ([#82](https://github.com/PeterKneale/bioassert/pull/82))
+
 ## [5.1.0](https://github.com/PeterKneale/bioassert/compare/v5.0.1...v5.1.0) - 2026-07-17
 
 ### Added
